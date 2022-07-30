@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>
+      <%= if content_for?(:title) then yield(:title) + ' | ' end %>
+      Site Name
+    </title>
+    <%= if content_for?(:head) then yield(:head) end %>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+    <%= include_gon %>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+
+  <body>
+
+
+    <div class="non-footer">
+      <%= render 'layouts/notifications' %>
+      <%= render 'layouts/navbar' %>
+      <%= render 'layouts/sidenav' %>
+      <%= yield %>
+    </div>
+
+    <%= render 'layouts/footer' %>
+    <%= yield :additional_js %>
+  </body>
+</html>
