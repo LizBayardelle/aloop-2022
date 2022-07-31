@@ -19,7 +19,6 @@ gem "bootsnap", require: false
 # OTHER NECESSARY STUFF
 gem 'jquery-rails'
 gem 'jquery-ui-rails'
-gem 'sprockets-rails'
 gem 'bcrypt', '~> 3.1.7'
 gem 'gon'
 gem 'sass-rails'
