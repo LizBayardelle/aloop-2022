@@ -8,7 +8,7 @@ class RegistrationsController < Devise::RegistrationsController
 			:admin,
 
 			:password,
-			:password_confirmation
+			:password_confirmation,
 
 			:first_name,
 			:last_name,

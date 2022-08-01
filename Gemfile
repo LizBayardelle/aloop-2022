@@ -10,7 +10,6 @@ gem "pg", "~> 1.1"
 gem "puma", "~> 5.0"
 # gem "sassc-rails"
 gem "importmap-rails"
-gem "turbo-rails"
 gem "stimulus-rails"
 gem "jbuilder"
 gem "tzinfo-data", platforms: %i[ mingw mswin x64_mingw jruby ]
@@ -36,10 +35,10 @@ gem 'high_voltage', '~> 3.1'
 gem 'font_awesome5_rails'
 gem 'tinymce-rails'
 
-
 # FOR PAYMENTS
 gem 'stripe-rails'
 gem 'paypal-sdk-rest'
+gem 'paypal-checkout-sdk'
 gem "money-rails"
 
 # FOR IMAGES
