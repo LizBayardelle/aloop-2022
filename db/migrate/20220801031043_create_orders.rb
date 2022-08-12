@@ -1,6 +1,5 @@
 class CreateOrders < ActiveRecord::Migration[7.0]
   def change
-    drop_table :orders
     create_table :orders do |t|
       t.boolean :paid, default: false
       t.string :token
