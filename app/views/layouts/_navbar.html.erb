@@ -1,26 +1,54 @@
 <nav class="navbar navbar-expand-md px-3 navbar-light bg-light">
   <div class="container-fluid">
-    <a class="navbar-brand" href="#">Aloop</a>
+    <%= link_to "Aloop", root_path, class: "navbar-brand" %>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="#">Home</a>
+
+        <li class="nav-item"><%= link_to "Store", products_path, class: "nav-link" %></li>
+
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Admin
+          </a>
+          <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <%= link_to "Products", admin_products_path, class: "dropdown-item" %>
+            <%= link_to "Sales", admin_sales_path, class: "dropdown-item" %>
+            <%= link_to "Users", admin_users_path, class: "dropdown-item" %>
+          </div>
         </li>
+
         <% if current_user %>
-          <li class="nav-item">
-            <%= link_to "Sign Out", new_user_registration_path, class: "nav-link" %>
-          </li>
+          <li class="nav-item"><%= link_to "Sign Out", destroy_user_session_path, :method => :delete, class: "nav-link" %></li>
         <% else %>
-          <li class="nav-item">
-            <%= link_to "Sign out", destroy_user_session_path, :method => :delete, class: "nav-link" %>
-          </li>
-          <li class="nav-item">
-            <%= link_to "Sign In", new_user_session_path, class: "nav-link" %>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              My Account
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+              <%= link_to "Create an Account", new_user_registration_path, class: "dropdown-item" %>
+              <%= link_to "Sign In", new_user_session_path, class: "dropdown-item" %>
+            </div>
           </li>
         <% end %>
+
+        <li>
+          <button type="button" class="btn btn-invisible position-relative">
+            <%= simple_form_for(@current_order, html: { id: "goToCart" }) do |f| %>
+              <%= f.hidden_field :move_to_checkout, value: false %>
+              <%= button_tag( :class => "btn-invisible mt-2") do %>
+                <i class='fas fa-shopping-cart'></i>
+              <% end %>
+            <% end %>
+            
+            <span class="position-absolute translate-middle badge rounded-pill bg-danger">
+              <%= @current_order.order_number_of_items %>
+            </span>
+          </button>
+        </li>
+
       </ul>
     </div>
   </div>

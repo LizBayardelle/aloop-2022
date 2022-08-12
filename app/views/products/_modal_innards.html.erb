@@ -1,0 +1,38 @@
+<%= simple_form_for(product) do |f| %>
+  <div class="modal-body">
+    <%= f.error_notification %>
+    <%= f.error_notification message: f.object.errors[:base].to_sentence if f.object.errors[:base].present? %>
+
+    <div class="form-inputs spaced">
+      <%= f.input :name, label: "Product Name" %>
+      <%= f.input :price_cents, label: "Product Price (in Cents)" %>
+
+      <div class="form-group">
+        <%= f.label "Product Images" %><br>
+        <%= f.file_field :photos, :multiple => true, class: "mb-1" %>
+        <br>
+        <% product.photos.each do |photo| %>
+          <%= image_tag(photo, width: 25) %>
+        <% end %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label "Categories" %><br>
+        <div class="form-check">
+          <%= f.collection_check_boxes(:product_category_ids, ProductCategory.all, :id, :name ) %>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <%= f.label "Full Product Description", class: "mt-2" %>
+        <%= f.text_area :description, label: "Full Description", class: "tinymce" %>
+      </div>
+
+      <%= f.input :active, label: "This is an active product.", class: "mt-2" %>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+     <%= f.button :submit %>
+  </div>
+<% end %>

@@ -40,6 +40,7 @@ gem 'stripe-rails'
 gem 'paypal-sdk-rest'
 gem 'paypal-checkout-sdk'
 gem "money-rails"
+gem 'country_select'
 
 # FOR IMAGES
 gem 'mini_magick'

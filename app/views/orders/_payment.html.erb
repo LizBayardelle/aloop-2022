@@ -14,7 +14,7 @@
       return actions.order.create({
         purchase_units: [{
           amount: {
-            value: '<%= order.price %>' // Can also reference a variable or function
+            value: '<%= @order.order_total/100 %>' // Can also reference a variable or function
           }
         }]
       });
@@ -31,7 +31,8 @@
         // const element = document.getElementById('paypal-button-container');
         // element.innerHTML = '<h3>Thank you for your payment!</h3>';
         // actions.redirect('thank_you.html');
-        document.getElementById('formPaid').submit();
+        // document.getElementById('formPaid').submit();
+        document.getElementById('buttonPaid').click();
       });
     }
   }).render('#paypal-button-container');

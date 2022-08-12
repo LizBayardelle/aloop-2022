@@ -3,7 +3,7 @@
   <head>
     <title>
       <%= if content_for?(:title) then yield(:title) + ' | ' end %>
-      Site Name
+      Aloop Offroad
     </title>
     <%= if content_for?(:head) then yield(:head) end %>
     <%= csrf_meta_tags %>
@@ -22,15 +22,26 @@
     <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
     <meta name="msapplication-TileColor" content="#da532c">
     <meta name="theme-color" content="#ffffff">
-    
+
+    <!-- BOOTSTRAP GOODIES -->
+
+    <!-- CDNs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.matchHeight/0.7.2/jquery.matchHeight.js" integrity="sha512-S2SvZGyr848abU9tlAkvQvyW+lg+dru96R5ymzoC49wSDwaw8cGNrWz0DceIbeXG6Ot1S3Oy8o1xv7gdvZ+X0w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.1.2/tinymce.min.js" integrity="sha512-cJ2vUNryvHzgNJfmFTtZ2VX5EMT5JOU1i8nm+L1kwoHQ9bSqSYdswxyk++9Gi27p3BG2rXZXLMsTsluY4RZSSw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+      tinymce.init({
+        selector: '.tinymce'
+      });
+    </script>
+
   </head>
 
   <body>
 
 
     <div class="non-footer">
-      <%= render 'layouts/notifications' %>
       <%= render 'layouts/navbar' %>
+      <%= render 'layouts/notifications' %>
       <%= render 'layouts/sidenav' %>
       <%= yield %>
     </div>

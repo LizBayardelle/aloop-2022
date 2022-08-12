@@ -1,5 +1,16 @@
 class RegistrationsController < Devise::RegistrationsController
 
+
+	def create
+		super
+		if params[:initial_order]
+			order = Order.find(params[:initial_order])
+			order.user_id == @user.id
+			order.save
+		end
+	end
+
+
 	private
 
 	def sign_up_params
@@ -12,7 +23,8 @@ class RegistrationsController < Devise::RegistrationsController
 
 			:first_name,
 			:last_name,
-			:phone
+			:phone,
+			:initial_order
 		)
 	end
 
@@ -29,7 +41,8 @@ class RegistrationsController < Devise::RegistrationsController
 
 			:first_name,
 			:last_name,
-			:phone
+			:phone,
+			:initial_order
 		)
 	end
 end

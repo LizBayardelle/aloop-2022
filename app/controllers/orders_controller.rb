@@ -1,5 +1,5 @@
 class OrdersController < ApplicationController
-  before_action :set_order, only: %i[ show edit update destroy ]
+  before_action :set_order, only: %i[ update destroy ]
 
   def index
     @orders = Order.all
@@ -7,15 +7,11 @@ class OrdersController < ApplicationController
 
 
   def show
-  end
-
-
-  def new
-    @order = Order.new
-  end
-
-
-  def edit
+    if Order.find(params[:id])
+      @order = Order.find(params[:id])
+    else
+      @order = @current_order 
+    end
   end
 
 
@@ -38,7 +34,7 @@ class OrdersController < ApplicationController
   def update
     respond_to do |format|
       if @order.update(order_params)
-        format.html { redirect_to order_url(@order), notice: "Order was successfully updated." }
+        format.html { redirect_to order_url(@order) }
         format.json { render :show, status: :ok, location: @order }
       else
         format.html { render :edit, status: :unprocessable_entity }
@@ -57,6 +53,20 @@ class OrdersController < ApplicationController
       format.json { head :no_content }
     end
   end
+
+  def mark_order_paid
+    @order = Order.find(params[:id])
+    if @order.update(paid: true)
+
+      @current_order = Order.create!
+      session[:order_id] = @current_order.id
+
+      redirect_to order_path(@order)
+    else
+      redirect_to order_path(@order)
+      flash[:warning] = "Oops! Something went wrong!"
+    end
+  end
   
 
   private
@@ -69,10 +79,22 @@ class OrdersController < ApplicationController
 
   def order_params
     params.require(:order).permit(
-      :paid,
-      :token,
+      :id,
+      :user_id,
       :price,
-      :user_id
+      :token,
+
+      :move_to_checkout,
+      :shipping_info,
+      :paid,
+      
+      :ship_to_name,
+      :address_line_1,
+      :address_line_2,
+      :city,
+      :state,
+      :postal_code,
+      :country
     )
   end
 end

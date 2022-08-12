@@ -1,14 +1,24 @@
-<p style="color: green"><%= notice %></p>
+<main class="container my-5">
 
-<h1>Products</h1>
+  <header class="text-center">
+    <h1>Aloop Store</h1>
+  </header>
 
-<div id="products">
-  <% @products.each do |product| %>
-    <%= render product %>
-    <p>
-      <%= link_to "Show this product", product %>
-    </p>
-  <% end %>
-</div>
+  <section>
+    <div class="row">
+      <% @products.each do |product| %>
+        <%= render partial: "products/product_box", locals: { product: product } %>
+      <% end %>
+    </div> <!-- row -->
+  </section>
 
-<%= link_to "New product", new_product_path %>
+</main>
+
+
+
+
+<script>
+  $( document ).ready(function() {
+    $('.product-box').matchHeight();
+  });
+</script>
