@@ -34,6 +34,7 @@ gem 'high_voltage', '~> 3.1'
 # STYLE STUFF
 gem 'font_awesome5_rails'
 gem 'tinymce-rails'
+gem 'jquery-matchheight-rails'
 
 # FOR PAYMENTS
 gem 'stripe-rails'

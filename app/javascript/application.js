@@ -11,9 +11,11 @@ import "bootstrap"
 //= require jquery-ui
 //= require popper
 //= require bootstrap
+//= require jquery.matchHeight
 //= require activestorage
 //= require font_awesome5
 //= require tinymce
+//= require_tree .
 
 
 window.jQuery = $;

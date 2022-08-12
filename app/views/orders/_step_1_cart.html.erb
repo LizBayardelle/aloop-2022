@@ -9,7 +9,10 @@
 
   </header>
 
-    <!-- <div class="total-price"></div> -->
+  <% if @order.order_items.count == 0 %>
+    <p class="text-center">Nothing here yet!  You should head to our <%= link_to "store", products_path %> and fix that...</p>
+  <% else %>
+
     <section id="cart-details" class="text-left pt-4">
       <table class="table">
         <tbody>
@@ -57,20 +60,23 @@
           </tr>
         </tbody>
       </table>
-  </section>
+    </section>
 
-  <section id="actions" class="text-center mt-5">
-    <h4>Ready to checkout?</h4>
-    <% if current_user %>
+    <section id="actions" class="text-center mt-5">
+      <h4>Ready to checkout?</h4>
+      <% if current_user %>
 
-      <%= simple_form_for(@order, html: { id: "formMoveToCheckout" }) do |f| %>
-        <%= f.hidden_field :move_to_checkout, value: true %>
-        <%= f.submit "Checkout", class: "btn" %>
+        <%= simple_form_for(@order, html: { id: "formMoveToCheckout" }) do |f| %>
+          <%= f.hidden_field :move_to_checkout, value: true %>
+          <%= f.submit "Checkout", class: "btn" %>
+        <% end %>
+
+      <% else %>
+        <%= link_to "Checkout", new_user_registration_path(order_id: order.id), class: "btn" %>
       <% end %>
+    </section>
 
-    <% else %>
-      <%= link_to "Checkout", new_user_registration_path(order_id: order.id), class: "btn" %>
-    <% end %>
-  </section>
+  <% end %>
+
 </main>
 
