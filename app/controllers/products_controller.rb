@@ -68,6 +68,9 @@ class ProductsController < ApplicationController
         :height,
         :width,
         :depth,
+        :subtitle,
+        :years,
+        :color,
         
         product_category_ids: [],
         bike_model_ids: [],
