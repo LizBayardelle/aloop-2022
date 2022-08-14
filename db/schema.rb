@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2022_08_09_232219) do
+ActiveRecord::Schema[7.0].define(version: 2022_08_14_225100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -40,6 +40,12 @@ ActiveRecord::Schema[7.0].define(version: 2022_08_09_232219) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "bike_models", force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "order_items", force: :cascade do |t|
@@ -86,6 +92,15 @@ ActiveRecord::Schema[7.0].define(version: 2022_08_09_232219) do
     t.index ["product_id"], name: "index_product_categorizations_on_product_id"
   end
 
+  create_table "product_models", force: :cascade do |t|
+    t.bigint "product_id", null: false
+    t.bigint "bike_model_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bike_model_id"], name: "index_product_models_on_bike_model_id"
+    t.index ["product_id"], name: "index_product_models_on_product_id"
+  end
+
   create_table "product_orders", force: :cascade do |t|
     t.bigint "product_id", null: false
     t.bigint "order_id", null: false
@@ -102,6 +117,11 @@ ActiveRecord::Schema[7.0].define(version: 2022_08_09_232219) do
     t.boolean "active", default: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "meta_title"
+    t.string "meta_keywords"
+    t.integer "height"
+    t.integer "width"
+    t.integer "depth"
   end
 
   create_table "users", force: :cascade do |t|
@@ -133,6 +153,8 @@ ActiveRecord::Schema[7.0].define(version: 2022_08_09_232219) do
   add_foreign_key "orders", "users"
   add_foreign_key "product_categorizations", "product_categories"
   add_foreign_key "product_categorizations", "products"
+  add_foreign_key "product_models", "bike_models"
+  add_foreign_key "product_models", "products"
   add_foreign_key "product_orders", "orders"
   add_foreign_key "product_orders", "products"
 end

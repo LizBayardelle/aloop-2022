@@ -10,6 +10,10 @@ Rails.application.routes.draw do
 
   resources :products
   resources :product_categories
+  
+  resources :bike_models
+  resources :product_models
+
   resources :orders
   resources :order_items
 

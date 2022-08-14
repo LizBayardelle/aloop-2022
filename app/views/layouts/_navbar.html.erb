@@ -37,7 +37,7 @@
         <% end %>
 
         <li>
-          <button type="button" class="btn btn-invisible position-relative w-0">
+          <button type="button" class="btn-invisible position-relative w-0">
             <%= simple_form_for(@current_order, html: { id: "goToCart" }) do |f| %>
               <%= f.hidden_field :move_to_checkout, value: false %>
               <%= button_tag( :class => "btn-invisible mt-2") do %>

@@ -62,7 +62,15 @@ class ProductsController < ApplicationController
         :price_cents,
         :description,
         :active,
+
+        :meta_title,
+        :meta_keywords,
+        :height,
+        :width,
+        :depth,
+        
         product_category_ids: [],
+        bike_model_ids: [],
         photos: []
       )
     end

@@ -2,24 +2,34 @@
 
   <header class="text-center mb-3">
     <h1>Products</h1>
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newProductModal">
-      Create a New Product
+    <button type="button" class="btn btn-black-outline" data-bs-toggle="modal" data-bs-target="#newProductModal">
+      Add a New Product
     </button>
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newCategoryModal">
-      Create a New Category
+    <button type="button" class="btn btn-red-outline" data-bs-toggle="modal" data-bs-target="#newCategoryModal">
+      Add a New Category
+    </button>
+    <button type="button" class="btn btn-blue-outline" data-bs-toggle="modal" data-bs-target="#newModelModal">
+      Add a New Model
     </button>
   </header>
   <%= render partial: "products/modal_new", locals: { product: Product.new } %>
   <%= render partial: "product_categories/modal_new", locals: { category: ProductCategory.new } %>
+  <%= render partial: "bike_models/modal_new", locals: { bike_model: BikeModel.new } %>
 
 
 
-  <div id="categories" class="text-center">
+  <div id="categories" class="text-center mb-4">
     <% ProductCategory.all.each do |category| %>
-      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editCategory<%= category.id %>Modal">
+      <button type="button" class="btn btn-small btn-red" data-bs-toggle="modal" data-bs-target="#editCategory<%= category.id %>Modal">
         <%= category.name %>
       </button>
       <%= render partial: "product_categories/modal_edit", locals: { category: category } %>
+    <% end %>
+    <% BikeModel.all.each do |bike_model| %>
+      <button type="button" class="btn btn-small btn-blue" data-bs-toggle="modal" data-bs-target="#editModel<%= bike_model.id %>Modal">
+        <%= bike_model.name %>
+      </button>
+      <%= render partial: "bike_models/modal_edit", locals: { bike_model: bike_model } %>
     <% end %>
   </div>
 
@@ -33,6 +43,7 @@
           <th scope="col">Name</th>
           <th scope="col">Photos</th>
           <th scope="col">Categories</th>
+          <th scope="col">Models</th>
           <th scope="col">Price</th>
         </tr>
       </thead>
@@ -55,6 +66,9 @@
             </td>
             <td>
               <%= product.product_categories.map(&:name).join(", ") %>
+            </td>
+            <td>
+              <%= product.bike_models.map(&:name).join(", ") %>
             </td>
             <td><%= number_to_currency(product.price_cents.to_f/100) %></td>
           </tr>

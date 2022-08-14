@@ -16,17 +16,47 @@
         <% end %>
       </div>
 
-      <div class="form-group">
-        <%= f.label "Categories" %><br>
-        <div class="form-check">
-          <%= f.collection_check_boxes(:product_category_ids, ProductCategory.all, :id, :name ) %>
+      <div class="row">
+        <div class="form-group col-6">
+          <%= f.label "Categories" %><br>
+          <div class="form-check">
+            <%= f.collection_check_boxes(:product_category_ids, ProductCategory.all, :id, :name ) %>
+          </div>
         </div>
-      </div>
+
+        <div class="form-group col-6">
+          <%= f.label "Models" %><br>
+          <div class="form-check">
+            <%= f.collection_check_boxes(:bike_model_ids, BikeModel.all, :id, :name ) %>
+          </div>
+        </div>
+      </div> <!-- row -->
 
       <div class="form-group">
         <%= f.label "Full Product Description", class: "mt-2" %>
         <%= f.text_area :description, label: "Full Description", class: "tinymce" %>
       </div>
+
+      <div class="row">
+        <div class="form-group col-6">
+          <%= f.input :meta_title, label: "Meta Title" %>
+        </div>
+
+        <div class="form-group col-6">
+          <%= f.input :meta_keywords, label: "Meta Keywords" %>
+        </div>
+
+        <div class="form-group col-4">
+          <%= f.input :height %>
+        </div>
+        <div class="form-group col-4">
+          <%= f.input :width %>
+        </div>
+        <div class="form-group col-4">
+          <%= f.input :depth %>
+        </div>
+      </div> <!-- row -->
+
 
       <%= f.input :active, label: "This is an active product.", class: "mt-2" %>
     </div>
