@@ -30,6 +30,7 @@ class ProductsController < ApplicationController
   def update
     respond_to do |format|
       if @product.update(product_params)
+        # @product.photos.attach(params[:product][:photos]) if params.dig(:product, :photos).present?
         format.html { redirect_to admin_products_path, notice: "Product was successfully updated." }
         format.json { render :show, status: :ok, location: @product }
       else
