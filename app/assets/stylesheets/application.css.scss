@@ -43,6 +43,18 @@ $z-depth-3-y: 0 10px 20px rgba(0,0,0,0.19), 0 -5px 10px 20px rgba(0,0,0,0.19);
 $z-depth-4-y: 0 14px 28px rgba(0,0,0,0.25), 0 -5px 14px 28px rgba(0,0,0,0.25);
 $z-depth-5-y: 0 19px 38px rgba(0,0,0,0.30), 0 -5px 19px 38px rgba(0,0,0,0.30);
 
+.z-depth-1 { box-shadow: $z-depth-1; }
+.z-depth-2 { box-shadow: $z-depth-2; }
+.z-depth-3 { box-shadow: $z-depth-3; }
+.z-depth-4 { box-shadow: $z-depth-4; }
+.z-depth-5 { box-shadow: $z-depth-5; }
+.z-depth-1-y { box-shadow: $z-depth-1-y; }
+.z-depth-2-y { box-shadow: $z-depth-2-y; }
+.z-depth-3-y { box-shadow: $z-depth-3-y; }
+.z-depth-4-y { box-shadow: $z-depth-4-y; }
+.z-depth-5-y { box-shadow: $z-depth-5-y; }
+
+
 .color-grey { color: $color-grey; }
 .color-red { color: $color-red; }
 .color-blue { color: $color-blue; }

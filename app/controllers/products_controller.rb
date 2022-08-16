@@ -68,6 +68,7 @@ class ProductsController < ApplicationController
         :height,
         :width,
         :depth,
+        
         :subtitle,
         :years,
         :color,

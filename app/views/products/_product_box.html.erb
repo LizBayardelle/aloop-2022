@@ -1,17 +1,25 @@
 <div class="col-sm-6 col-md-3">
-	<div class="product-box">
+	<div class="product-box" style="position: relative">
+		<div style="position: absolute; top: 0; right: 0; padding: 5px 10px">
+			<% if product.color && product.color != "" %>
+				<span class="badge bg-black" style="border: thin solid white"><%= product.color %></span>
+			<% end %>
+		</div>
 		<%= link_to product_path(product) do %>
 			<% product.photos.limit(1).each do |photo| %>
 				<%= image_tag(photo) %>
 			<% end %>
 		<% end %>
-		<p class="mt-3"><%= product.name %></p>
+		<div class="px-2">
+			<h3 class="h4 mt-3 mb-0"><%= product.name %></h3>
+			<p><small><em><%= product.undertitle %></em></small></p>
 
-		<%= simple_form_for(@new_order_item) do |f| %>
-		    <%= f.hidden_field :order_id, value: @current_order.id %>
-		    <%= f.hidden_field :product_id, value: product.id %>
-		    <%= f.hidden_field :quantity, value: 1  %>
-		    <%= f.submit number_to_currency(product.price_cents.to_f/100), class: "btn" %>
-		<% end %>
+			<%= simple_form_for(@new_order_item) do |f| %>
+			    <%= f.hidden_field :order_id, value: @current_order.id %>
+			    <%= f.hidden_field :product_id, value: product.id %>
+			    <%= f.hidden_field :quantity, value: 1  %>
+			    <%= f.submit number_to_currency(product.price_cents.to_f/100), class: "btn btn-red btn-small" %>
+			<% end %>
+		</div> <!-- text padding -->
 	</div> <!-- box -->
 </div>
