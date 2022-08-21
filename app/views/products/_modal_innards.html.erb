@@ -11,22 +11,7 @@
           <%= f.input :subtitle, label: "Subtitle Details" %>
         </div>
         <div class="form-group col-4">
-          <%= f.input :price_cents, label: "Product Price (in Cents)" %>
-        </div>
-        <div class="form-group col-6">
-          <%= f.input :years %>
-        </div>
-        <div class="form-group col-6">
-          <%= f.input :color, placeholder: "Only if multiple colors available." %>
-        </div>
-
-        <div class="form-group col-12">
-          <%= f.label "Product Images" %><br>
-          <%= f.file_field :photos, :multiple => true, class: "mb-1" %>
-          <br>
-          <% product.photos.each do |photo| %>
-            <%= image_tag(photo, width: 25) %>
-          <% end %>
+          <%= f.input :price %>
         </div>
 
         <div class="form-group col-6">

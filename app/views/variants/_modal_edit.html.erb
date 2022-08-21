@@ -1,0 +1,37 @@
+<div class="modal fade" id="editVariant<%= variant.id %>Modal" tabindex="-1" aria-labelledby="editVariant<%= variant.id %>ModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editVariant<%= variant.id %>ModalLabel">Edit <%= variant.name %></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <%= simple_form_for(variant) do |f| %>
+        <div class="modal-body">
+          <%= f.error_notification %>
+          <%= f.error_notification message: f.object.errors[:base].to_sentence if f.object.errors[:base].present? %>
+
+          <div class="form-inputs spaced">
+            <%= f.input :name %>
+            <%= f.input :price_adjustment, label: "Price Adjustment", placeholder: "Difference from Default Price (in Cents)" %>
+            <%= f.input :description %>
+            <%= f.input :active, label: "Display on Website.", class: "mt-2" %>
+            <div class="form-group">
+              <%= f.label "Variant Images" %><br>
+              <%= f.file_field :photos, :multiple => true, class: "mb-1" %>
+              <br>
+              <% variant.photos.each do |photo| %>
+                <%= image_tag(photo, width: 25) %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <%= f.submit "Save", class: "btn" %>
+        </div>
+      <% end %>
+
+    </div>
+  </div>
+</div>

@@ -9,6 +9,7 @@ class ProductsController < ApplicationController
 
 
   def show
+    @new_order_item = OrderItem.new
   end
 
 
@@ -17,6 +18,8 @@ class ProductsController < ApplicationController
 
     respond_to do |format|
       if @product.save
+        default_component = Component.create(product_id: @product.id, name: "Default")
+        default_component.save
         format.html { redirect_to admin_products_path, notice: "Product was successfully created." }
         format.json { render :show, status: :created, location: @product }
       else
@@ -30,7 +33,6 @@ class ProductsController < ApplicationController
   def update
     respond_to do |format|
       if @product.update(product_params)
-        # @product.photos.attach(params[:product][:photos]) if params.dig(:product, :photos).present?
         format.html { redirect_to admin_products_path, notice: "Product was successfully updated." }
         format.json { render :show, status: :ok, location: @product }
       else
@@ -42,11 +44,16 @@ class ProductsController < ApplicationController
 
 
   def destroy
-    @product.destroy
+    if OrderItem.where(product_id: @product.id).count != 0
+      redirect_to admin_products_path
+      flash[:notice] = "This product has previously been ordered and shouldn't be deleted.  Try marking it as not currently sold instead."
+    else
+      @product.destroy
 
-    respond_to do |format|
-      format.html { redirect_to admin_products_path, notice: "Product was successfully destroyed." }
-      format.json { head :no_content }
+      respond_to do |format|
+        format.html { redirect_to admin_products_path, notice: "Product was successfully deleted." }
+        format.json { head :no_content }
+      end
     end
   end
 
@@ -60,7 +67,7 @@ class ProductsController < ApplicationController
     def product_params
       params.require(:product).permit(
         :name,
-        :price_cents,
+        :price,
         :description,
         :active,
 
@@ -69,14 +76,10 @@ class ProductsController < ApplicationController
         :height,
         :width,
         :depth,
-        
         :subtitle,
-        :years,
-        :color,
         
         product_category_ids: [],
-        bike_model_ids: [],
-        photos: []
+        bike_model_ids: []
       )
     end
 end

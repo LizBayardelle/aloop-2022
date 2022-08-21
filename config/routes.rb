@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  resources :variants
+  resources :components
   get 'home/index'
   root 'home#index'
   

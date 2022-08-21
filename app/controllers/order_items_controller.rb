@@ -37,7 +37,10 @@ class OrderItemsController < ApplicationController
       :id,
       :order_id,
       :product_id,
-      :quantity
+      :quantity,
+      :specs,
+      :notes,
+      :total_price
     )
   end
 

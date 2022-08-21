@@ -71,6 +71,7 @@ $z-depth-5-y: 0 19px 38px rgba(0,0,0,0.30), 0 -5px 19px 38px rgba(0,0,0,0.30);
 ------------BASICS-------------
 -----------------------------*/
 
+.hidden { display: none !important; }
 .non-footer { min-height: calc(100vh - 392px); }
 
 .linkish { color: $color-primary; cursor: pointer; }
@@ -84,6 +85,27 @@ td { vertical-align: middle; }
     padding: 15px;
 }
 .badge { background-color: $color-grey; box-shadow: $z-depth-1; }
+
+td { vertical-align: top; }
+
+*, *:after, *:before {
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  border: 0 none;
+  position: relative;
+  outline: none;
+}
+
+html, body {
+  width: 100%;
+}
+
+
 
 
 /*-----------------------------
@@ -227,6 +249,77 @@ td { vertical-align: middle; }
   .navbar .nav-item .dropdown-menu { margin-top:0; }
 }
 
+.nav-item {
+    text-transform: uppercase;
+    font-size: 1rem;
+    font-weight: 200;
+    text-align: center;
+    color: $color-black;
+    margin: 0px 15px;
+}
+
+.dropdown-item { font-weight: 200; }
+
+.nav-item > a {
+  text-decoration: none;
+  color: $color-black;
+  z-index: 1;
+}
+
+.nav-item > a:before {
+  content: "";
+  background: $color-red;
+  position: absolute;
+  width: 100%;
+  height: 5px;
+  bottom: 0;
+  left: 0;
+  border-radius: 1px;
+  transform: scaleX(0);
+  animation: .5s forwards no-hover-v linear;
+  animation-fill-mode: forwards;
+  z-index: -1;
+}
+.nav-item > a:hover:before,
+.nav-item > a:focus:before {
+  animation: .25s forwards hover-v linear;
+  animation-fill-mode: forwards;
+}
+@keyframes hover-v {
+  0% {
+      transform: scaleX(0);
+      height: 5px;
+     }
+  45% {   
+      transform: scaleX(1.05);
+      height: 5px;
+     }
+  55% {height: 5px;}
+  100% {
+      transform: scaleX(1.05);
+      height: 2.5rem;
+     }
+}
+@keyframes no-hover-v {
+  0% {
+      transform: scaleX(1.05);
+      height: 2.5rem;
+     }
+  45% {height: 5px;}
+  55% {   
+      transform: scaleX(1.05);
+      height: 5px;
+      opacity: 1;
+     }
+  
+  100% {
+      transform: scaleX(0);
+      height: 5px;
+      opacity: .02;
+     }
+}
+
+
 
 
 
@@ -255,6 +348,11 @@ input[type='checkbox'] { margin-right: 10px }
 }
 
 
+
+
+
+
+
 /*-----------------------------
 ------------PRODUCTS-----------
 -----------------------------*/
@@ -273,6 +371,24 @@ input[type='checkbox'] { margin-right: 10px }
     height: auto;
 }
 
+.select-box {
+    border: thin solid $color-grey;
+    border-radius: 5px;
+    margin: 5px;
+    cursor: pointer;
+}
+
+.select-box img {
+    width: 100%;
+}
+
+.select-box .text {
+    padding: 10px;
+}
+
+.select-box.active {
+    border: medium solid $color-black;
+}
 
 
 
