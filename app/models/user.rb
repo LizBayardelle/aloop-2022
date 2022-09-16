@@ -4,9 +4,13 @@ class User < ApplicationRecord
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable, :trackable
 
+  # ATTACHMENTS
+  has_one_attached :image
+
 
   # RELATIONSHIPS
   has_many :orders
+
 
   # MODELS
 

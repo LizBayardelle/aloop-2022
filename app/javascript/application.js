@@ -1,9 +1,9 @@
 // Configure your import map in config/importmap.rb. Read more: https://github.com/rails/importmap-rails
-import "controllers"
 import "jquery"
 import "jquery_ujs"
 import "popper"
 import "bootstrap"
+import "controllers"
 
 
 //= require jquery3
@@ -18,8 +18,12 @@ import "bootstrap"
 //= require_tree .
 
 
+
+
 window.jQuery = $;
 window.$ = $;
+
+
 
 
 setTimeout(function() {

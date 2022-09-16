@@ -25,10 +25,10 @@
 
 $color-primary: #001dd7;
 $color-white: #ffffff;
-$color-grey: #c0c0c0;
+$color-grey: #f2f2f2;
 $color-black: #000000;
 
-$color-red: #ec3223;
+$color-red: #ec3223;  // rgba(236,50,35,1)
 $color-blue: #001dd7;
 
 $z-depth-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
@@ -59,13 +59,24 @@ $z-depth-5-y: 0 19px 38px rgba(0,0,0,0.30), 0 -5px 19px 38px rgba(0,0,0,0.30);
 .color-red { color: $color-red; }
 .color-blue { color: $color-blue; }
 .color-black { color: $color-black; }
+.color-white { color: $color-white; }
+
 
 .bg-grey { background-color: $color-grey; }
 .bg-red { background-color: $color-red; }
-.bg-blue { background-color: $color-blue; }
+.bg-blue, .bg-primary { background-color: $color-blue; }
 .bg-black { background-color: $color-black; }
+.bg-white { background-color: $color-white; }
 
 
+.badge { box-shadow: $z-depth-1; }
+.badge.blue { background-color: $color-blue; color: $color-white; border: solid medium $color-blue; }
+.badge.blue-outline { background-color: $color-white; color: $color-blue; border: solid medium $color-blue; }
+.badge.red { background-color: $color-red; color: $color-white; border: solid medium $color-red; }
+.badge.red-outline { background-color: $color-white; color: $color-red; border: solid medium $color-red; }
+.badge.black { background-color: $color-black; color: $color-white; border: solid medium $color-black; }
+.badge.black-outline { background-color: $color-white; color: $color-black; border: solid medium $color-black; }
+.badge { text-decoration: none; }
 
 /*-----------------------------
 ------------BASICS-------------
@@ -84,7 +95,12 @@ td { vertical-align: middle; }
     border-radius: 10px;
     padding: 15px;
 }
-.badge { background-color: $color-grey; box-shadow: $z-depth-1; }
+
+.raised-box {
+    background-color: $color-white;
+    box-shadow: $z-depth-4;
+}
+
 
 td { vertical-align: top; }
 
@@ -123,7 +139,27 @@ html, body {
 ------------COLORS-------------
 -----------------------------*/
 
-
+textarea:focus,
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="datetime"]:focus,
+input[type="datetime-local"]:focus,
+input[type="date"]:focus,
+input[type="month"]:focus,
+input[type="time"]:focus,
+input[type="week"]:focus,
+input[type="number"]:focus,
+input[type="email"]:focus,
+input[type="url"]:focus,
+input[type="search"]:focus,
+input[type="tel"]:focus,
+input[type="color"]:focus,
+.uneditable-input:focus,
+.accordion-button:focus {   
+  border-color: rgba(236,50,35, 0.8);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(236,50,35, 0.6);
+  outline: 0 none;
+}
 
 
 
@@ -207,6 +243,24 @@ html, body {
     color: $color-white; 
 }
 
+.btn-white.hover-clear:hover {
+    background-color: none !important; 
+    border: 2px solid $color-white;
+    color: $color-white; 
+}
+
+.btn-black, .btn-black-outline:hover { 
+    background-color: $color-black; 
+    border: 2px solid $color-black;
+    color: $color-white; 
+}
+
+.btn-black:hover, .btn-black-outline { 
+    background-color: $color-white; 
+    border: 2px solid $color-black;
+    color: $color-black; 
+}
+
 .btn-invisible, .btn-invisible:hover { background-color: rgba(0,0,0,0); color: black; border: none; }
 
 .btn-small {
@@ -238,10 +292,148 @@ html, body {
 ------------IMAGES-------------
 -----------------------------*/
 
-
 .bg-dirt {
-background: linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url("https://images.pexels.com/photos/1161996/pexels-photo-1161996.jpeg") no-repeat top center;
+  min-height: 600px;
+  background: linear-gradient(
+    rgba(0,0,0,0.5),
+    rgba(0,0,0,0.5)
+  ),
+  url("https://aloopphotobucket.s3.us-west-1.amazonaws.com/Images/Bike+Dirt.jpeg") no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+
+
+.bg-tires {
+    background: linear-gradient(
+        rgba(0,0,0,0.5),
+        rgba(0,0,0,0.5)
+    ),
+    url("https://aloopphotobucket.s3.us-west-1.amazonaws.com/Images/Tire+Tracks.jpeg") no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
     background-size: cover;
+}
+
+
+.bg-grate {
+    background: linear-gradient(
+        rgba(0,0,0,0.5),
+        rgba(0,0,0,0.5)
+    ),
+    url("https://aloopphotobucket.s3.us-west-1.amazonaws.com/Images/Steel+Grate.jpg") no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+}
+
+.bg-gears {
+    background: linear-gradient(
+        rgba(0,0,0,0.5),
+        rgba(0,0,0,0.5)
+    ),
+    url("https://aloopphotobucket.s3.us-west-1.amazonaws.com/Images/Gears.jpeg") no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+}
+
+.bg-bike1 {
+    background: linear-gradient(
+        rgba(0,0,0,0.5),
+        rgba(0,0,0,0.5)
+    ),
+    url("https://images.pexels.com/photos/1448385/pexels-photo-1448385.jpeg") no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+}
+
+.bg-bike2 {
+    background: linear-gradient(
+        rgba(0,0,0,0.5),
+        rgba(0,0,0,0.5)
+    ),
+    url("https://aloopphotobucket.s3.us-west-1.amazonaws.com/Images/Bike2.jpeg") no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+}
+
+.bg-bike3 {
+    background: linear-gradient(
+        rgba(0,0,0,0.5),
+        rgba(0,0,0,0.5)
+    ),
+    url("https://images.unsplash.com/photo-1608566048123-c266ed1c7cd8?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8") no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+}
+
+.profile-image {
+  width: 50px;
+  height: 50px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.profile-image img {
+  display: inline;
+  margin: auto auto;
+  height: 100%;
+  width: auto;
+}
+
+.profile-image.large {
+  width: 125px;
+  height: 125px;
+}
+
+
+
+
+
+
+
+
+
+/*-----------------------------
+------------GALLERY------------
+-----------------------------*/
+
+.portfolio-menu{
+    text-align:center;
+}
+.portfolio-menu ul li{
+    display:inline-block;
+    margin:0;
+    list-style:none;
+    padding:10px 15px;
+    cursor:pointer;
+    -webkit-transition:all 05s ease;
+    -moz-transition:all 05s ease;
+    -ms-transition:all 05s ease;
+    -o-transition:all 05s ease;
+    transition:all .5s ease;
+}
+
+.portfolio-item{
+    /*width:100%;*/
+}
+.portfolio-item .item{
+    /*width:303px;*/
+    float:left;
+    margin-bottom:10px;
 }
 
 
@@ -325,23 +517,19 @@ background: linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url("http
       transform: scaleX(0);
       height: 5px;
      }
-  45% {   
+  65% {   
       transform: scaleX(1.05);
       height: 5px;
      }
-  55% {height: 5px;}
   100% {
       transform: scaleX(1.05);
-      height: 2.5rem;
      }
 }
 @keyframes no-hover-v {
   0% {
       transform: scaleX(1.05);
-      height: 2.5rem;
      }
-  45% {height: 5px;}
-  55% {   
+  65% {   
       transform: scaleX(1.05);
       height: 5px;
       opacity: 1;
@@ -427,4 +615,61 @@ input[type='checkbox'] { margin-right: 10px }
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+/*-----------------------------
+--------------BLOG-------------
+-----------------------------*/
+
+.feature {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 3rem;
+  width: 3rem;
+  font-size: 1.5rem;
+}
+
+.bg-featured-blog {
+  height: 100%;
+  width: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  min-height: 15rem;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/*-----------------------------
+-------------FAQ---------------
+-----------------------------*/
+
+.accordion-body {
+    background-color: $color-grey;
+}
+
+.accordion-button:not(.collapsed) {
+    color: $color-white;
+    font-weight: 700;
+    background-color: $color-red;
+}
 

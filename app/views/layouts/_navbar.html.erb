@@ -10,28 +10,47 @@
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
 
-        <li class="nav-item"><%= link_to "Kits", products_path, class: "nav-link" %></li>
-        <li class="nav-item"><%= link_to "Gallery", products_path, class: "nav-link" %></li>
+        <li class="nav-item dropdown">
+          <%= link_to "Kits", page_path("kits"), class: "nav-link dropdown-toggle", id: "navbarDropdownMenuLink", 'data-toggle': "dropdown", 'aria-haspopup': "true", 'aria-expanded': "false" %>
+          <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <%= link_to "XR250 and XR400", page_path("XR250_XR400"), class: "dropdown-item" %>
+            <%= link_to "XR600", page_path("XR600"), class: "dropdown-item" %>
+            <%= link_to "XR650XL", page_path("XR650L"), class: "dropdown-item" %>
+            <%= link_to "Graphics", page_path("graphics"), class: "dropdown-item" %>
+            <%= link_to "Color Coded Key Covers", products_path, class: "dropdown-item" %>
+            <%= link_to "Rear Fenders", products_path, class: "dropdown-item" %>
+            <%= link_to "Replacement Parts", products_path, class: "dropdown-item" %>
+          </div>
+        </li>
+
+        <li class="nav-item"><%= link_to "Gallery", photos_path, class: "nav-link" %></li>
         <li class="nav-item"><%= link_to "Store", products_path, class: "nav-link" %></li>
-        <li class="nav-item"><%= link_to "Info", products_path, class: "nav-link" %></li>
-        <li class="nav-item"><%= link_to "Export", products_path, class: "nav-link" %></li>
-        <li class="nav-item"><%= link_to "Blog", products_path, class: "nav-link" %></li>
+        <li class="nav-item"><%= link_to "FAQ", page_path("faq"), class: "nav-link" %></li>
+        <li class="nav-item"><%= link_to "Export", page_path("export"), class: "nav-link" %></li>
+        <li class="nav-item"><%= link_to "Blog", blogs_path, class: "nav-link" %></li>
 
         <% if current_user && current_user.admin %>
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              Admin
-            </a>
+            <%= link_to "Admin", admin_dashboard_path, class: "nav-link dropdown-toggle", id: "navbarDropdownMenuLink", 'data-toggle': "dropdown", 'aria-haspopup': "true", 'aria-expanded': "false" %>
             <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
               <%= link_to "Products", admin_products_path, class: "dropdown-item" %>
               <%= link_to "Sales", admin_sales_path, class: "dropdown-item" %>
               <%= link_to "Users", admin_users_path, class: "dropdown-item" %>
+              <%= link_to "Blog", admin_blog_path, class: "dropdown-item" %>
             </div>
           </li>
         <% end %>
 
         <% if current_user %>
-          <li class="nav-item"><%= link_to "Sign Out", destroy_user_session_path, :method => :delete, class: "nav-link" %></li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              My Account
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+              <%= link_to "My Account", user_path(current_user), class: "dropdown-item" %>
+              <%= link_to "Sign Out", destroy_user_session_path, :method => :delete, class: "dropdown-item" %>
+            </div>
+          </li>
         <% else %>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

@@ -1,26 +1,41 @@
-<h2>Sign up</h2>
+<section class="bg-grate p-5">
 
-<%= simple_form_for(resource, as: resource_name, url: registration_path(resource_name)) do |f| %>
-  <%= f.error_notification %>
+  <header class="text-center">
+    <h1 class="display-1 thin color-white py-5">Create an Account</h1>
+  </header>
 
-  <div class="form-inputs">
-    <%= f.hidden_field :initial_order, value: params[:order_id] %>
-    <%= f.input :email,
-                required: true,
-                autofocus: true,
-                input_html: { autocomplete: "email" }%>
-    <%= f.input :password,
-                required: true,
-                hint: ("#{@minimum_password_length} characters minimum" if @minimum_password_length),
-                input_html: { autocomplete: "new-password" } %>
-    <%= f.input :password_confirmation,
-                required: true,
-                input_html: { autocomplete: "new-password" } %>
+  <div class="raised-box p-5 mb-5">
+    <%= simple_form_for(resource, as: resource_name, url: session_path(resource_name)) do |f| %>
+      <div class="form-inputs spaced row">
+        <%= f.hidden_field :initial_order, value: params[:order_id] %>
+        <div class="form-group col-12">
+          <%= f.input :email,
+                    required: true,
+                    autofocus: true,
+                    input_html: { autocomplete: "email" }%>
+        </div> <!-- form group -->
+        <div class="form-group col-sm-6">
+          <%= f.input :password,
+                    required: true,
+                    hint: ("#{@minimum_password_length} characters minimum" if @minimum_password_length),
+                    input_html: { autocomplete: "new-password" } %>
+        </div> <!-- form group -->
+        <div class="form-group col-sm-6">
+          <%= f.input :password_confirmation,
+                    required: true,
+                    input_html: { autocomplete: "new-password" } %>
+        </div> <!-- form group -->
+      </div>
+
+      <div class="form-actions text-center">
+        <%= f.button :submit, "Let's Go", class: "mb-3" %><br>
+        <%= render "users/shared/links" %>
+      </div>
+    <% end %>
+
   </div>
 
-  <div class="form-actions">
-    <%= f.button :submit, "Sign up" %>
-  </div>
-<% end %>
+</section>
 
-<%= render "users/shared/links" %>
+
+

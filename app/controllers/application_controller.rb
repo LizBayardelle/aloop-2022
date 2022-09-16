@@ -12,4 +12,14 @@ class ApplicationController < ActionController::Base
     @current_order
   end
 
+  def admin_only
+    unless current_user && current_user.admin
+      if current_user.mastermind
+        redirect_to team_mine_path
+      else
+        respond_to root_path, notice: "Sorry, you have to be an admin to do that."
+      end
+    end
+  end
+
 end

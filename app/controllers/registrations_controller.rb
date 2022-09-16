@@ -23,6 +23,8 @@ class RegistrationsController < Devise::RegistrationsController
 
 			:first_name,
 			:last_name,
+	        :image,
+	        :job_title,
 			:phone,
 			:initial_order
 		)
@@ -41,6 +43,8 @@ class RegistrationsController < Devise::RegistrationsController
 
 			:first_name,
 			:last_name,
+	        :image,
+	        :job_title,
 			:phone,
 			:initial_order
 		)
