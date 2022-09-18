@@ -17,7 +17,7 @@
 			<p class="h3 color-red mb-2"><%= number_to_currency(product.price, precision: 2) %></p>
 			<% first_component = product.components.first %>
 			Components: <% product.components.count %>
-			Variants of First Component:  <%= first_component.variants.count %>
+			<br>Variants of First Component:  <%= first_component.variants.count %>
 			<% if product.components.count == 1 && first_component.variants.count == 1 %>
 				<%= simple_form_for(@new_order_item) do |f| %>
 				    <%= f.hidden_field :order_id, value: @current_order.id %>

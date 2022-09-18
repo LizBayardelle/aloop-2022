@@ -99,6 +99,7 @@
 
         <% component.variants.each do |variant| %>
           $('#c<%= component.id %>v<%= component.variants.first.id %>').click(function(){
+            $console.log("IT WAS CLICKED");
             $(".select-box<% component.id %>").removeClass("active");
             $(this).addClass("active");
             var selected_variant = "<%= variant.name %>"

@@ -8,7 +8,6 @@
     <%= if content_for?(:head) then yield(:head) end %>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-
     <%= stylesheet_link_tag "application" %>
     <%= javascript_importmap_tags %>
     <%= include_gon %>
@@ -24,7 +23,7 @@
     <meta name="theme-color" content="#ffffff">
 
     <!-- BOOTSTRAP GOODIES -->
-
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <!-- CDNs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.1.2/tinymce.min.js" integrity="sha512-cJ2vUNryvHzgNJfmFTtZ2VX5EMT5JOU1i8nm+L1kwoHQ9bSqSYdswxyk++9Gi27p3BG2rXZXLMsTsluY4RZSSw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>

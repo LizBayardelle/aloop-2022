@@ -5,12 +5,15 @@
 
 <div class="container">
    <div class="row">
-      <div class="col-lg-12 text-center my-2">
-             <h3 class="py-3"><a href="https://spreeowl.com/">Spreeowl</a></h3>
-         <h4>Isotope filter magical layouts with Bootstrap 4</h4>
+      <div class="col-lg-12 text-center mt-5">
+         <h1 class="display-3 thin">Customer Images</h1>
+         <h4>See real photos from hundreds of our happy customers...</h4>
       </div>
    </div>
-   <div class="portfolio-menu mt-2 mb-4">
+
+
+
+   <div class="portfolio-menu mt-2 mb-5">
       <ul>
          <li class="btn btn-outline-dark active" data-filter="*">All</li>
          <li class="btn btn-outline-dark" data-filter=".gts">Girls T-shirt</li>
@@ -18,7 +21,17 @@
          <li class="btn btn-outline-dark text" data-filter=".selfie">selfie</li>
       </ul>
    </div>
+
+
    <div class="portfolio-item row">
+      <% @photos.each do |photo| %>
+         <div class="item selfie col-lg-3 col-md-4 col-6 col-sm">
+            <a href="<%= url_for(photo) %>" class="fancylight popup-btn" data-fancybox-group="light"> 
+            <img class="img-fluid" src="https://image.freepik.com/free-photo/stylish-young-woman-with-bags-taking-selfie_23-2147962203.jpg" alt="">
+            </a>
+         </div>
+      <% end %>
+
       <div class="item selfie col-lg-3 col-md-4 col-6 col-sm">
          <a href="https://image.freepik.com/free-photo/stylish-young-woman-with-bags-taking-selfie_23-2147962203.jpg" class="fancylight popup-btn" data-fancybox-group="light"> 
          <img class="img-fluid" src="https://image.freepik.com/free-photo/stylish-young-woman-with-bags-taking-selfie_23-2147962203.jpg" alt="">
