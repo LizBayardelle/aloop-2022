@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
-  resources :photos
+
+
   get 'home/index'
   root 'home#index'
   
@@ -26,5 +27,8 @@ Rails.application.routes.draw do
 
   resources :blogs
   resources :blog_subcategories
+
+  resources :photos
+  post "photos/:id/approve_photo" => "photos#approve_photo", as: "approve_photo"
 
 end
