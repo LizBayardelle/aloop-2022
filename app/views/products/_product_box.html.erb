@@ -11,7 +11,7 @@
 			<% end %>
 			<img src="<%= demo_picture_url %>">
 		<% end %>
-		<div class="px-2">
+		<div class="match-height px-2">
 			<h3 class="h4 mt-3 mb-0"><%= product.name %></h3>
 			<p><small><em><%= product.undertitle %></em></small></p>
 			<p class="h3 color-red mb-2"><%= number_to_currency(product.price, precision: 2) %></p>
@@ -23,10 +23,10 @@
 				    <%= f.hidden_field :order_id, value: @current_order.id %>
 				    <%= f.hidden_field :product_id, value: product.id %>
 				    <%= f.hidden_field :quantity, value: 1  %>
-				    <%= f.submit "Add to Cart", class: "btn btn-blue btn-small" %>
+				    <%= f.submit "Add to Cart", class: "btn btn-blue btn-small mt-2" %>
 				<% end %>
 			<% end %>
-			<%= link_to "See Options", product_path(product), class: "btn btn-blue-outline btn-small" %>
+			<%= link_to "See Options", product_path(product), class: "btn btn-blue-outline btn-small mt-2" %>
 		</div> <!-- text padding -->
 	</div> <!-- box -->
 </div>

@@ -52,7 +52,7 @@
       </ul>
    </div>
 
-  <div class="portfolio-item row">
+  <div class="portfolio-item row mb-5">
     <% @photos.where(approved: true).each do |photo| %>
       <div class="item <%= photo.kit %> col-lg-3 col-md-4 col-6 col-sm">
         <div data-bs-toggle="modal" data-bs-target="#photoModal<%= photo.id %>" style="height: 130px; overflow-y: hidden;">
