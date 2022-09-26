@@ -1,11 +1,11 @@
-<main class="container my-5">
+<main class="my-5 mx-4">
 
-  <header class="text-center">
+  <header class="container text-center">
     <h1>Aloop Store</h1>
   </header>
 
-  <section>
-    <div class="row">
+  <section class="container">
+    <div class="row g-4">
       <% @products.each do |product| %>
         <%= render partial: "products/product_box", locals: { product: product } %>
       <% end %>

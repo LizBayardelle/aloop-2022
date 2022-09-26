@@ -19,15 +19,10 @@
           <% @order.order_items.each do |item| %>
             <% product = Product.find(item.product_id) %>
             <tr>
-              <td style="width: 150px">
-                <%= link_to product do %>
-                  <% product.photos.limit(1).each do |photo| %>
-                    <%= image_tag(photo, width: 100) %>
-                  <% end %>
-                <% end %>
-              </td>
               <td>
-                <%= product.name %>
+                <h4><%= product.name %></h4>
+                <p class="mb-0 pb-0"><%= item.specs.html_safe %></p>
+                <p class="mb-0 pb-0"><em><%= item.notes %></em></p>
                 <br>
                 <small><em>
                   <%= link_to "Remove", order_item_path(item), method: :delete, style: "text-decoration: none", data: {confirm: "Are you sure you want to remove that product from your cart?"} %>
@@ -36,7 +31,7 @@
               <td>
                 <%= item.quantity %>
               </td>
-              <td><%= number_to_currency(product.price_cents.to_f*item.quantity/100) %></td>
+              <td><%= number_to_currency(item.total_price) %></td>
             </tr>
           <% end %>
           <tr style="border-bottom: solid thin white">
@@ -52,10 +47,9 @@
             <th>
               <% total_price = 0 %>
               <% @order.order_items.each do |item| %>
-                <% product = Product.find(item.product_id) %>
-                <% total_price += ( product.price_cents * item.quantity )%>
+                <% total_price += ( item.total_price * item.quantity )%>
               <% end %>
-              <%= number_to_currency(total_price/100) %>
+              <%= number_to_currency(total_price) %>
             </th>
           </tr>
         </tbody>

@@ -211,6 +211,13 @@ input[type="color"]:focus,
   transform: translateY(0);
 }
 
+.btn-inactive, .btn-inactive-outline:hover { 
+    background-color: $color-grey; 
+    border: 2px solid $color-grey;
+    color: $color-white; 
+    pointer-events: none;
+}
+
 .btn-red, .btn-red-outline:hover { 
     background-color: $color-red; 
     border: 2px solid $color-red;
@@ -586,9 +593,7 @@ input[type='checkbox'] { margin-right: 10px }
 
 .product-box {
     background-color: $color-white;
-    margin: 15px;
     box-shadow: $z-depth-2;
-    width: 100%;
     text-align: center;
     padding-bottom: 10px;
 }
@@ -598,23 +603,24 @@ input[type='checkbox'] { margin-right: 10px }
     height: auto;
 }
 
-.select-box {
-    border: thin solid $color-grey;
+.selectbox {
+    border: medium solid $color-grey;
     border-radius: 5px;
     margin: 5px;
     cursor: pointer;
 }
 
-.select-box img {
+.selectbox img {
     width: 100%;
 }
 
-.select-box .text {
+.selectbox .text {
     padding: 10px;
 }
 
-.select-box.active {
-    border: medium solid $color-black;
+.selectbox.active {
+    border: medium solid $color-red;
+    box-shadow: $z-depth-3;
 }
 
 

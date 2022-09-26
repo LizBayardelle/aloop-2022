@@ -1,4 +1,4 @@
-<% if current_user && current_user.admin %>
+<% if current_user && current_user.admin && @current_order.id != @order.id %>
   <div class="container text-center mt-5">
     <div class="box w-75 ms-auto me-auto">
       <p class="uppercase mb-2">Admin Information</p>

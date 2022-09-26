@@ -45,7 +45,7 @@
               <% end %>
             </td>
             <td><%= order.order_number_of_items %></td>
-            <td><%= number_to_currency(order.order_total/100) %></td>
+            <td><%= number_to_currency(order.order_total) %></td>
           </tr>
         <% end %>
       </tbody>

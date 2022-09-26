@@ -3,13 +3,13 @@ class OrderItemsController < ApplicationController
   def create
     puts params.inspect
     
-    if OrderItem.where(order_id: @current_order.id, product_id: params[:order_item][:product_id]).count != 0
-      @order_item = OrderItem.where(order_id: @current_order.id, product_id: params[:order_item][:product_id]).first
-      @order_item.quantity += params[:order_item][:quantity].to_i
-      @order_item.save
-    else
+    # if OrderItem.where(order_id: @current_order.id, product_id: params[:order_item][:product_id]).count != 0
+    #   @order_item = OrderItem.where(order_id: @current_order.id, product_id: params[:order_item][:product_id]).first
+    #   @order_item.quantity += params[:order_item][:quantity].to_i
+    #   @order_item.save
+    # else
       @order_item = OrderItem.new(order_params)
-    end
+    # end
 
     if @order_item.save
       redirect_to order_path(@current_order)

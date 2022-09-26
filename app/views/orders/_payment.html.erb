@@ -14,7 +14,7 @@
       return actions.order.create({
         purchase_units: [{
           amount: {
-            value: '<%= @order.order_total/100 %>' // Can also reference a variable or function
+            value: '<%= @order.order_total %>' // Can also reference a variable or function
           }
         }]
       });
