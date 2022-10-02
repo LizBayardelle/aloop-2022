@@ -43,21 +43,15 @@ class OrdersController < ApplicationController
                     email:          @order.customer_email
                   },
 
-                  @order.order_items.each do |item|
-                    parcel = {
-                      length:        5,
-                      width:         2,
-                      height:        5,
-                      distance_unit: :in,
-                      weight:        2,
-                      mass_unit:     :lb
-                    }
-                    parcels_array << parcel
-                  end
+                  parcel = {
+                    length:        5,
+                    width:         2,
+                    height:        5,
+                    distance_unit: :in,
+                    weight:        2,
+                    mass_unit:     :lb
+                  }
 
-                  parcels: [
-                    parcels_array.join(',')
-                  ]
     }
 
     # Make our API call
