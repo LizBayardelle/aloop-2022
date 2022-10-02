@@ -105,6 +105,21 @@ td { vertical-align: middle; }
     box-shadow: $z-depth-4;
 }
 
+.raised-box.hoverable{
+    cursor: pointer;
+    box-shadow: $z-depth-3;
+    border: solid thin $color-white;
+}
+
+.raised-box.hoverable:hover {
+    cursor: pointer;
+    box-shadow: $z-depth-1;
+}
+
+.raised-box.active {
+    border: solid thin $color-red;
+}
+
 
 td { vertical-align: top; }
 
@@ -124,6 +139,7 @@ td { vertical-align: top; }
 html, body {
   width: 100%;
 }
+
 
 
 
@@ -410,7 +426,13 @@ input[type="color"]:focus,
   height: 125px;
 }
 
-
+.blog-body img {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 50vh;
+    box-shadow: $z-depth-3;
+}
 
 
 

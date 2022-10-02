@@ -70,6 +70,7 @@ GEM
       public_suffix (>= 2.0.2, < 5.0)
     autoprefixer-rails (10.4.7.0)
       execjs (~> 2)
+    awesome_print (1.9.2)
     aws-eventstream (1.2.0)
     aws-partitions (1.613.0)
     aws-sdk (3.1.0)
@@ -1367,6 +1368,8 @@ GEM
       responders
       warden (~> 1.2.3)
     digest (3.1.0)
+    domain_name (0.5.20190701)
+      unf (>= 0.0.5, < 1.0.0)
     erubi (1.10.0)
     execjs (2.8.1)
     ffi (1.15.5)
@@ -1384,7 +1387,11 @@ GEM
       i18n (>= 0.7)
       multi_json
       request_store (>= 1.0)
+    hashie (5.0.0)
     high_voltage (3.1.2)
+    http-accept (1.7.0)
+    http-cookie (1.0.5)
+      domain_name (~> 0.5)
     i18n (1.12.0)
       concurrent-ruby (~> 1.0)
     i18n_data (0.16.0)
@@ -1419,6 +1426,9 @@ GEM
     marcel (1.0.2)
     matrix (0.4.2)
     method_source (1.0.0)
+    mime-types (3.4.1)
+      mime-types-data (~> 3.2015)
+    mime-types-data (3.2022.0105)
     mini_magick (4.11.0)
     mini_mime (1.1.2)
     minitest (5.16.2)
@@ -1447,6 +1457,7 @@ GEM
       digest
       net-protocol
       timeout
+    netrc (0.11.0)
     nio4r (2.5.8)
     nokogiri (1.13.8-x86_64-darwin)
       racc (~> 1.4)
@@ -1513,6 +1524,11 @@ GEM
     responders (3.0.1)
       actionpack (>= 5.0)
       railties (>= 5.0)
+    rest-client (2.1.0)
+      http-accept (>= 1.7.0, < 2.0)
+      http-cookie (>= 1.0.2, < 2.0)
+      mime-types (>= 1.16, < 4.0)
+      netrc (~> 0.8)
     rexml (3.2.5)
     rubyzip (2.3.2)
     sass-rails (6.0.0)
@@ -1530,6 +1546,11 @@ GEM
       rexml (~> 3.2, >= 3.2.5)
       rubyzip (>= 1.2.2, < 3.0)
       websocket (~> 1.0)
+    shippo (4.0.0)
+      activesupport (>= 4)
+      awesome_print
+      hashie (>= 3.5.2)
+      rest-client (>= 2.1, < 2.2)
     simple_form (5.1.0)
       actionpack (>= 5.2)
       activemodel (>= 5.2)
@@ -1560,6 +1581,9 @@ GEM
       railties (>= 3.1.1)
     tzinfo (2.0.5)
       concurrent-ruby (~> 1.0)
+    unf (0.1.4)
+      unf_ext
+    unf_ext (0.0.8.2)
     unicode_utils (1.4.0)
     warden (1.2.9)
       rack (>= 2.0.9)
@@ -1621,6 +1645,7 @@ DEPENDENCIES
   rails (~> 7.0.1)
   sass-rails
   selenium-webdriver
+  shippo
   simple_form
   spring
   sprockets-rails

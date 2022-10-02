@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2022_09_16_234830) do
+ActiveRecord::Schema[7.0].define(version: 2022_09_28_214922) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -121,13 +121,19 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_16_234830) do
     t.datetime "updated_at", null: false
     t.boolean "move_to_checkout", default: false
     t.boolean "shipping_info", default: false
-    t.string "address_line_1"
-    t.string "address_line_2"
-    t.string "city"
-    t.string "state"
-    t.string "postal_code"
-    t.string "country"
-    t.string "ship_to_name"
+    t.string "address_line_1", default: ""
+    t.string "address_line_2", default: ""
+    t.string "city", default: ""
+    t.string "state", default: ""
+    t.string "postal_code", default: ""
+    t.string "country", default: ""
+    t.string "ship_to_name", default: ""
+    t.boolean "shipping_chosen", default: false
+    t.string "shipping_choice", default: ""
+    t.string "shipping_choice_img", default: ""
+    t.string "shipping_price", default: ""
+    t.string "customer_email", default: ""
+    t.decimal "final_price", precision: 8, scale: 2
     t.index ["user_id"], name: "index_orders_on_user_id"
   end
 

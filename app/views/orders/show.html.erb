@@ -16,8 +16,10 @@
   <%= render partial: "orders/step_1_cart", locals: { order: @order } %>
 <% elsif @order.shipping_info == false && @order.paid == false %>
   <%= render partial: "orders/step_2_shipping", locals: { order: @order } %>
+<% elsif @order.shipping_info == true && @order.shipping_chosen == false %>
+  <%= render partial: "orders/step_3_shipping_options", locals: { order: @order } %>
 <% elsif @order.paid == false %>
-  <%= render partial: "orders/step_3_payment", locals: { order: @order } %>
+  <%= render partial: "orders/step_4_payment", locals: { order: @order } %>
 <% elsif @order.paid %>
-  <%= render partial: "orders/step_4_confirmation", locals: { order: @order } %>
+  <%= render partial: "orders/step_5_confirmation", locals: { order: @order } %>
 <% end %>

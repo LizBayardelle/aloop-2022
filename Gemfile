@@ -42,6 +42,7 @@ gem 'paypal-sdk-rest'
 gem 'paypal-checkout-sdk'
 gem "money-rails"
 gem 'country_select'
+gem 'shippo'
 
 # FOR IMAGES
 gem 'mini_magick'

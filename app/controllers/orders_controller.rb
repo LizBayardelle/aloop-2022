@@ -1,5 +1,6 @@
 class OrdersController < ApplicationController
   before_action :set_order, only: %i[ update destroy ]
+  require 'shippo'
 
   def index
     @orders = Order.all
@@ -12,6 +13,57 @@ class OrdersController < ApplicationController
     else
       @order = @current_order 
     end
+
+
+    # Setup your API token
+    Shippo::API.token = ENV["SHIPPO_API_TOKEN"]  # not an actual valid token
+
+    # Setup query parameter hash
+    params   = {  async:          false,
+                  address_from:   {
+                    name:           'Aloop Offroad',
+                    company:        'Aloop Offroad',
+                    street1:        'PO Box 412',
+                    street2:        '',
+                    city:           'Sedalia',
+                    state:          'CO',
+                    zip:            '80135',
+                    country:        'US',
+                    phone:          '+1 303 550 2582'
+                  },
+
+                  address_to:     {
+                    name:           @order.ship_to_name,
+                    street1:        @order.address_line_1,
+                    street2:        @order.address_line_2,
+                    city:           @order.city,
+                    state:          @order.state,
+                    zip:            @order.postal_code,
+                    country:        @order.country,
+                    email:          @order.customer_email
+                  },
+
+                  @order.order_items.each do |item|
+                    parcel = {
+                      length:        5,
+                      width:         2,
+                      height:        5,
+                      distance_unit: :in,
+                      weight:        2,
+                      mass_unit:     :lb
+                    }
+                    parcels_array << parcel
+                  end
+
+                  parcels: [
+                    parcels_array.join(',')
+                  ]
+    }
+
+    # Make our API call
+    @shipment = Shippo::Shipment.create(params)
+
+
   end
 
 
@@ -85,16 +137,23 @@ class OrdersController < ApplicationController
       :token,
 
       :move_to_checkout,
-      :shipping_info,
       :paid,
       
+      :shipping_info,
       :ship_to_name,
+      :customer_email,
       :address_line_1,
       :address_line_2,
       :city,
       :state,
       :postal_code,
-      :country
+      :country,
+
+      :shipping_chosen,
+      :shipping_choice,
+      :shipping_choice_img,
+      :shipping_price,
+      :final_price
     )
   end
 end
