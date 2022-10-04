@@ -43,7 +43,7 @@ class OrdersController < ApplicationController
                     email:          @order.customer_email
                   },
 
-                  parcel: {
+                  parcels: {
                     length:        5,
                     width:         2,
                     height:        5,

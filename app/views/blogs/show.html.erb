@@ -1,6 +1,6 @@
 
 <main class="flex-shrink-0">
-  <section class="py-5">
+  <section class="pt-5">
     <div class="container px-5 my-5">
       <div class="row gx-5">
         <div class="col-lg-3">
@@ -37,27 +37,39 @@
                   <%= @blog.body.html_safe %>
               </section>
           </article>
-          <!-- Comments section-->
-          <section>
-        
-            <h2 class="text-center pt-4 pb-2">Comments</h2>
-            <div id="disqus_thread"></div>
-            <script>
-              var disqus_config = function () {
-                this.page.url = "<%= polymorphic_url(@blog) %>";  // Replace PAGE_URL with your page's canonical URL variable
-                this.page.identifier = "<%= @blog.id %>"; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
-              };
-              (function() { // DON'T EDIT BELOW THIS LINE
-              var d = document, s = d.createElement('script');
-              s.src = 'https://aloop-offroad.disqus.com/embed.js';
-              s.setAttribute('data-timestamp', +new Date());
-              (d.head || d.body).appendChild(s);
-              })();
-            </script>
+        </div> <!-- col -->
+      </div> <!-- row -->
+    </div> <!-- container -->
+  </section>
 
-          </section>
-        </div>
+
+  <% if @blog.video_url && @blog.video_url != "" %>
+    <section class="bg-grate text-center py-5">
+      <div class="container py-5">
+        <span class="z-depth-5"><%= @blog.video_url.html_safe %></span>
       </div>
-    </div>
+    </section>
+  <% end %>
+
+
+  <section class="container">
+    <h2 class="text-center pt-4 pb-2">Comments</h2>
+    <div id="disqus_thread"></div>
+    <script>
+      var disqus_config = function () {
+        this.page.url = "<%= polymorphic_url(@blog) %>";  // Replace PAGE_URL with your page's canonical URL variable
+        this.page.identifier = "<%= @blog.id %>"; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+      };
+      (function() { // DON'T EDIT BELOW THIS LINE
+      var d = document, s = d.createElement('script');
+      s.src = 'https://aloop-offroad.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+      })();
+    </script>
+  </section>
+
+
+
   </section>
 </main>

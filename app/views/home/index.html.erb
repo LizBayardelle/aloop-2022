@@ -123,4 +123,43 @@
             </aside>
         </div>
     </section>
+
+
+
+
+    <section>
+        <div class="container">
+            <h2 class="text-center pb-4">From the 'Gram</h2>
+
+            <!-- Place <div> tag where you want the feed to appear -->
+            <div id="curator-feed-aloop-offroad-layout"><a href="https://curator.io" target="_blank" class="crt-logo crt-tag">Powered by Curator.io</a></div>
+            <!-- The Javascript can be moved to the end of the html page before the </body> tag -->
+            <script type="text/javascript">
+            /* curator-feed-aloop-offroad-layout */
+            (function(){
+            var i, e, d = document, s = "script";i = d.createElement("script");i.async = 1;
+            i.src = "https://cdn.curator.io/published/65414202-ebc8-4b03-90ae-5b54dab3ee4d.js";
+            e = d.getElementsByTagName(s)[0];e.parentNode.insertBefore(i, e);
+            })();
+            </script>
+
+        </div> <!-- container -->
+    </section>
+
+
+
+
+    <% if @videos != [] %>
+        <section class="text-center container py-5">
+            <h2 class="pb-4">Videos</h2>
+                <% @videos.each do |video| %>
+                    <div class="py-3">
+                        <%= video.video_url.html_safe %>
+                    </div> <!-- col -->
+                <% end %>
+        </section> <!-- row -->
+    <% end %>
+
+
+
 </main>
