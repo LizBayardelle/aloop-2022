@@ -209,6 +209,7 @@ input[type="color"]:focus,
     -webkit-user-select: none;
     touch-action: manipulation;
     will-change: transform;
+    box-shadow: $z-depth-2;
 }
 
 .btn:disabled {
@@ -400,6 +401,18 @@ input[type="color"]:focus,
         rgba(0,0,0,0.5)
     ),
     url("https://images.unsplash.com/photo-1608566048123-c266ed1c7cd8?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8") no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+}
+
+.bg-key-guard {
+    background: linear-gradient(
+        rgba(0,0,0,0.5),
+        rgba(0,0,0,0.5)
+    ),
+    url("https://aloopphotobucket.s3.us-west-1.amazonaws.com/Products/Key+Guard+Background.jpg") no-repeat center center fixed;
     -webkit-background-size: cover;
     -moz-background-size: cover;
     -o-background-size: cover;
