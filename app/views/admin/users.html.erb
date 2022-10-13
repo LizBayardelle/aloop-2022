@@ -1,2 +1,45 @@
-<h1>Admin#users</h1>
-<p>Find me in app/views/admin/users.html.erb</p>
+<main class="container py-5">
+
+  <header class="text-center mb-3">
+    <h1>Admin & Users</h1>
+  </header>
+
+
+
+  <section id="admins" class="py-3">
+  	<h2>Administrators</h2>
+  	<% User.where(admin: true).each do |user| %>
+        <div class="profile-image me-3" style="display: inline-block;">
+            <img src="<%= url_for(user.image) %>" />
+        </div>
+        <div class="small" style="display: inline-block; top: -7px">
+            <div class="fw-bold"><%= user.full_name %></div>
+            <div class="text-muted"><%= user.job_title %></div>
+        </div>
+  	<% end %>
+  </section>
+
+
+  <section class="py-3">
+	<h2>Users</h2>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Name</th>
+          <th scope="col">Email</th>
+          <th scope="col">Phone</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% User.where(admin: true).each do |user| %>
+          <tr>
+            <td><%= user.full_name %></td>
+            <td><%= user.email %></td>
+            <td><%= user.phone %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+</main>

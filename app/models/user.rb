@@ -10,6 +10,7 @@ class User < ApplicationRecord
 
   # RELATIONSHIPS
   has_many :orders
+  has_many :blogs
 
 
   # MODELS
