@@ -6,6 +6,7 @@ Rails.application.routes.draw do
   
   devise_for :users, :controllers => { registrations: 'registrations' }
   resources :users, only: [:show]
+  post "users/:id/authorize_user" => "users#authorize_user", as: "authorize_user"
 
   get 'admin/dashboard'
   get 'admin/users'
