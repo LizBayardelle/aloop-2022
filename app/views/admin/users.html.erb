@@ -32,7 +32,7 @@
         </tr>
       </thead>
       <tbody>
-        <% User.where(admin: true).each do |user| %>
+        <% User.where(admin: false).each do |user| %>
           <tr>
             <td><%= user.full_name %></td>
             <td><%= user.email %></td>

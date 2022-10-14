@@ -8,6 +8,14 @@
     <%= simple_form_for(resource, as: resource_name, url: user_registration_path) do |f| %>
       <div class="form-inputs spaced row">
         <%= f.hidden_field :initial_order, value: params[:order_id] %>
+        
+        <div class="form-group col-sm-6">
+          <%= f.input :first_name %>
+        </div> <!-- col -->
+        <div class="form-group col-sm-6">
+          <%= f.input :last_name %>
+        </div> <!-- col -->
+
         <div class="form-group col-12">
           <%= f.input :email,
                     required: true,
