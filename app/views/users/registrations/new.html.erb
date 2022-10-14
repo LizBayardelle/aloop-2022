@@ -5,7 +5,7 @@
   </header>
 
   <div class="raised-box p-5 mb-5">
-    <%= simple_form_for(resource, as: resource_name, url: session_path(resource_name)) do |f| %>
+    <%= simple_form_for(resource, as: resource_name, url: user_registration_path) do |f| %>
       <div class="form-inputs spaced row">
         <%= f.hidden_field :initial_order, value: params[:order_id] %>
         <div class="form-group col-12">
