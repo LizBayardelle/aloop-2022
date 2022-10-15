@@ -12,7 +12,7 @@
   		<div class="mb-2">
 	        <div class="profile-image me-3" style="display: inline-block;">
 	            <% if user.image.attached? %>
-		            <img src="<%= url_for(user.image) %>" />
+		            <img src="<%= polymorphic_url(user.image) %>" />
 	            <% end %>
 	        </div>
 	        <div class="small" style="display: inline-block; top: -7px">
