@@ -17,7 +17,11 @@
 			<h3 class="h4 mt-3 mb-0"><%= product.name %></h3>
 			<p><small><em><%= product.undertitle %></em></small></p>
 			<p class="h3 color-blue mb-2"><%= number_to_currency(product.price, precision: 2) %></p>
-			<%= link_to product.price, product_path(product), class: "btn btn-redmt-2" %>
+			<% if product.price %>
+				<%= link_to number_to_currency(product.price), product_path(product), class: "btn btn-redmt-2" %>
+			<% else %>
+				<%= link_to "Buy Now", product_path(product), class: "btn btn-redmt-2" %>
+			<% end %>
 		</div> <!-- text padding -->
 	</div> <!-- product box -->
 </div> <!-- box -->

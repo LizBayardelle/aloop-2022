@@ -7,15 +7,16 @@
 #
 # we *highly recommend* you use sslmode=verify-full when possible
 # see https://ankane.org/postgres-sslmode-explained for more info
-from: $(heroku config:get DATABASE_URL)?sslmode=require
+from: $(heroku config:get DATABASE_URL -a aloop-2022)?sslmode=require
 
 # destination database URL
-to: postgres://localhost:5432/myapp_development
+to: $(echo $PGSYNC_DATABASE_OUTPUT_URL_Aloop_2022)
 
 # exclude tables
 exclude:
   - ar_internal_metadata
   - schema_migrations
+  - users
 
 # define groups
 # groups:
