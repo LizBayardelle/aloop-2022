@@ -1,0 +1,113 @@
+<p id="targetShowActions" class="hidden linkish"><small>Show Editing Tools</small>
+<p id="targetHideActions" class="linkish"><small>Hide Editing Tools</small>
+
+
+<div>
+  <table class="table table-hover table-small">
+    <thead>
+      <tr>
+        <th scope="col" data-field="category" data-sortable="true">Category</th>
+        <th scope="col" data-field="product" data-sortable="true">Product</th>
+        <th scope="col" data-field="component" data-sortable="true">Component</th>          
+        <th scope="col" data-field="variant" data-sortable="true">Variant</th>
+        <th scope="col" data-field="productNumber" data-sortable="true">Product Number</th>
+        <th scope="col" data-field="price" data-sortable="true">Price</th>
+        <th scope="col" data-field="models" data-sortable="true">Bike Model(s)</th>
+
+      </tr>
+    </thead>
+    <tbody>
+
+      <% products.each do |product| %>
+        <% product.components.each do |component| %>
+          <% component.variants.each do |variant| %>
+            <tr>
+              <td>
+                <% product.product_categories.each do |category| %>
+                  <span class="badge red rounded-pill"><%= category.name %></span>
+                <% end %>
+              </td>
+              <td>
+                <%= product.name %>
+                <div class="tableActions">
+                  <%= link_to product do %><i class="fas fa-eye px-1"></i><% end %>
+                  <span data-bs-toggle="modal" data-bs-target="#editProduct<%= product.id %>Modal">
+                    <i class="fas fa-pen px-1 linkish"></i>
+                  </span>
+                  <%= render partial: "products/modal_edit", locals: { product: product } %>
+                  <%= link_to "<i class='fas fa-trash-alt px-1'></i>".html_safe, product_path(product), method: :delete, data: {confirm: "Are you sure you want to delete that product?"} %>
+                </div>
+              </td>
+
+              <td>
+                <%= component.name %>
+                <div class="tableActions">
+                  <span class="linkish" data-bs-toggle="modal" data-bs-target="#editComponent<%= component.id %>Modal">
+                    <i class="fas fa-pen px-1 linkish"></i>
+                  </span>
+                  <%= render partial: "components/modal_edit", locals: { component: component, product: product } %>
+                  <%= link_to "<i class='fas fa-trash-alt'></i>".html_safe, component_path(component), method: :delete, data: {confirm: "Are you sure you want to delete that product component?"} %>
+                  <span data-bs-toggle="modal" data-bs-target="#newComponentProduct<%= product.id %>Modal">
+                    <i class="fas fa-plus px-1 linkish"></i>
+                  </span>
+                  <%= render partial: "components/modal_new", locals: { component: Component.new, product: product } %>
+                </div>
+              </td>
+
+              <td>
+                <%= variant.name %>
+                <div class="tableActions">
+                  <span class="linkish" data-bs-toggle="modal" data-bs-target="#editVariant<%= variant.id %>Modal">
+                    <i class="fas fa-pen px-1 linkish"></i>
+                  </span>
+                  <%= render partial: "variants/modal_edit", locals: { component: component, variant: variant } %>
+                  <%= link_to "<i class='fas fa-trash-alt'></i>".html_safe, variant_path(variant), method: :delete, data: {confirm: "Are you sure you want to delete that variant?"} %>
+                  <span data-bs-toggle="modal" data-bs-target="#newVariantComponent<%= component.id %>Modal">
+                    <i class="fas fa-plus px-1 linkish"></i>
+                  </span>
+                  <%= render partial: "variants/modal_new", locals: { variant: Variant.new, component: component, product: product } %>
+                </div>
+              </td>
+
+              <td>
+                <%= variant.sku %>
+              </td>
+
+              <td>
+                <%= number_to_currency(variant.price) %>
+              </td>
+
+              <td>
+                <% variant.bike_models.each do |bike_model| %>
+                  <span class="badge blue rounded-pill"><%= bike_model.name %></span>
+                <% end %>
+              </td>
+
+            </tr>
+          <% end %>
+        <% end %>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+
+
+
+<script>
+  $(document).ready(function() {
+    $('#targetShowActions').click(function(){
+      $('.tableActions').removeClass("hidden");
+      $(this).addClass("hidden");
+      $('#targetHideActions').removeClass("hidden");
+    });
+    $('#targetHideActions').click(function(){
+      $('.tableActions').addClass("hidden");
+      $(this).addClass("hidden");
+      $('#targetShowActions').removeClass("hidden");
+    });
+  });
+</script>
+
+
+

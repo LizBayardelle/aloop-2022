@@ -12,15 +12,15 @@
     <%= f.error_notification message: f.object.errors[:base].to_sentence if f.object.errors[:base].present? %>
 
     <div class="form-inputs spaced">
-      <%= f.input :name, label: "Product Name" %>
 
       <div class="row">
-        <div class="form-group col-8">
+        <div class="form-group col-12">
+          <%= f.input :name, label: "Product Name" %>
+        </div>
+        <div class="form-group col-12">
           <%= f.input :subtitle, label: "Subtitle Details" %>
         </div>
-        <div class="form-group col-4">
-          <%= f.input :price %>
-        </div>
+
 
         <div class="form-group col-6">
           <%= f.label "Categories" %><br>
@@ -28,40 +28,59 @@
             <%= f.collection_check_boxes(:product_category_ids, ProductCategory.all, :id, :name ) %>
           </div>
         </div>
-
-        <div class="form-group col-6">
-          <%= f.label "Models" %><br>
-          <div class="form-check">
-            <%= f.collection_check_boxes(:bike_model_ids, BikeModel.all, :id, :name ) %>
-          </div>
+        <div class="form-group col-6 mt-4">
+          <%= f.input :active, label: "This is an active product.", class: "mt-2" %>
         </div>
+
 
         <div class="form-group col-12">
           <%= f.label "Full Product Description", class: "mt-2" %>
           <%= f.text_area :description, label: "Full Description", class: "tinymce" %>
         </div>
+      </div> <!-- row -->
 
-        <div class="form-group col-6">
-          <%= f.input :meta_title, label: "Meta Title" %>
+
+      <div class="bg-grey my-3 z-depth-3 py-5">
+        <div class="row px-4">
+          <h3 class="text-center thin color-blue">SEO Information</h3>
+
+          <div class="form-group col-6">
+            <%= f.input :meta_title, label: "Meta Title" %>
+          </div>
+
+          <div class="form-group col-6">
+            <%= f.input :meta_keywords, label: "Meta Keywords" %>
+          </div>
+        </div>
+      </div>
+
+
+
+      <div class="row pt-4">
+        <h3 class="text-center thin color-blue">Backend Details</h3>
+
+        <div class="form-group col-12">
+          <%= f.input :size, label: "Product Size" %>
         </div>
 
-        <div class="form-group col-6">
-          <%= f.input :meta_keywords, label: "Meta Keywords" %>
+        <div class="form-group col-12">
+          <%= f.input :application_notes, label: "Application Notes" %>
         </div>
 
         <div class="form-group col-4">
-          <%= f.input :height %>
+          <%= f.input :height, label: "Shipping Box Height" %>
         </div>
+
         <div class="form-group col-4">
-          <%= f.input :width %>
+          <%= f.input :width, label: "Shipping Box Width" %>
         </div>
+
         <div class="form-group col-4">
-          <%= f.input :depth %>
+          <%= f.input :depth, label: "Shipping Box Depth" %>
         </div>
       </div> <!-- row -->
 
 
-      <%= f.input :active, label: "This is an active product.", class: "mt-2" %>
     </div>
   </div>
   <div class="modal-footer">

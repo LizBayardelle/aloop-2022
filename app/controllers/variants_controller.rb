@@ -47,9 +47,15 @@ class VariantsController < ApplicationController
         :component_id, 
         :name, 
         :description, 
-        :price_adjustment,
+        :price,
+
+        :sku,
+        :vendor,
+        :vendor_parts_number,
+        
         :active,
-        photos: []
+        photos: [],
+        bike_model_ids: []
       )
     end
 end

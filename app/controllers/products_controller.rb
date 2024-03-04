@@ -20,6 +20,9 @@ class ProductsController < ApplicationController
       if @product.save
         default_component = Component.create(product_id: @product.id, name: "Default")
         default_component.save
+        default_variant = Variant.create(component_id: default_component.id, name: "Default")
+        default_variant.save
+
         format.html { redirect_to admin_products_path, notice: "Product was successfully created." }
         format.json { render :show, status: :created, location: @product }
       else
@@ -71,6 +74,9 @@ class ProductsController < ApplicationController
         :description,
         :active,
 
+        :size,
+        :application_notes,
+
         :meta_title,
         :meta_keywords,
         :height,
@@ -78,8 +84,7 @@ class ProductsController < ApplicationController
         :depth,
         :subtitle,
         
-        product_category_ids: [],
-        bike_model_ids: []
+        product_category_ids: []
       )
     end
 end

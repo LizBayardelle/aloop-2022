@@ -6,31 +6,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
-      <%= simple_form_for(variant) do |f| %>
-        <div class="modal-body">
-          <%= f.error_notification %>
-          <%= f.error_notification message: f.object.errors[:base].to_sentence if f.object.errors[:base].present? %>
-
-          <div class="form-inputs spaced">
-            <%= f.input :name %>
-            <%= f.input :price_adjustment, label: "Price Adjustment", placeholder: "Difference from Default Price (in Cents)" %>
-            <%= f.input :description %>
-            <%= f.input :active, label: "Display on Website.", class: "mt-2" %>
-            <div class="form-group">
-              <%= f.label "Variant Images" %><br>
-              <%= f.file_field :photos, :multiple => true, class: "mb-1" %>
-              <br>
-              <% variant.photos.each do |photo| %>
-                <%= image_tag(photo, width: 25) %>
-              <% end %>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <%= f.submit "Save", class: "btn" %>
-        </div>
-      <% end %>
+      <%= render partial: "variants/modal_innards", locals: { variant: variant, component: component } %>
 
     </div>
   </div>

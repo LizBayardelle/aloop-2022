@@ -6,8 +6,6 @@ class ComponentsController < ApplicationController
 
     respond_to do |format|
       if @component.save
-        default_variant = Variant.create(component_id: @component.id, name: "Default")
-        default_variant.save
         format.html { redirect_to admin_products_path, notice: "Product component was successfully created." }
         format.json { render :show, status: :created, location: @component }
       else

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2022_09_28_214922) do
+ActiveRecord::Schema[7.0].define(version: 2022_10_15_211136) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -160,24 +160,6 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_28_214922) do
     t.index ["product_id"], name: "index_product_categorizations_on_product_id"
   end
 
-  create_table "product_models", force: :cascade do |t|
-    t.bigint "product_id", null: false
-    t.bigint "bike_model_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["bike_model_id"], name: "index_product_models_on_bike_model_id"
-    t.index ["product_id"], name: "index_product_models_on_product_id"
-  end
-
-  create_table "product_orders", force: :cascade do |t|
-    t.bigint "product_id", null: false
-    t.bigint "order_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["order_id"], name: "index_product_orders_on_order_id"
-    t.index ["product_id"], name: "index_product_orders_on_product_id"
-  end
-
   create_table "products", force: :cascade do |t|
     t.string "name"
     t.text "description"
@@ -191,6 +173,8 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_28_214922) do
     t.integer "depth"
     t.string "subtitle"
     t.decimal "price", precision: 8, scale: 2
+    t.string "size"
+    t.string "application_notes"
   end
 
   create_table "users", force: :cascade do |t|
@@ -216,14 +200,26 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_28_214922) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  create_table "variant_models", force: :cascade do |t|
+    t.bigint "variant_id", null: false
+    t.bigint "bike_model_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bike_model_id"], name: "index_variant_models_on_bike_model_id"
+    t.index ["variant_id"], name: "index_variant_models_on_variant_id"
+  end
+
   create_table "variants", force: :cascade do |t|
     t.bigint "component_id", null: false
     t.string "name"
     t.text "description"
-    t.integer "price_adjustment", default: 0
+    t.decimal "price", precision: 8, scale: 2, default: "0.0"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "active", default: true
+    t.string "sku"
+    t.string "vendor"
+    t.string "vendor_parts_number"
     t.index ["component_id"], name: "index_variants_on_component_id"
   end
 
@@ -238,9 +234,7 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_28_214922) do
   add_foreign_key "orders", "users"
   add_foreign_key "product_categorizations", "product_categories"
   add_foreign_key "product_categorizations", "products"
-  add_foreign_key "product_models", "bike_models"
-  add_foreign_key "product_models", "products"
-  add_foreign_key "product_orders", "orders"
-  add_foreign_key "product_orders", "products"
+  add_foreign_key "variant_models", "bike_models"
+  add_foreign_key "variant_models", "variants"
   add_foreign_key "variants", "components"
 end

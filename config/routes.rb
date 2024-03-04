@@ -24,7 +24,7 @@ Rails.application.routes.draw do
   post "orders/:id/mark_order_paid" => "orders#mark_order_paid", as: "mark_order_paid"
 
   resources :bike_models
-  resources :product_models
+  resources :variant_models
 
   resources :blogs
   resources :blog_subcategories
