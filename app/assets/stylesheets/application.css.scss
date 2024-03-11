@@ -23,13 +23,13 @@
 
 
 
-$color-primary: #001dd7;
+$color-primary: #2e3d99;
 $color-white: #ffffff;
 $color-grey: #f2f2f2;
 $color-black: #000000;
 
-$color-red: #ec3223;  // rgba(236,50,35,1)
-$color-blue: #001dd7;
+$color-red: #cd2127;  // rgba(205,33,39,1)
+$color-blue: #2e3d99;
 
 $z-depth-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 $z-depth-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
@@ -177,8 +177,8 @@ input[type="tel"]:focus,
 input[type="color"]:focus,
 .uneditable-input:focus,
 .accordion-button:focus {   
-  border-color: rgba(236,50,35, 0.8);
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(236,50,35, 0.6);
+  border-color: rgba(205,33,39, 0.8);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(205,33,39, 0.6);
   outline: 0 none;
 }
 
@@ -401,11 +401,12 @@ input[type="color"]:focus,
         rgba(0,0,0,0.5),
         rgba(0,0,0,0.5)
     ),
-    url("https://images.unsplash.com/photo-1608566048123-c266ed1c7cd8?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8") no-repeat center center fixed;
+    url("https://aloopphotobucket.s3.us-west-1.amazonaws.com/Images/DSC_0120.JPG") no-repeat center center fixed;
     -webkit-background-size: cover;
     -moz-background-size: cover;
     -o-background-size: cover;
     background-size: cover;
+    min-height: 70vh;
 }
 
 .bg-key-guard {
