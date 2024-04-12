@@ -10,7 +10,7 @@ gem "pg", "~> 1.1"
 gem "puma"
 # gem "sassc-rails"
 gem "importmap-rails"
-gem "stimulus-rails"
+# gem "stimulus-rails"
 gem "jbuilder"
 gem "tzinfo-data", platforms: %i[ mingw mswin x64_mingw jruby ]
 gem "bootsnap", require: false
