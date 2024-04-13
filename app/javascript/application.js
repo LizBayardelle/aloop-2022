@@ -17,6 +17,8 @@ $(function() {
     });
 });
 
+console.log(`i am here!!`);
+
 // Fade out alerts after 5 seconds
 setTimeout(function() {
     $('.alert').fadeOut('fast');

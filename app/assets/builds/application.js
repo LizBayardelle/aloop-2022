@@ -94,7 +94,7 @@ var require_jquery = __commonJS({
         }
         return typeof obj === "object" || typeof obj === "function" ? class2type[toString.call(obj)] || "object" : typeof obj;
       }
-      var version = "3.6.0", jQuery2 = function(selector, context) {
+      var version = "3.7.1", rhtmlSuffix = /HTML$/i, jQuery2 = function(selector, context) {
         return new jQuery2.fn.init(selector, context);
       };
       jQuery2.fn = jQuery2.prototype = {
@@ -254,6 +254,25 @@ var require_jquery = __commonJS({
           }
           return obj;
         },
+        // Retrieve the text value of an array of DOM nodes
+        text: function(elem) {
+          var node, ret = "", i = 0, nodeType = elem.nodeType;
+          if (!nodeType) {
+            while (node = elem[i++]) {
+              ret += jQuery2.text(node);
+            }
+          }
+          if (nodeType === 1 || nodeType === 11) {
+            return elem.textContent;
+          }
+          if (nodeType === 9) {
+            return elem.documentElement.textContent;
+          }
+          if (nodeType === 3 || nodeType === 4) {
+            return elem.nodeValue;
+          }
+          return ret;
+        },
         // results is for internal usage only
         makeArray: function(arr2, results) {
           var ret = results || [];
@@ -271,6 +290,10 @@ var require_jquery = __commonJS({
         },
         inArray: function(elem, arr2, i) {
           return arr2 == null ? -1 : indexOf.call(arr2, elem, i);
+        },
+        isXMLDoc: function(elem) {
+          var namespace = elem && elem.namespaceURI, docElem = elem && (elem.ownerDocument || elem).documentElement;
+          return !rhtmlSuffix.test(namespace || docElem && docElem.nodeName || "HTML");
         },
         // Support: Android <=4.0 only, PhantomJS 1 only
         // push.apply(_, arraylike) throws on ancient WebKit
@@ -335,1322 +358,1182 @@ var require_jquery = __commonJS({
         }
         return type === "array" || length === 0 || typeof length === "number" && length > 0 && length - 1 in obj;
       }
-      var Sizzle = (
-        /*!
-         * Sizzle CSS Selector Engine v2.3.6
-         * https://sizzlejs.com/
-         *
-         * Copyright JS Foundation and other contributors
-         * Released under the MIT license
-         * https://js.foundation/
-         *
-         * Date: 2021-02-16
-         */
-        function(window3) {
-          var i, support2, Expr, getText, isXML, tokenize, compile, select, outermostContext, sortInput, hasDuplicate, setDocument, document3, docElem, documentIsHTML, rbuggyQSA, rbuggyMatches, matches, contains2, expando = "sizzle" + 1 * /* @__PURE__ */ new Date(), preferredDoc = window3.document, dirruns = 0, done = 0, classCache = createCache(), tokenCache = createCache(), compilerCache = createCache(), nonnativeSelectorCache = createCache(), sortOrder = function(a, b) {
-            if (a === b) {
-              hasDuplicate = true;
-            }
-            return 0;
-          }, hasOwn2 = {}.hasOwnProperty, arr2 = [], pop = arr2.pop, pushNative = arr2.push, push2 = arr2.push, slice2 = arr2.slice, indexOf2 = function(list, elem) {
-            var i2 = 0, len = list.length;
-            for (; i2 < len; i2++) {
-              if (list[i2] === elem) {
-                return i2;
-              }
-            }
-            return -1;
-          }, booleans = "checked|selected|async|autofocus|autoplay|controls|defer|disabled|hidden|ismap|loop|multiple|open|readonly|required|scoped", whitespace = "[\\x20\\t\\r\\n\\f]", identifier = "(?:\\\\[\\da-fA-F]{1,6}" + whitespace + "?|\\\\[^\\r\\n\\f]|[\\w-]|[^\0-\\x7f])+", attributes = "\\[" + whitespace + "*(" + identifier + ")(?:" + whitespace + // Operator (capture 2)
-          "*([*^$|!~]?=)" + whitespace + // "Attribute values must be CSS identifiers [capture 5]
-          // or strings [capture 3 or capture 4]"
-          `*(?:'((?:\\\\.|[^\\\\'])*)'|"((?:\\\\.|[^\\\\"])*)"|(` + identifier + "))|)" + whitespace + "*\\]", pseudos = ":(" + identifier + `)(?:\\((('((?:\\\\.|[^\\\\'])*)'|"((?:\\\\.|[^\\\\"])*)")|((?:\\\\.|[^\\\\()[\\]]|` + attributes + ")*)|.*)\\)|)", rwhitespace = new RegExp(whitespace + "+", "g"), rtrim2 = new RegExp("^" + whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + whitespace + "+$", "g"), rcomma = new RegExp("^" + whitespace + "*," + whitespace + "*"), rcombinators = new RegExp("^" + whitespace + "*([>+~]|" + whitespace + ")" + whitespace + "*"), rdescend = new RegExp(whitespace + "|>"), rpseudo = new RegExp(pseudos), ridentifier = new RegExp("^" + identifier + "$"), matchExpr = {
-            "ID": new RegExp("^#(" + identifier + ")"),
-            "CLASS": new RegExp("^\\.(" + identifier + ")"),
-            "TAG": new RegExp("^(" + identifier + "|[*])"),
-            "ATTR": new RegExp("^" + attributes),
-            "PSEUDO": new RegExp("^" + pseudos),
-            "CHILD": new RegExp("^:(only|first|last|nth|nth-last)-(child|of-type)(?:\\(" + whitespace + "*(even|odd|(([+-]|)(\\d*)n|)" + whitespace + "*(?:([+-]|)" + whitespace + "*(\\d+)|))" + whitespace + "*\\)|)", "i"),
-            "bool": new RegExp("^(?:" + booleans + ")$", "i"),
-            // For use in libraries implementing .is()
-            // We use this for POS matching in `select`
-            "needsContext": new RegExp("^" + whitespace + "*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\\(" + whitespace + "*((?:-\\d)?\\d*)" + whitespace + "*\\)|)(?=[^-]|$)", "i")
-          }, rhtml2 = /HTML$/i, rinputs = /^(?:input|select|textarea|button)$/i, rheader = /^h\d$/i, rnative = /^[^{]+\{\s*\[native \w/, rquickExpr2 = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/, rsibling = /[+~]/, runescape = new RegExp("\\\\[\\da-fA-F]{1,6}" + whitespace + "?|\\\\([^\\r\\n\\f])", "g"), funescape = function(escape, nonHex) {
-            var high = "0x" + escape.slice(1) - 65536;
-            return nonHex ? (
-              // Strip the backslash prefix from a non-hex escape sequence
-              nonHex
-            ) : (
-              // Replace a hexadecimal escape sequence with the encoded Unicode code point
-              // Support: IE <=11+
-              // For values outside the Basic Multilingual Plane (BMP), manually construct a
-              // surrogate pair
-              high < 0 ? String.fromCharCode(high + 65536) : String.fromCharCode(high >> 10 | 55296, high & 1023 | 56320)
-            );
-          }, rcssescape = /([\0-\x1f\x7f]|^-?\d)|^-$|[^\0-\x1f\x7f-\uFFFF\w-]/g, fcssescape = function(ch, asCodePoint) {
-            if (asCodePoint) {
-              if (ch === "\0") {
-                return "\uFFFD";
-              }
-              return ch.slice(0, -1) + "\\" + ch.charCodeAt(ch.length - 1).toString(16) + " ";
-            }
-            return "\\" + ch;
-          }, unloadHandler = function() {
-            setDocument();
-          }, inDisabledFieldset = addCombinator(
-            function(elem) {
-              return elem.disabled === true && elem.nodeName.toLowerCase() === "fieldset";
-            },
-            { dir: "parentNode", next: "legend" }
-          );
+      function nodeName(elem, name) {
+        return elem.nodeName && elem.nodeName.toLowerCase() === name.toLowerCase();
+      }
+      var pop = arr.pop;
+      var sort = arr.sort;
+      var splice = arr.splice;
+      var whitespace = "[\\x20\\t\\r\\n\\f]";
+      var rtrimCSS = new RegExp(
+        "^" + whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + whitespace + "+$",
+        "g"
+      );
+      jQuery2.contains = function(a, b) {
+        var bup = b && b.parentNode;
+        return a === bup || !!(bup && bup.nodeType === 1 && // Support: IE 9 - 11+
+        // IE doesn't have `contains` on SVG.
+        (a.contains ? a.contains(bup) : a.compareDocumentPosition && a.compareDocumentPosition(bup) & 16));
+      };
+      var rcssescape = /([\0-\x1f\x7f]|^-?\d)|^-$|[^\x80-\uFFFF\w-]/g;
+      function fcssescape(ch, asCodePoint) {
+        if (asCodePoint) {
+          if (ch === "\0") {
+            return "\uFFFD";
+          }
+          return ch.slice(0, -1) + "\\" + ch.charCodeAt(ch.length - 1).toString(16) + " ";
+        }
+        return "\\" + ch;
+      }
+      jQuery2.escapeSelector = function(sel) {
+        return (sel + "").replace(rcssescape, fcssescape);
+      };
+      var preferredDoc = document2, pushNative = push;
+      (function() {
+        var i, Expr, outermostContext, sortInput, hasDuplicate, push2 = pushNative, document3, documentElement2, documentIsHTML, rbuggyQSA, matches, expando = jQuery2.expando, dirruns = 0, done = 0, classCache = createCache(), tokenCache = createCache(), compilerCache = createCache(), nonnativeSelectorCache = createCache(), sortOrder = function(a, b) {
+          if (a === b) {
+            hasDuplicate = true;
+          }
+          return 0;
+        }, booleans = "checked|selected|async|autofocus|autoplay|controls|defer|disabled|hidden|ismap|loop|multiple|open|readonly|required|scoped", identifier = "(?:\\\\[\\da-fA-F]{1,6}" + whitespace + "?|\\\\[^\\r\\n\\f]|[\\w-]|[^\0-\\x7f])+", attributes = "\\[" + whitespace + "*(" + identifier + ")(?:" + whitespace + // Operator (capture 2)
+        "*([*^$|!~]?=)" + whitespace + // "Attribute values must be CSS identifiers [capture 5] or strings [capture 3 or capture 4]"
+        `*(?:'((?:\\\\.|[^\\\\'])*)'|"((?:\\\\.|[^\\\\"])*)"|(` + identifier + "))|)" + whitespace + "*\\]", pseudos = ":(" + identifier + `)(?:\\((('((?:\\\\.|[^\\\\'])*)'|"((?:\\\\.|[^\\\\"])*)")|((?:\\\\.|[^\\\\()[\\]]|` + attributes + ")*)|.*)\\)|)", rwhitespace = new RegExp(whitespace + "+", "g"), rcomma = new RegExp("^" + whitespace + "*," + whitespace + "*"), rleadingCombinator = new RegExp("^" + whitespace + "*([>+~]|" + whitespace + ")" + whitespace + "*"), rdescend = new RegExp(whitespace + "|>"), rpseudo = new RegExp(pseudos), ridentifier = new RegExp("^" + identifier + "$"), matchExpr = {
+          ID: new RegExp("^#(" + identifier + ")"),
+          CLASS: new RegExp("^\\.(" + identifier + ")"),
+          TAG: new RegExp("^(" + identifier + "|[*])"),
+          ATTR: new RegExp("^" + attributes),
+          PSEUDO: new RegExp("^" + pseudos),
+          CHILD: new RegExp(
+            "^:(only|first|last|nth|nth-last)-(child|of-type)(?:\\(" + whitespace + "*(even|odd|(([+-]|)(\\d*)n|)" + whitespace + "*(?:([+-]|)" + whitespace + "*(\\d+)|))" + whitespace + "*\\)|)",
+            "i"
+          ),
+          bool: new RegExp("^(?:" + booleans + ")$", "i"),
+          // For use in libraries implementing .is()
+          // We use this for POS matching in `select`
+          needsContext: new RegExp("^" + whitespace + "*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\\(" + whitespace + "*((?:-\\d)?\\d*)" + whitespace + "*\\)|)(?=[^-]|$)", "i")
+        }, rinputs = /^(?:input|select|textarea|button)$/i, rheader = /^h\d$/i, rquickExpr2 = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/, rsibling = /[+~]/, runescape = new RegExp("\\\\[\\da-fA-F]{1,6}" + whitespace + "?|\\\\([^\\r\\n\\f])", "g"), funescape = function(escape, nonHex) {
+          var high = "0x" + escape.slice(1) - 65536;
+          if (nonHex) {
+            return nonHex;
+          }
+          return high < 0 ? String.fromCharCode(high + 65536) : String.fromCharCode(high >> 10 | 55296, high & 1023 | 56320);
+        }, unloadHandler = function() {
+          setDocument();
+        }, inDisabledFieldset = addCombinator(
+          function(elem) {
+            return elem.disabled === true && nodeName(elem, "fieldset");
+          },
+          { dir: "parentNode", next: "legend" }
+        );
+        function safeActiveElement() {
           try {
-            push2.apply(
-              arr2 = slice2.call(preferredDoc.childNodes),
-              preferredDoc.childNodes
-            );
-            arr2[preferredDoc.childNodes.length].nodeType;
-          } catch (e) {
-            push2 = {
-              apply: arr2.length ? (
-                // Leverage slice if possible
-                function(target, els) {
-                  pushNative.apply(target, slice2.call(els));
-                }
-              ) : (
-                // Support: IE<9
-                // Otherwise append directly
-                function(target, els) {
-                  var j = target.length, i2 = 0;
-                  while (target[j++] = els[i2++]) {
-                  }
-                  target.length = j - 1;
-                }
-              )
-            };
+            return document3.activeElement;
+          } catch (err) {
           }
-          function Sizzle2(selector, context, results, seed) {
-            var m, i2, elem, nid, match, groups, newSelector, newContext = context && context.ownerDocument, nodeType = context ? context.nodeType : 9;
-            results = results || [];
-            if (typeof selector !== "string" || !selector || nodeType !== 1 && nodeType !== 9 && nodeType !== 11) {
-              return results;
+        }
+        try {
+          push2.apply(
+            arr = slice.call(preferredDoc.childNodes),
+            preferredDoc.childNodes
+          );
+          arr[preferredDoc.childNodes.length].nodeType;
+        } catch (e) {
+          push2 = {
+            apply: function(target, els) {
+              pushNative.apply(target, slice.call(els));
+            },
+            call: function(target) {
+              pushNative.apply(target, slice.call(arguments, 1));
             }
-            if (!seed) {
-              setDocument(context);
-              context = context || document3;
-              if (documentIsHTML) {
-                if (nodeType !== 11 && (match = rquickExpr2.exec(selector))) {
-                  if (m = match[1]) {
-                    if (nodeType === 9) {
-                      if (elem = context.getElementById(m)) {
-                        if (elem.id === m) {
-                          results.push(elem);
-                          return results;
-                        }
-                      } else {
-                        return results;
-                      }
-                    } else {
-                      if (newContext && (elem = newContext.getElementById(m)) && contains2(context, elem) && elem.id === m) {
-                        results.push(elem);
-                        return results;
-                      }
-                    }
-                  } else if (match[2]) {
-                    push2.apply(results, context.getElementsByTagName(selector));
-                    return results;
-                  } else if ((m = match[3]) && support2.getElementsByClassName && context.getElementsByClassName) {
-                    push2.apply(results, context.getElementsByClassName(m));
-                    return results;
-                  }
-                }
-                if (support2.qsa && !nonnativeSelectorCache[selector + " "] && (!rbuggyQSA || !rbuggyQSA.test(selector)) && // Support: IE 8 only
-                // Exclude object elements
-                (nodeType !== 1 || context.nodeName.toLowerCase() !== "object")) {
-                  newSelector = selector;
-                  newContext = context;
-                  if (nodeType === 1 && (rdescend.test(selector) || rcombinators.test(selector))) {
-                    newContext = rsibling.test(selector) && testContext(context.parentNode) || context;
-                    if (newContext !== context || !support2.scope) {
-                      if (nid = context.getAttribute("id")) {
-                        nid = nid.replace(rcssescape, fcssescape);
-                      } else {
-                        context.setAttribute("id", nid = expando);
-                      }
-                    }
-                    groups = tokenize(selector);
-                    i2 = groups.length;
-                    while (i2--) {
-                      groups[i2] = (nid ? "#" + nid : ":scope") + " " + toSelector(groups[i2]);
-                    }
-                    newSelector = groups.join(",");
-                  }
-                  try {
-                    push2.apply(
-                      results,
-                      newContext.querySelectorAll(newSelector)
-                    );
-                    return results;
-                  } catch (qsaError) {
-                    nonnativeSelectorCache(selector, true);
-                  } finally {
-                    if (nid === expando) {
-                      context.removeAttribute("id");
-                    }
-                  }
-                }
-              }
-            }
-            return select(selector.replace(rtrim2, "$1"), context, results, seed);
-          }
-          function createCache() {
-            var keys = [];
-            function cache(key, value) {
-              if (keys.push(key + " ") > Expr.cacheLength) {
-                delete cache[keys.shift()];
-              }
-              return cache[key + " "] = value;
-            }
-            return cache;
-          }
-          function markFunction(fn2) {
-            fn2[expando] = true;
-            return fn2;
-          }
-          function assert(fn2) {
-            var el = document3.createElement("fieldset");
-            try {
-              return !!fn2(el);
-            } catch (e) {
-              return false;
-            } finally {
-              if (el.parentNode) {
-                el.parentNode.removeChild(el);
-              }
-              el = null;
-            }
-          }
-          function addHandle(attrs, handler) {
-            var arr3 = attrs.split("|"), i2 = arr3.length;
-            while (i2--) {
-              Expr.attrHandle[arr3[i2]] = handler;
-            }
-          }
-          function siblingCheck(a, b) {
-            var cur = b && a, diff = cur && a.nodeType === 1 && b.nodeType === 1 && a.sourceIndex - b.sourceIndex;
-            if (diff) {
-              return diff;
-            }
-            if (cur) {
-              while (cur = cur.nextSibling) {
-                if (cur === b) {
-                  return -1;
-                }
-              }
-            }
-            return a ? 1 : -1;
-          }
-          function createInputPseudo(type) {
-            return function(elem) {
-              var name = elem.nodeName.toLowerCase();
-              return name === "input" && elem.type === type;
-            };
-          }
-          function createButtonPseudo(type) {
-            return function(elem) {
-              var name = elem.nodeName.toLowerCase();
-              return (name === "input" || name === "button") && elem.type === type;
-            };
-          }
-          function createDisabledPseudo(disabled) {
-            return function(elem) {
-              if ("form" in elem) {
-                if (elem.parentNode && elem.disabled === false) {
-                  if ("label" in elem) {
-                    if ("label" in elem.parentNode) {
-                      return elem.parentNode.disabled === disabled;
-                    } else {
-                      return elem.disabled === disabled;
-                    }
-                  }
-                  return elem.isDisabled === disabled || // Where there is no isDisabled, check manually
-                  /* jshint -W018 */
-                  elem.isDisabled !== !disabled && inDisabledFieldset(elem) === disabled;
-                }
-                return elem.disabled === disabled;
-              } else if ("label" in elem) {
-                return elem.disabled === disabled;
-              }
-              return false;
-            };
-          }
-          function createPositionalPseudo(fn2) {
-            return markFunction(function(argument) {
-              argument = +argument;
-              return markFunction(function(seed, matches2) {
-                var j, matchIndexes = fn2([], seed.length, argument), i2 = matchIndexes.length;
-                while (i2--) {
-                  if (seed[j = matchIndexes[i2]]) {
-                    seed[j] = !(matches2[j] = seed[j]);
-                  }
-                }
-              });
-            });
-          }
-          function testContext(context) {
-            return context && typeof context.getElementsByTagName !== "undefined" && context;
-          }
-          support2 = Sizzle2.support = {};
-          isXML = Sizzle2.isXML = function(elem) {
-            var namespace = elem && elem.namespaceURI, docElem2 = elem && (elem.ownerDocument || elem).documentElement;
-            return !rhtml2.test(namespace || docElem2 && docElem2.nodeName || "HTML");
           };
-          setDocument = Sizzle2.setDocument = function(node) {
-            var hasCompare, subWindow, doc = node ? node.ownerDocument || node : preferredDoc;
-            if (doc == document3 || doc.nodeType !== 9 || !doc.documentElement) {
-              return document3;
-            }
-            document3 = doc;
-            docElem = document3.documentElement;
-            documentIsHTML = !isXML(document3);
-            if (preferredDoc != document3 && (subWindow = document3.defaultView) && subWindow.top !== subWindow) {
-              if (subWindow.addEventListener) {
-                subWindow.addEventListener("unload", unloadHandler, false);
-              } else if (subWindow.attachEvent) {
-                subWindow.attachEvent("onunload", unloadHandler);
+        }
+        function find(selector, context, results, seed) {
+          var m, i2, elem, nid, match, groups, newSelector, newContext = context && context.ownerDocument, nodeType = context ? context.nodeType : 9;
+          results = results || [];
+          if (typeof selector !== "string" || !selector || nodeType !== 1 && nodeType !== 9 && nodeType !== 11) {
+            return results;
+          }
+          if (!seed) {
+            setDocument(context);
+            context = context || document3;
+            if (documentIsHTML) {
+              if (nodeType !== 11 && (match = rquickExpr2.exec(selector))) {
+                if (m = match[1]) {
+                  if (nodeType === 9) {
+                    if (elem = context.getElementById(m)) {
+                      if (elem.id === m) {
+                        push2.call(results, elem);
+                        return results;
+                      }
+                    } else {
+                      return results;
+                    }
+                  } else {
+                    if (newContext && (elem = newContext.getElementById(m)) && find.contains(context, elem) && elem.id === m) {
+                      push2.call(results, elem);
+                      return results;
+                    }
+                  }
+                } else if (match[2]) {
+                  push2.apply(results, context.getElementsByTagName(selector));
+                  return results;
+                } else if ((m = match[3]) && context.getElementsByClassName) {
+                  push2.apply(results, context.getElementsByClassName(m));
+                  return results;
+                }
+              }
+              if (!nonnativeSelectorCache[selector + " "] && (!rbuggyQSA || !rbuggyQSA.test(selector))) {
+                newSelector = selector;
+                newContext = context;
+                if (nodeType === 1 && (rdescend.test(selector) || rleadingCombinator.test(selector))) {
+                  newContext = rsibling.test(selector) && testContext(context.parentNode) || context;
+                  if (newContext != context || !support.scope) {
+                    if (nid = context.getAttribute("id")) {
+                      nid = jQuery2.escapeSelector(nid);
+                    } else {
+                      context.setAttribute("id", nid = expando);
+                    }
+                  }
+                  groups = tokenize(selector);
+                  i2 = groups.length;
+                  while (i2--) {
+                    groups[i2] = (nid ? "#" + nid : ":scope") + " " + toSelector(groups[i2]);
+                  }
+                  newSelector = groups.join(",");
+                }
+                try {
+                  push2.apply(
+                    results,
+                    newContext.querySelectorAll(newSelector)
+                  );
+                  return results;
+                } catch (qsaError) {
+                  nonnativeSelectorCache(selector, true);
+                } finally {
+                  if (nid === expando) {
+                    context.removeAttribute("id");
+                  }
+                }
               }
             }
-            support2.scope = assert(function(el) {
-              docElem.appendChild(el).appendChild(document3.createElement("div"));
-              return typeof el.querySelectorAll !== "undefined" && !el.querySelectorAll(":scope fieldset div").length;
-            });
-            support2.attributes = assert(function(el) {
-              el.className = "i";
-              return !el.getAttribute("className");
-            });
-            support2.getElementsByTagName = assert(function(el) {
-              el.appendChild(document3.createComment(""));
-              return !el.getElementsByTagName("*").length;
-            });
-            support2.getElementsByClassName = rnative.test(document3.getElementsByClassName);
-            support2.getById = assert(function(el) {
-              docElem.appendChild(el).id = expando;
-              return !document3.getElementsByName || !document3.getElementsByName(expando).length;
-            });
-            if (support2.getById) {
-              Expr.filter["ID"] = function(id) {
-                var attrId = id.replace(runescape, funescape);
-                return function(elem) {
-                  return elem.getAttribute("id") === attrId;
-                };
-              };
-              Expr.find["ID"] = function(id, context) {
-                if (typeof context.getElementById !== "undefined" && documentIsHTML) {
-                  var elem = context.getElementById(id);
-                  return elem ? [elem] : [];
+          }
+          return select(selector.replace(rtrimCSS, "$1"), context, results, seed);
+        }
+        function createCache() {
+          var keys = [];
+          function cache(key, value) {
+            if (keys.push(key + " ") > Expr.cacheLength) {
+              delete cache[keys.shift()];
+            }
+            return cache[key + " "] = value;
+          }
+          return cache;
+        }
+        function markFunction(fn2) {
+          fn2[expando] = true;
+          return fn2;
+        }
+        function assert(fn2) {
+          var el = document3.createElement("fieldset");
+          try {
+            return !!fn2(el);
+          } catch (e) {
+            return false;
+          } finally {
+            if (el.parentNode) {
+              el.parentNode.removeChild(el);
+            }
+            el = null;
+          }
+        }
+        function createInputPseudo(type) {
+          return function(elem) {
+            return nodeName(elem, "input") && elem.type === type;
+          };
+        }
+        function createButtonPseudo(type) {
+          return function(elem) {
+            return (nodeName(elem, "input") || nodeName(elem, "button")) && elem.type === type;
+          };
+        }
+        function createDisabledPseudo(disabled) {
+          return function(elem) {
+            if ("form" in elem) {
+              if (elem.parentNode && elem.disabled === false) {
+                if ("label" in elem) {
+                  if ("label" in elem.parentNode) {
+                    return elem.parentNode.disabled === disabled;
+                  } else {
+                    return elem.disabled === disabled;
+                  }
                 }
+                return elem.isDisabled === disabled || // Where there is no isDisabled, check manually
+                elem.isDisabled !== !disabled && inDisabledFieldset(elem) === disabled;
+              }
+              return elem.disabled === disabled;
+            } else if ("label" in elem) {
+              return elem.disabled === disabled;
+            }
+            return false;
+          };
+        }
+        function createPositionalPseudo(fn2) {
+          return markFunction(function(argument) {
+            argument = +argument;
+            return markFunction(function(seed, matches2) {
+              var j, matchIndexes = fn2([], seed.length, argument), i2 = matchIndexes.length;
+              while (i2--) {
+                if (seed[j = matchIndexes[i2]]) {
+                  seed[j] = !(matches2[j] = seed[j]);
+                }
+              }
+            });
+          });
+        }
+        function testContext(context) {
+          return context && typeof context.getElementsByTagName !== "undefined" && context;
+        }
+        function setDocument(node) {
+          var subWindow, doc = node ? node.ownerDocument || node : preferredDoc;
+          if (doc == document3 || doc.nodeType !== 9 || !doc.documentElement) {
+            return document3;
+          }
+          document3 = doc;
+          documentElement2 = document3.documentElement;
+          documentIsHTML = !jQuery2.isXMLDoc(document3);
+          matches = documentElement2.matches || documentElement2.webkitMatchesSelector || documentElement2.msMatchesSelector;
+          if (documentElement2.msMatchesSelector && // Support: IE 11+, Edge 17 - 18+
+          // IE/Edge sometimes throw a "Permission denied" error when strict-comparing
+          // two documents; shallow comparisons work.
+          // eslint-disable-next-line eqeqeq
+          preferredDoc != document3 && (subWindow = document3.defaultView) && subWindow.top !== subWindow) {
+            subWindow.addEventListener("unload", unloadHandler);
+          }
+          support.getById = assert(function(el) {
+            documentElement2.appendChild(el).id = jQuery2.expando;
+            return !document3.getElementsByName || !document3.getElementsByName(jQuery2.expando).length;
+          });
+          support.disconnectedMatch = assert(function(el) {
+            return matches.call(el, "*");
+          });
+          support.scope = assert(function() {
+            return document3.querySelectorAll(":scope");
+          });
+          support.cssHas = assert(function() {
+            try {
+              document3.querySelector(":has(*,:jqfake)");
+              return false;
+            } catch (e) {
+              return true;
+            }
+          });
+          if (support.getById) {
+            Expr.filter.ID = function(id) {
+              var attrId = id.replace(runescape, funescape);
+              return function(elem) {
+                return elem.getAttribute("id") === attrId;
               };
-            } else {
-              Expr.filter["ID"] = function(id) {
-                var attrId = id.replace(runescape, funescape);
-                return function(elem) {
-                  var node2 = typeof elem.getAttributeNode !== "undefined" && elem.getAttributeNode("id");
-                  return node2 && node2.value === attrId;
-                };
+            };
+            Expr.find.ID = function(id, context) {
+              if (typeof context.getElementById !== "undefined" && documentIsHTML) {
+                var elem = context.getElementById(id);
+                return elem ? [elem] : [];
+              }
+            };
+          } else {
+            Expr.filter.ID = function(id) {
+              var attrId = id.replace(runescape, funescape);
+              return function(elem) {
+                var node2 = typeof elem.getAttributeNode !== "undefined" && elem.getAttributeNode("id");
+                return node2 && node2.value === attrId;
               };
-              Expr.find["ID"] = function(id, context) {
-                if (typeof context.getElementById !== "undefined" && documentIsHTML) {
-                  var node2, i2, elems, elem = context.getElementById(id);
-                  if (elem) {
+            };
+            Expr.find.ID = function(id, context) {
+              if (typeof context.getElementById !== "undefined" && documentIsHTML) {
+                var node2, i2, elems, elem = context.getElementById(id);
+                if (elem) {
+                  node2 = elem.getAttributeNode("id");
+                  if (node2 && node2.value === id) {
+                    return [elem];
+                  }
+                  elems = context.getElementsByName(id);
+                  i2 = 0;
+                  while (elem = elems[i2++]) {
                     node2 = elem.getAttributeNode("id");
                     if (node2 && node2.value === id) {
                       return [elem];
                     }
-                    elems = context.getElementsByName(id);
-                    i2 = 0;
-                    while (elem = elems[i2++]) {
-                      node2 = elem.getAttributeNode("id");
-                      if (node2 && node2.value === id) {
-                        return [elem];
+                  }
+                }
+                return [];
+              }
+            };
+          }
+          Expr.find.TAG = function(tag, context) {
+            if (typeof context.getElementsByTagName !== "undefined") {
+              return context.getElementsByTagName(tag);
+            } else {
+              return context.querySelectorAll(tag);
+            }
+          };
+          Expr.find.CLASS = function(className, context) {
+            if (typeof context.getElementsByClassName !== "undefined" && documentIsHTML) {
+              return context.getElementsByClassName(className);
+            }
+          };
+          rbuggyQSA = [];
+          assert(function(el) {
+            var input;
+            documentElement2.appendChild(el).innerHTML = "<a id='" + expando + "' href='' disabled='disabled'></a><select id='" + expando + "-\r\\' disabled='disabled'><option selected=''></option></select>";
+            if (!el.querySelectorAll("[selected]").length) {
+              rbuggyQSA.push("\\[" + whitespace + "*(?:value|" + booleans + ")");
+            }
+            if (!el.querySelectorAll("[id~=" + expando + "-]").length) {
+              rbuggyQSA.push("~=");
+            }
+            if (!el.querySelectorAll("a#" + expando + "+*").length) {
+              rbuggyQSA.push(".#.+[+~]");
+            }
+            if (!el.querySelectorAll(":checked").length) {
+              rbuggyQSA.push(":checked");
+            }
+            input = document3.createElement("input");
+            input.setAttribute("type", "hidden");
+            el.appendChild(input).setAttribute("name", "D");
+            documentElement2.appendChild(el).disabled = true;
+            if (el.querySelectorAll(":disabled").length !== 2) {
+              rbuggyQSA.push(":enabled", ":disabled");
+            }
+            input = document3.createElement("input");
+            input.setAttribute("name", "");
+            el.appendChild(input);
+            if (!el.querySelectorAll("[name='']").length) {
+              rbuggyQSA.push("\\[" + whitespace + "*name" + whitespace + "*=" + whitespace + `*(?:''|"")`);
+            }
+          });
+          if (!support.cssHas) {
+            rbuggyQSA.push(":has");
+          }
+          rbuggyQSA = rbuggyQSA.length && new RegExp(rbuggyQSA.join("|"));
+          sortOrder = function(a, b) {
+            if (a === b) {
+              hasDuplicate = true;
+              return 0;
+            }
+            var compare = !a.compareDocumentPosition - !b.compareDocumentPosition;
+            if (compare) {
+              return compare;
+            }
+            compare = (a.ownerDocument || a) == (b.ownerDocument || b) ? a.compareDocumentPosition(b) : (
+              // Otherwise we know they are disconnected
+              1
+            );
+            if (compare & 1 || !support.sortDetached && b.compareDocumentPosition(a) === compare) {
+              if (a === document3 || a.ownerDocument == preferredDoc && find.contains(preferredDoc, a)) {
+                return -1;
+              }
+              if (b === document3 || b.ownerDocument == preferredDoc && find.contains(preferredDoc, b)) {
+                return 1;
+              }
+              return sortInput ? indexOf.call(sortInput, a) - indexOf.call(sortInput, b) : 0;
+            }
+            return compare & 4 ? -1 : 1;
+          };
+          return document3;
+        }
+        find.matches = function(expr, elements) {
+          return find(expr, null, null, elements);
+        };
+        find.matchesSelector = function(elem, expr) {
+          setDocument(elem);
+          if (documentIsHTML && !nonnativeSelectorCache[expr + " "] && (!rbuggyQSA || !rbuggyQSA.test(expr))) {
+            try {
+              var ret = matches.call(elem, expr);
+              if (ret || support.disconnectedMatch || // As well, disconnected nodes are said to be in a document
+              // fragment in IE 9
+              elem.document && elem.document.nodeType !== 11) {
+                return ret;
+              }
+            } catch (e) {
+              nonnativeSelectorCache(expr, true);
+            }
+          }
+          return find(expr, document3, null, [elem]).length > 0;
+        };
+        find.contains = function(context, elem) {
+          if ((context.ownerDocument || context) != document3) {
+            setDocument(context);
+          }
+          return jQuery2.contains(context, elem);
+        };
+        find.attr = function(elem, name) {
+          if ((elem.ownerDocument || elem) != document3) {
+            setDocument(elem);
+          }
+          var fn2 = Expr.attrHandle[name.toLowerCase()], val = fn2 && hasOwn.call(Expr.attrHandle, name.toLowerCase()) ? fn2(elem, name, !documentIsHTML) : void 0;
+          if (val !== void 0) {
+            return val;
+          }
+          return elem.getAttribute(name);
+        };
+        find.error = function(msg) {
+          throw new Error("Syntax error, unrecognized expression: " + msg);
+        };
+        jQuery2.uniqueSort = function(results) {
+          var elem, duplicates = [], j = 0, i2 = 0;
+          hasDuplicate = !support.sortStable;
+          sortInput = !support.sortStable && slice.call(results, 0);
+          sort.call(results, sortOrder);
+          if (hasDuplicate) {
+            while (elem = results[i2++]) {
+              if (elem === results[i2]) {
+                j = duplicates.push(i2);
+              }
+            }
+            while (j--) {
+              splice.call(results, duplicates[j], 1);
+            }
+          }
+          sortInput = null;
+          return results;
+        };
+        jQuery2.fn.uniqueSort = function() {
+          return this.pushStack(jQuery2.uniqueSort(slice.apply(this)));
+        };
+        Expr = jQuery2.expr = {
+          // Can be adjusted by the user
+          cacheLength: 50,
+          createPseudo: markFunction,
+          match: matchExpr,
+          attrHandle: {},
+          find: {},
+          relative: {
+            ">": { dir: "parentNode", first: true },
+            " ": { dir: "parentNode" },
+            "+": { dir: "previousSibling", first: true },
+            "~": { dir: "previousSibling" }
+          },
+          preFilter: {
+            ATTR: function(match) {
+              match[1] = match[1].replace(runescape, funescape);
+              match[3] = (match[3] || match[4] || match[5] || "").replace(runescape, funescape);
+              if (match[2] === "~=") {
+                match[3] = " " + match[3] + " ";
+              }
+              return match.slice(0, 4);
+            },
+            CHILD: function(match) {
+              match[1] = match[1].toLowerCase();
+              if (match[1].slice(0, 3) === "nth") {
+                if (!match[3]) {
+                  find.error(match[0]);
+                }
+                match[4] = +(match[4] ? match[5] + (match[6] || 1) : 2 * (match[3] === "even" || match[3] === "odd"));
+                match[5] = +(match[7] + match[8] || match[3] === "odd");
+              } else if (match[3]) {
+                find.error(match[0]);
+              }
+              return match;
+            },
+            PSEUDO: function(match) {
+              var excess, unquoted = !match[6] && match[2];
+              if (matchExpr.CHILD.test(match[0])) {
+                return null;
+              }
+              if (match[3]) {
+                match[2] = match[4] || match[5] || "";
+              } else if (unquoted && rpseudo.test(unquoted) && // Get excess from tokenize (recursively)
+              (excess = tokenize(unquoted, true)) && // advance to the next closing parenthesis
+              (excess = unquoted.indexOf(")", unquoted.length - excess) - unquoted.length)) {
+                match[0] = match[0].slice(0, excess);
+                match[2] = unquoted.slice(0, excess);
+              }
+              return match.slice(0, 3);
+            }
+          },
+          filter: {
+            TAG: function(nodeNameSelector) {
+              var expectedNodeName = nodeNameSelector.replace(runescape, funescape).toLowerCase();
+              return nodeNameSelector === "*" ? function() {
+                return true;
+              } : function(elem) {
+                return nodeName(elem, expectedNodeName);
+              };
+            },
+            CLASS: function(className) {
+              var pattern = classCache[className + " "];
+              return pattern || (pattern = new RegExp("(^|" + whitespace + ")" + className + "(" + whitespace + "|$)")) && classCache(className, function(elem) {
+                return pattern.test(
+                  typeof elem.className === "string" && elem.className || typeof elem.getAttribute !== "undefined" && elem.getAttribute("class") || ""
+                );
+              });
+            },
+            ATTR: function(name, operator, check) {
+              return function(elem) {
+                var result = find.attr(elem, name);
+                if (result == null) {
+                  return operator === "!=";
+                }
+                if (!operator) {
+                  return true;
+                }
+                result += "";
+                if (operator === "=") {
+                  return result === check;
+                }
+                if (operator === "!=") {
+                  return result !== check;
+                }
+                if (operator === "^=") {
+                  return check && result.indexOf(check) === 0;
+                }
+                if (operator === "*=") {
+                  return check && result.indexOf(check) > -1;
+                }
+                if (operator === "$=") {
+                  return check && result.slice(-check.length) === check;
+                }
+                if (operator === "~=") {
+                  return (" " + result.replace(rwhitespace, " ") + " ").indexOf(check) > -1;
+                }
+                if (operator === "|=") {
+                  return result === check || result.slice(0, check.length + 1) === check + "-";
+                }
+                return false;
+              };
+            },
+            CHILD: function(type, what, _argument, first, last) {
+              var simple = type.slice(0, 3) !== "nth", forward = type.slice(-4) !== "last", ofType = what === "of-type";
+              return first === 1 && last === 0 ? (
+                // Shortcut for :nth-*(n)
+                function(elem) {
+                  return !!elem.parentNode;
+                }
+              ) : function(elem, _context, xml) {
+                var cache, outerCache, node, nodeIndex, start2, dir2 = simple !== forward ? "nextSibling" : "previousSibling", parent = elem.parentNode, name = ofType && elem.nodeName.toLowerCase(), useCache = !xml && !ofType, diff = false;
+                if (parent) {
+                  if (simple) {
+                    while (dir2) {
+                      node = elem;
+                      while (node = node[dir2]) {
+                        if (ofType ? nodeName(node, name) : node.nodeType === 1) {
+                          return false;
+                        }
+                      }
+                      start2 = dir2 = type === "only" && !start2 && "nextSibling";
+                    }
+                    return true;
+                  }
+                  start2 = [forward ? parent.firstChild : parent.lastChild];
+                  if (forward && useCache) {
+                    outerCache = parent[expando] || (parent[expando] = {});
+                    cache = outerCache[type] || [];
+                    nodeIndex = cache[0] === dirruns && cache[1];
+                    diff = nodeIndex && cache[2];
+                    node = nodeIndex && parent.childNodes[nodeIndex];
+                    while (node = ++nodeIndex && node && node[dir2] || // Fallback to seeking `elem` from the start
+                    (diff = nodeIndex = 0) || start2.pop()) {
+                      if (node.nodeType === 1 && ++diff && node === elem) {
+                        outerCache[type] = [dirruns, nodeIndex, diff];
+                        break;
+                      }
+                    }
+                  } else {
+                    if (useCache) {
+                      outerCache = elem[expando] || (elem[expando] = {});
+                      cache = outerCache[type] || [];
+                      nodeIndex = cache[0] === dirruns && cache[1];
+                      diff = nodeIndex;
+                    }
+                    if (diff === false) {
+                      while (node = ++nodeIndex && node && node[dir2] || (diff = nodeIndex = 0) || start2.pop()) {
+                        if ((ofType ? nodeName(node, name) : node.nodeType === 1) && ++diff) {
+                          if (useCache) {
+                            outerCache = node[expando] || (node[expando] = {});
+                            outerCache[type] = [dirruns, diff];
+                          }
+                          if (node === elem) {
+                            break;
+                          }
+                        }
                       }
                     }
                   }
-                  return [];
+                  diff -= last;
+                  return diff === first || diff % first === 0 && diff / first >= 0;
                 }
               };
-            }
-            Expr.find["TAG"] = support2.getElementsByTagName ? function(tag, context) {
-              if (typeof context.getElementsByTagName !== "undefined") {
-                return context.getElementsByTagName(tag);
-              } else if (support2.qsa) {
-                return context.querySelectorAll(tag);
-              }
-            } : function(tag, context) {
-              var elem, tmp = [], i2 = 0, results = context.getElementsByTagName(tag);
-              if (tag === "*") {
-                while (elem = results[i2++]) {
-                  if (elem.nodeType === 1) {
-                    tmp.push(elem);
-                  }
-                }
-                return tmp;
-              }
-              return results;
-            };
-            Expr.find["CLASS"] = support2.getElementsByClassName && function(className, context) {
-              if (typeof context.getElementsByClassName !== "undefined" && documentIsHTML) {
-                return context.getElementsByClassName(className);
-              }
-            };
-            rbuggyMatches = [];
-            rbuggyQSA = [];
-            if (support2.qsa = rnative.test(document3.querySelectorAll)) {
-              assert(function(el) {
-                var input;
-                docElem.appendChild(el).innerHTML = "<a id='" + expando + "'></a><select id='" + expando + "-\r\\' msallowcapture=''><option selected=''></option></select>";
-                if (el.querySelectorAll("[msallowcapture^='']").length) {
-                  rbuggyQSA.push("[*^$]=" + whitespace + `*(?:''|"")`);
-                }
-                if (!el.querySelectorAll("[selected]").length) {
-                  rbuggyQSA.push("\\[" + whitespace + "*(?:value|" + booleans + ")");
-                }
-                if (!el.querySelectorAll("[id~=" + expando + "-]").length) {
-                  rbuggyQSA.push("~=");
-                }
-                input = document3.createElement("input");
-                input.setAttribute("name", "");
-                el.appendChild(input);
-                if (!el.querySelectorAll("[name='']").length) {
-                  rbuggyQSA.push("\\[" + whitespace + "*name" + whitespace + "*=" + whitespace + `*(?:''|"")`);
-                }
-                if (!el.querySelectorAll(":checked").length) {
-                  rbuggyQSA.push(":checked");
-                }
-                if (!el.querySelectorAll("a#" + expando + "+*").length) {
-                  rbuggyQSA.push(".#.+[+~]");
-                }
-                el.querySelectorAll("\\\f");
-                rbuggyQSA.push("[\\r\\n\\f]");
-              });
-              assert(function(el) {
-                el.innerHTML = "<a href='' disabled='disabled'></a><select disabled='disabled'><option/></select>";
-                var input = document3.createElement("input");
-                input.setAttribute("type", "hidden");
-                el.appendChild(input).setAttribute("name", "D");
-                if (el.querySelectorAll("[name=d]").length) {
-                  rbuggyQSA.push("name" + whitespace + "*[*^$|!~]?=");
-                }
-                if (el.querySelectorAll(":enabled").length !== 2) {
-                  rbuggyQSA.push(":enabled", ":disabled");
-                }
-                docElem.appendChild(el).disabled = true;
-                if (el.querySelectorAll(":disabled").length !== 2) {
-                  rbuggyQSA.push(":enabled", ":disabled");
-                }
-                el.querySelectorAll("*,:x");
-                rbuggyQSA.push(",.*:");
-              });
-            }
-            if (support2.matchesSelector = rnative.test(matches = docElem.matches || docElem.webkitMatchesSelector || docElem.mozMatchesSelector || docElem.oMatchesSelector || docElem.msMatchesSelector)) {
-              assert(function(el) {
-                support2.disconnectedMatch = matches.call(el, "*");
-                matches.call(el, "[s!='']:x");
-                rbuggyMatches.push("!=", pseudos);
-              });
-            }
-            rbuggyQSA = rbuggyQSA.length && new RegExp(rbuggyQSA.join("|"));
-            rbuggyMatches = rbuggyMatches.length && new RegExp(rbuggyMatches.join("|"));
-            hasCompare = rnative.test(docElem.compareDocumentPosition);
-            contains2 = hasCompare || rnative.test(docElem.contains) ? function(a, b) {
-              var adown = a.nodeType === 9 ? a.documentElement : a, bup = b && b.parentNode;
-              return a === bup || !!(bup && bup.nodeType === 1 && (adown.contains ? adown.contains(bup) : a.compareDocumentPosition && a.compareDocumentPosition(bup) & 16));
-            } : function(a, b) {
-              if (b) {
-                while (b = b.parentNode) {
-                  if (b === a) {
-                    return true;
-                  }
-                }
-              }
-              return false;
-            };
-            sortOrder = hasCompare ? function(a, b) {
-              if (a === b) {
-                hasDuplicate = true;
-                return 0;
-              }
-              var compare = !a.compareDocumentPosition - !b.compareDocumentPosition;
-              if (compare) {
-                return compare;
-              }
-              compare = (a.ownerDocument || a) == (b.ownerDocument || b) ? a.compareDocumentPosition(b) : (
-                // Otherwise we know they are disconnected
-                1
-              );
-              if (compare & 1 || !support2.sortDetached && b.compareDocumentPosition(a) === compare) {
-                if (a == document3 || a.ownerDocument == preferredDoc && contains2(preferredDoc, a)) {
-                  return -1;
-                }
-                if (b == document3 || b.ownerDocument == preferredDoc && contains2(preferredDoc, b)) {
-                  return 1;
-                }
-                return sortInput ? indexOf2(sortInput, a) - indexOf2(sortInput, b) : 0;
-              }
-              return compare & 4 ? -1 : 1;
-            } : function(a, b) {
-              if (a === b) {
-                hasDuplicate = true;
-                return 0;
-              }
-              var cur, i2 = 0, aup = a.parentNode, bup = b.parentNode, ap = [a], bp = [b];
-              if (!aup || !bup) {
-                return a == document3 ? -1 : b == document3 ? 1 : (
-                  /* eslint-enable eqeqeq */
-                  aup ? -1 : bup ? 1 : sortInput ? indexOf2(sortInput, a) - indexOf2(sortInput, b) : 0
-                );
-              } else if (aup === bup) {
-                return siblingCheck(a, b);
-              }
-              cur = a;
-              while (cur = cur.parentNode) {
-                ap.unshift(cur);
-              }
-              cur = b;
-              while (cur = cur.parentNode) {
-                bp.unshift(cur);
-              }
-              while (ap[i2] === bp[i2]) {
-                i2++;
-              }
-              return i2 ? (
-                // Do a sibling check if the nodes have a common ancestor
-                siblingCheck(ap[i2], bp[i2])
-              ) : (
-                // Otherwise nodes in our document sort first
-                // Support: IE 11+, Edge 17 - 18+
-                // IE/Edge sometimes throw a "Permission denied" error when strict-comparing
-                // two documents; shallow comparisons work.
-                /* eslint-disable eqeqeq */
-                ap[i2] == preferredDoc ? -1 : bp[i2] == preferredDoc ? 1 : (
-                  /* eslint-enable eqeqeq */
-                  0
-                )
-              );
-            };
-            return document3;
-          };
-          Sizzle2.matches = function(expr, elements) {
-            return Sizzle2(expr, null, null, elements);
-          };
-          Sizzle2.matchesSelector = function(elem, expr) {
-            setDocument(elem);
-            if (support2.matchesSelector && documentIsHTML && !nonnativeSelectorCache[expr + " "] && (!rbuggyMatches || !rbuggyMatches.test(expr)) && (!rbuggyQSA || !rbuggyQSA.test(expr))) {
-              try {
-                var ret = matches.call(elem, expr);
-                if (ret || support2.disconnectedMatch || // As well, disconnected nodes are said to be in a document
-                // fragment in IE 9
-                elem.document && elem.document.nodeType !== 11) {
-                  return ret;
-                }
-              } catch (e) {
-                nonnativeSelectorCache(expr, true);
-              }
-            }
-            return Sizzle2(expr, document3, null, [elem]).length > 0;
-          };
-          Sizzle2.contains = function(context, elem) {
-            if ((context.ownerDocument || context) != document3) {
-              setDocument(context);
-            }
-            return contains2(context, elem);
-          };
-          Sizzle2.attr = function(elem, name) {
-            if ((elem.ownerDocument || elem) != document3) {
-              setDocument(elem);
-            }
-            var fn2 = Expr.attrHandle[name.toLowerCase()], val = fn2 && hasOwn2.call(Expr.attrHandle, name.toLowerCase()) ? fn2(elem, name, !documentIsHTML) : void 0;
-            return val !== void 0 ? val : support2.attributes || !documentIsHTML ? elem.getAttribute(name) : (val = elem.getAttributeNode(name)) && val.specified ? val.value : null;
-          };
-          Sizzle2.escape = function(sel) {
-            return (sel + "").replace(rcssescape, fcssescape);
-          };
-          Sizzle2.error = function(msg) {
-            throw new Error("Syntax error, unrecognized expression: " + msg);
-          };
-          Sizzle2.uniqueSort = function(results) {
-            var elem, duplicates = [], j = 0, i2 = 0;
-            hasDuplicate = !support2.detectDuplicates;
-            sortInput = !support2.sortStable && results.slice(0);
-            results.sort(sortOrder);
-            if (hasDuplicate) {
-              while (elem = results[i2++]) {
-                if (elem === results[i2]) {
-                  j = duplicates.push(i2);
-                }
-              }
-              while (j--) {
-                results.splice(duplicates[j], 1);
-              }
-            }
-            sortInput = null;
-            return results;
-          };
-          getText = Sizzle2.getText = function(elem) {
-            var node, ret = "", i2 = 0, nodeType = elem.nodeType;
-            if (!nodeType) {
-              while (node = elem[i2++]) {
-                ret += getText(node);
-              }
-            } else if (nodeType === 1 || nodeType === 9 || nodeType === 11) {
-              if (typeof elem.textContent === "string") {
-                return elem.textContent;
-              } else {
-                for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
-                  ret += getText(elem);
-                }
-              }
-            } else if (nodeType === 3 || nodeType === 4) {
-              return elem.nodeValue;
-            }
-            return ret;
-          };
-          Expr = Sizzle2.selectors = {
-            // Can be adjusted by the user
-            cacheLength: 50,
-            createPseudo: markFunction,
-            match: matchExpr,
-            attrHandle: {},
-            find: {},
-            relative: {
-              ">": { dir: "parentNode", first: true },
-              " ": { dir: "parentNode" },
-              "+": { dir: "previousSibling", first: true },
-              "~": { dir: "previousSibling" }
             },
-            preFilter: {
-              "ATTR": function(match) {
-                match[1] = match[1].replace(runescape, funescape);
-                match[3] = (match[3] || match[4] || match[5] || "").replace(runescape, funescape);
-                if (match[2] === "~=") {
-                  match[3] = " " + match[3] + " ";
-                }
-                return match.slice(0, 4);
-              },
-              "CHILD": function(match) {
-                match[1] = match[1].toLowerCase();
-                if (match[1].slice(0, 3) === "nth") {
-                  if (!match[3]) {
-                    Sizzle2.error(match[0]);
-                  }
-                  match[4] = +(match[4] ? match[5] + (match[6] || 1) : 2 * (match[3] === "even" || match[3] === "odd"));
-                  match[5] = +(match[7] + match[8] || match[3] === "odd");
-                } else if (match[3]) {
-                  Sizzle2.error(match[0]);
-                }
-                return match;
-              },
-              "PSEUDO": function(match) {
-                var excess, unquoted = !match[6] && match[2];
-                if (matchExpr["CHILD"].test(match[0])) {
-                  return null;
-                }
-                if (match[3]) {
-                  match[2] = match[4] || match[5] || "";
-                } else if (unquoted && rpseudo.test(unquoted) && // Get excess from tokenize (recursively)
-                (excess = tokenize(unquoted, true)) && // advance to the next closing parenthesis
-                (excess = unquoted.indexOf(")", unquoted.length - excess) - unquoted.length)) {
-                  match[0] = match[0].slice(0, excess);
-                  match[2] = unquoted.slice(0, excess);
-                }
-                return match.slice(0, 3);
+            PSEUDO: function(pseudo, argument) {
+              var args, fn2 = Expr.pseudos[pseudo] || Expr.setFilters[pseudo.toLowerCase()] || find.error("unsupported pseudo: " + pseudo);
+              if (fn2[expando]) {
+                return fn2(argument);
               }
-            },
-            filter: {
-              "TAG": function(nodeNameSelector) {
-                var nodeName2 = nodeNameSelector.replace(runescape, funescape).toLowerCase();
-                return nodeNameSelector === "*" ? function() {
-                  return true;
-                } : function(elem) {
-                  return elem.nodeName && elem.nodeName.toLowerCase() === nodeName2;
-                };
-              },
-              "CLASS": function(className) {
-                var pattern = classCache[className + " "];
-                return pattern || (pattern = new RegExp("(^|" + whitespace + ")" + className + "(" + whitespace + "|$)")) && classCache(
-                  className,
-                  function(elem) {
-                    return pattern.test(
-                      typeof elem.className === "string" && elem.className || typeof elem.getAttribute !== "undefined" && elem.getAttribute("class") || ""
-                    );
-                  }
-                );
-              },
-              "ATTR": function(name, operator, check) {
-                return function(elem) {
-                  var result = Sizzle2.attr(elem, name);
-                  if (result == null) {
-                    return operator === "!=";
-                  }
-                  if (!operator) {
-                    return true;
-                  }
-                  result += "";
-                  return operator === "=" ? result === check : operator === "!=" ? result !== check : operator === "^=" ? check && result.indexOf(check) === 0 : operator === "*=" ? check && result.indexOf(check) > -1 : operator === "$=" ? check && result.slice(-check.length) === check : operator === "~=" ? (" " + result.replace(rwhitespace, " ") + " ").indexOf(check) > -1 : operator === "|=" ? result === check || result.slice(0, check.length + 1) === check + "-" : false;
-                };
-              },
-              "CHILD": function(type, what, _argument, first, last) {
-                var simple = type.slice(0, 3) !== "nth", forward = type.slice(-4) !== "last", ofType = what === "of-type";
-                return first === 1 && last === 0 ? (
-                  // Shortcut for :nth-*(n)
-                  function(elem) {
-                    return !!elem.parentNode;
-                  }
-                ) : function(elem, _context, xml) {
-                  var cache, uniqueCache, outerCache, node, nodeIndex, start2, dir2 = simple !== forward ? "nextSibling" : "previousSibling", parent = elem.parentNode, name = ofType && elem.nodeName.toLowerCase(), useCache = !xml && !ofType, diff = false;
-                  if (parent) {
-                    if (simple) {
-                      while (dir2) {
-                        node = elem;
-                        while (node = node[dir2]) {
-                          if (ofType ? node.nodeName.toLowerCase() === name : node.nodeType === 1) {
-                            return false;
-                          }
-                        }
-                        start2 = dir2 = type === "only" && !start2 && "nextSibling";
-                      }
-                      return true;
-                    }
-                    start2 = [forward ? parent.firstChild : parent.lastChild];
-                    if (forward && useCache) {
-                      node = parent;
-                      outerCache = node[expando] || (node[expando] = {});
-                      uniqueCache = outerCache[node.uniqueID] || (outerCache[node.uniqueID] = {});
-                      cache = uniqueCache[type] || [];
-                      nodeIndex = cache[0] === dirruns && cache[1];
-                      diff = nodeIndex && cache[2];
-                      node = nodeIndex && parent.childNodes[nodeIndex];
-                      while (node = ++nodeIndex && node && node[dir2] || // Fallback to seeking `elem` from the start
-                      (diff = nodeIndex = 0) || start2.pop()) {
-                        if (node.nodeType === 1 && ++diff && node === elem) {
-                          uniqueCache[type] = [dirruns, nodeIndex, diff];
-                          break;
-                        }
-                      }
-                    } else {
-                      if (useCache) {
-                        node = elem;
-                        outerCache = node[expando] || (node[expando] = {});
-                        uniqueCache = outerCache[node.uniqueID] || (outerCache[node.uniqueID] = {});
-                        cache = uniqueCache[type] || [];
-                        nodeIndex = cache[0] === dirruns && cache[1];
-                        diff = nodeIndex;
-                      }
-                      if (diff === false) {
-                        while (node = ++nodeIndex && node && node[dir2] || (diff = nodeIndex = 0) || start2.pop()) {
-                          if ((ofType ? node.nodeName.toLowerCase() === name : node.nodeType === 1) && ++diff) {
-                            if (useCache) {
-                              outerCache = node[expando] || (node[expando] = {});
-                              uniqueCache = outerCache[node.uniqueID] || (outerCache[node.uniqueID] = {});
-                              uniqueCache[type] = [dirruns, diff];
-                            }
-                            if (node === elem) {
-                              break;
-                            }
-                          }
-                        }
-                      }
-                    }
-                    diff -= last;
-                    return diff === first || diff % first === 0 && diff / first >= 0;
-                  }
-                };
-              },
-              "PSEUDO": function(pseudo, argument) {
-                var args, fn2 = Expr.pseudos[pseudo] || Expr.setFilters[pseudo.toLowerCase()] || Sizzle2.error("unsupported pseudo: " + pseudo);
-                if (fn2[expando]) {
-                  return fn2(argument);
-                }
-                if (fn2.length > 1) {
-                  args = [pseudo, pseudo, "", argument];
-                  return Expr.setFilters.hasOwnProperty(pseudo.toLowerCase()) ? markFunction(function(seed, matches2) {
-                    var idx, matched = fn2(seed, argument), i2 = matched.length;
-                    while (i2--) {
-                      idx = indexOf2(seed, matched[i2]);
-                      seed[idx] = !(matches2[idx] = matched[i2]);
-                    }
-                  }) : function(elem) {
-                    return fn2(elem, 0, args);
-                  };
-                }
-                return fn2;
-              }
-            },
-            pseudos: {
-              // Potentially complex pseudos
-              "not": markFunction(function(selector) {
-                var input = [], results = [], matcher = compile(selector.replace(rtrim2, "$1"));
-                return matcher[expando] ? markFunction(function(seed, matches2, _context, xml) {
-                  var elem, unmatched = matcher(seed, null, xml, []), i2 = seed.length;
+              if (fn2.length > 1) {
+                args = [pseudo, pseudo, "", argument];
+                return Expr.setFilters.hasOwnProperty(pseudo.toLowerCase()) ? markFunction(function(seed, matches2) {
+                  var idx, matched = fn2(seed, argument), i2 = matched.length;
                   while (i2--) {
-                    if (elem = unmatched[i2]) {
-                      seed[i2] = !(matches2[i2] = elem);
-                    }
+                    idx = indexOf.call(seed, matched[i2]);
+                    seed[idx] = !(matches2[idx] = matched[i2]);
                   }
-                }) : function(elem, _context, xml) {
-                  input[0] = elem;
-                  matcher(input, null, xml, results);
-                  input[0] = null;
-                  return !results.pop();
+                }) : function(elem) {
+                  return fn2(elem, 0, args);
                 };
-              }),
-              "has": markFunction(function(selector) {
-                return function(elem) {
-                  return Sizzle2(selector, elem).length > 0;
-                };
-              }),
-              "contains": markFunction(function(text) {
-                text = text.replace(runescape, funescape);
-                return function(elem) {
-                  return (elem.textContent || getText(elem)).indexOf(text) > -1;
-                };
-              }),
-              // "Whether an element is represented by a :lang() selector
-              // is based solely on the element's language value
-              // being equal to the identifier C,
-              // or beginning with the identifier C immediately followed by "-".
-              // The matching of C against the element's language value is performed case-insensitively.
-              // The identifier C does not have to be a valid language name."
-              // http://www.w3.org/TR/selectors/#lang-pseudo
-              "lang": markFunction(function(lang) {
-                if (!ridentifier.test(lang || "")) {
-                  Sizzle2.error("unsupported lang: " + lang);
-                }
-                lang = lang.replace(runescape, funescape).toLowerCase();
-                return function(elem) {
-                  var elemLang;
-                  do {
-                    if (elemLang = documentIsHTML ? elem.lang : elem.getAttribute("xml:lang") || elem.getAttribute("lang")) {
-                      elemLang = elemLang.toLowerCase();
-                      return elemLang === lang || elemLang.indexOf(lang + "-") === 0;
-                    }
-                  } while ((elem = elem.parentNode) && elem.nodeType === 1);
-                  return false;
-                };
-              }),
-              // Miscellaneous
-              "target": function(elem) {
-                var hash3 = window3.location && window3.location.hash;
-                return hash3 && hash3.slice(1) === elem.id;
-              },
-              "root": function(elem) {
-                return elem === docElem;
-              },
-              "focus": function(elem) {
-                return elem === document3.activeElement && (!document3.hasFocus || document3.hasFocus()) && !!(elem.type || elem.href || ~elem.tabIndex);
-              },
-              // Boolean properties
-              "enabled": createDisabledPseudo(false),
-              "disabled": createDisabledPseudo(true),
-              "checked": function(elem) {
-                var nodeName2 = elem.nodeName.toLowerCase();
-                return nodeName2 === "input" && !!elem.checked || nodeName2 === "option" && !!elem.selected;
-              },
-              "selected": function(elem) {
-                if (elem.parentNode) {
-                  elem.parentNode.selectedIndex;
-                }
-                return elem.selected === true;
-              },
-              // Contents
-              "empty": function(elem) {
-                for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
-                  if (elem.nodeType < 6) {
-                    return false;
+              }
+              return fn2;
+            }
+          },
+          pseudos: {
+            // Potentially complex pseudos
+            not: markFunction(function(selector) {
+              var input = [], results = [], matcher = compile(selector.replace(rtrimCSS, "$1"));
+              return matcher[expando] ? markFunction(function(seed, matches2, _context, xml) {
+                var elem, unmatched = matcher(seed, null, xml, []), i2 = seed.length;
+                while (i2--) {
+                  if (elem = unmatched[i2]) {
+                    seed[i2] = !(matches2[i2] = elem);
                   }
                 }
-                return true;
-              },
-              "parent": function(elem) {
-                return !Expr.pseudos["empty"](elem);
-              },
-              // Element/input types
-              "header": function(elem) {
-                return rheader.test(elem.nodeName);
-              },
-              "input": function(elem) {
-                return rinputs.test(elem.nodeName);
-              },
-              "button": function(elem) {
-                var name = elem.nodeName.toLowerCase();
-                return name === "input" && elem.type === "button" || name === "button";
-              },
-              "text": function(elem) {
-                var attr;
-                return elem.nodeName.toLowerCase() === "input" && elem.type === "text" && // Support: IE<8
-                // New HTML5 attribute values (e.g., "search") appear with elem.type === "text"
-                ((attr = elem.getAttribute("type")) == null || attr.toLowerCase() === "text");
-              },
-              // Position-in-collection
-              "first": createPositionalPseudo(function() {
-                return [0];
-              }),
-              "last": createPositionalPseudo(function(_matchIndexes, length) {
-                return [length - 1];
-              }),
-              "eq": createPositionalPseudo(function(_matchIndexes, length, argument) {
-                return [argument < 0 ? argument + length : argument];
-              }),
-              "even": createPositionalPseudo(function(matchIndexes, length) {
-                var i2 = 0;
-                for (; i2 < length; i2 += 2) {
-                  matchIndexes.push(i2);
-                }
-                return matchIndexes;
-              }),
-              "odd": createPositionalPseudo(function(matchIndexes, length) {
-                var i2 = 1;
-                for (; i2 < length; i2 += 2) {
-                  matchIndexes.push(i2);
-                }
-                return matchIndexes;
-              }),
-              "lt": createPositionalPseudo(function(matchIndexes, length, argument) {
-                var i2 = argument < 0 ? argument + length : argument > length ? length : argument;
-                for (; --i2 >= 0; ) {
-                  matchIndexes.push(i2);
-                }
-                return matchIndexes;
-              }),
-              "gt": createPositionalPseudo(function(matchIndexes, length, argument) {
-                var i2 = argument < 0 ? argument + length : argument;
-                for (; ++i2 < length; ) {
-                  matchIndexes.push(i2);
-                }
-                return matchIndexes;
-              })
-            }
-          };
-          Expr.pseudos["nth"] = Expr.pseudos["eq"];
-          for (i in { radio: true, checkbox: true, file: true, password: true, image: true }) {
-            Expr.pseudos[i] = createInputPseudo(i);
-          }
-          for (i in { submit: true, reset: true }) {
-            Expr.pseudos[i] = createButtonPseudo(i);
-          }
-          function setFilters() {
-          }
-          setFilters.prototype = Expr.filters = Expr.pseudos;
-          Expr.setFilters = new setFilters();
-          tokenize = Sizzle2.tokenize = function(selector, parseOnly) {
-            var matched, match, tokens, type, soFar, groups, preFilters, cached = tokenCache[selector + " "];
-            if (cached) {
-              return parseOnly ? 0 : cached.slice(0);
-            }
-            soFar = selector;
-            groups = [];
-            preFilters = Expr.preFilter;
-            while (soFar) {
-              if (!matched || (match = rcomma.exec(soFar))) {
-                if (match) {
-                  soFar = soFar.slice(match[0].length) || soFar;
-                }
-                groups.push(tokens = []);
+              }) : function(elem, _context, xml) {
+                input[0] = elem;
+                matcher(input, null, xml, results);
+                input[0] = null;
+                return !results.pop();
+              };
+            }),
+            has: markFunction(function(selector) {
+              return function(elem) {
+                return find(selector, elem).length > 0;
+              };
+            }),
+            contains: markFunction(function(text) {
+              text = text.replace(runescape, funescape);
+              return function(elem) {
+                return (elem.textContent || jQuery2.text(elem)).indexOf(text) > -1;
+              };
+            }),
+            // "Whether an element is represented by a :lang() selector
+            // is based solely on the element's language value
+            // being equal to the identifier C,
+            // or beginning with the identifier C immediately followed by "-".
+            // The matching of C against the element's language value is performed case-insensitively.
+            // The identifier C does not have to be a valid language name."
+            // https://www.w3.org/TR/selectors/#lang-pseudo
+            lang: markFunction(function(lang) {
+              if (!ridentifier.test(lang || "")) {
+                find.error("unsupported lang: " + lang);
               }
-              matched = false;
-              if (match = rcombinators.exec(soFar)) {
-                matched = match.shift();
-                tokens.push({
-                  value: matched,
-                  // Cast descendant combinators to space
-                  type: match[0].replace(rtrim2, " ")
-                });
-                soFar = soFar.slice(matched.length);
-              }
-              for (type in Expr.filter) {
-                if ((match = matchExpr[type].exec(soFar)) && (!preFilters[type] || (match = preFilters[type](match)))) {
-                  matched = match.shift();
-                  tokens.push({
-                    value: matched,
-                    type,
-                    matches: match
-                  });
-                  soFar = soFar.slice(matched.length);
-                }
-              }
-              if (!matched) {
-                break;
-              }
-            }
-            return parseOnly ? soFar.length : soFar ? Sizzle2.error(selector) : (
-              // Cache the tokens
-              tokenCache(selector, groups).slice(0)
-            );
-          };
-          function toSelector(tokens) {
-            var i2 = 0, len = tokens.length, selector = "";
-            for (; i2 < len; i2++) {
-              selector += tokens[i2].value;
-            }
-            return selector;
-          }
-          function addCombinator(matcher, combinator, base) {
-            var dir2 = combinator.dir, skip = combinator.next, key = skip || dir2, checkNonElements = base && key === "parentNode", doneName = done++;
-            return combinator.first ? (
-              // Check against closest ancestor/preceding element
-              function(elem, context, xml) {
-                while (elem = elem[dir2]) {
-                  if (elem.nodeType === 1 || checkNonElements) {
-                    return matcher(elem, context, xml);
+              lang = lang.replace(runescape, funescape).toLowerCase();
+              return function(elem) {
+                var elemLang;
+                do {
+                  if (elemLang = documentIsHTML ? elem.lang : elem.getAttribute("xml:lang") || elem.getAttribute("lang")) {
+                    elemLang = elemLang.toLowerCase();
+                    return elemLang === lang || elemLang.indexOf(lang + "-") === 0;
                   }
-                }
+                } while ((elem = elem.parentNode) && elem.nodeType === 1);
                 return false;
+              };
+            }),
+            // Miscellaneous
+            target: function(elem) {
+              var hash3 = window2.location && window2.location.hash;
+              return hash3 && hash3.slice(1) === elem.id;
+            },
+            root: function(elem) {
+              return elem === documentElement2;
+            },
+            focus: function(elem) {
+              return elem === safeActiveElement() && document3.hasFocus() && !!(elem.type || elem.href || ~elem.tabIndex);
+            },
+            // Boolean properties
+            enabled: createDisabledPseudo(false),
+            disabled: createDisabledPseudo(true),
+            checked: function(elem) {
+              return nodeName(elem, "input") && !!elem.checked || nodeName(elem, "option") && !!elem.selected;
+            },
+            selected: function(elem) {
+              if (elem.parentNode) {
+                elem.parentNode.selectedIndex;
               }
-            ) : (
-              // Check against all ancestor/preceding elements
-              function(elem, context, xml) {
-                var oldCache, uniqueCache, outerCache, newCache = [dirruns, doneName];
-                if (xml) {
-                  while (elem = elem[dir2]) {
-                    if (elem.nodeType === 1 || checkNonElements) {
-                      if (matcher(elem, context, xml)) {
-                        return true;
-                      }
-                    }
-                  }
-                } else {
-                  while (elem = elem[dir2]) {
-                    if (elem.nodeType === 1 || checkNonElements) {
-                      outerCache = elem[expando] || (elem[expando] = {});
-                      uniqueCache = outerCache[elem.uniqueID] || (outerCache[elem.uniqueID] = {});
-                      if (skip && skip === elem.nodeName.toLowerCase()) {
-                        elem = elem[dir2] || elem;
-                      } else if ((oldCache = uniqueCache[key]) && oldCache[0] === dirruns && oldCache[1] === doneName) {
-                        return newCache[2] = oldCache[2];
-                      } else {
-                        uniqueCache[key] = newCache;
-                        if (newCache[2] = matcher(elem, context, xml)) {
-                          return true;
-                        }
-                      }
-                    }
-                  }
-                }
-                return false;
-              }
-            );
-          }
-          function elementMatcher(matchers) {
-            return matchers.length > 1 ? function(elem, context, xml) {
-              var i2 = matchers.length;
-              while (i2--) {
-                if (!matchers[i2](elem, context, xml)) {
+              return elem.selected === true;
+            },
+            // Contents
+            empty: function(elem) {
+              for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
+                if (elem.nodeType < 6) {
                   return false;
                 }
               }
               return true;
-            } : matchers[0];
+            },
+            parent: function(elem) {
+              return !Expr.pseudos.empty(elem);
+            },
+            // Element/input types
+            header: function(elem) {
+              return rheader.test(elem.nodeName);
+            },
+            input: function(elem) {
+              return rinputs.test(elem.nodeName);
+            },
+            button: function(elem) {
+              return nodeName(elem, "input") && elem.type === "button" || nodeName(elem, "button");
+            },
+            text: function(elem) {
+              var attr;
+              return nodeName(elem, "input") && elem.type === "text" && // Support: IE <10 only
+              // New HTML5 attribute values (e.g., "search") appear
+              // with elem.type === "text"
+              ((attr = elem.getAttribute("type")) == null || attr.toLowerCase() === "text");
+            },
+            // Position-in-collection
+            first: createPositionalPseudo(function() {
+              return [0];
+            }),
+            last: createPositionalPseudo(function(_matchIndexes, length) {
+              return [length - 1];
+            }),
+            eq: createPositionalPseudo(function(_matchIndexes, length, argument) {
+              return [argument < 0 ? argument + length : argument];
+            }),
+            even: createPositionalPseudo(function(matchIndexes, length) {
+              var i2 = 0;
+              for (; i2 < length; i2 += 2) {
+                matchIndexes.push(i2);
+              }
+              return matchIndexes;
+            }),
+            odd: createPositionalPseudo(function(matchIndexes, length) {
+              var i2 = 1;
+              for (; i2 < length; i2 += 2) {
+                matchIndexes.push(i2);
+              }
+              return matchIndexes;
+            }),
+            lt: createPositionalPseudo(function(matchIndexes, length, argument) {
+              var i2;
+              if (argument < 0) {
+                i2 = argument + length;
+              } else if (argument > length) {
+                i2 = length;
+              } else {
+                i2 = argument;
+              }
+              for (; --i2 >= 0; ) {
+                matchIndexes.push(i2);
+              }
+              return matchIndexes;
+            }),
+            gt: createPositionalPseudo(function(matchIndexes, length, argument) {
+              var i2 = argument < 0 ? argument + length : argument;
+              for (; ++i2 < length; ) {
+                matchIndexes.push(i2);
+              }
+              return matchIndexes;
+            })
           }
-          function multipleContexts(selector, contexts, results) {
-            var i2 = 0, len = contexts.length;
-            for (; i2 < len; i2++) {
-              Sizzle2(selector, contexts[i2], results);
+        };
+        Expr.pseudos.nth = Expr.pseudos.eq;
+        for (i in { radio: true, checkbox: true, file: true, password: true, image: true }) {
+          Expr.pseudos[i] = createInputPseudo(i);
+        }
+        for (i in { submit: true, reset: true }) {
+          Expr.pseudos[i] = createButtonPseudo(i);
+        }
+        function setFilters() {
+        }
+        setFilters.prototype = Expr.filters = Expr.pseudos;
+        Expr.setFilters = new setFilters();
+        function tokenize(selector, parseOnly) {
+          var matched, match, tokens, type, soFar, groups, preFilters, cached = tokenCache[selector + " "];
+          if (cached) {
+            return parseOnly ? 0 : cached.slice(0);
+          }
+          soFar = selector;
+          groups = [];
+          preFilters = Expr.preFilter;
+          while (soFar) {
+            if (!matched || (match = rcomma.exec(soFar))) {
+              if (match) {
+                soFar = soFar.slice(match[0].length) || soFar;
+              }
+              groups.push(tokens = []);
             }
-            return results;
+            matched = false;
+            if (match = rleadingCombinator.exec(soFar)) {
+              matched = match.shift();
+              tokens.push({
+                value: matched,
+                // Cast descendant combinators to space
+                type: match[0].replace(rtrimCSS, " ")
+              });
+              soFar = soFar.slice(matched.length);
+            }
+            for (type in Expr.filter) {
+              if ((match = matchExpr[type].exec(soFar)) && (!preFilters[type] || (match = preFilters[type](match)))) {
+                matched = match.shift();
+                tokens.push({
+                  value: matched,
+                  type,
+                  matches: match
+                });
+                soFar = soFar.slice(matched.length);
+              }
+            }
+            if (!matched) {
+              break;
+            }
           }
-          function condense(unmatched, map, filter, context, xml) {
-            var elem, newUnmatched = [], i2 = 0, len = unmatched.length, mapped = map != null;
-            for (; i2 < len; i2++) {
-              if (elem = unmatched[i2]) {
-                if (!filter || filter(elem, context, xml)) {
-                  newUnmatched.push(elem);
-                  if (mapped) {
-                    map.push(i2);
-                  }
+          if (parseOnly) {
+            return soFar.length;
+          }
+          return soFar ? find.error(selector) : (
+            // Cache the tokens
+            tokenCache(selector, groups).slice(0)
+          );
+        }
+        function toSelector(tokens) {
+          var i2 = 0, len = tokens.length, selector = "";
+          for (; i2 < len; i2++) {
+            selector += tokens[i2].value;
+          }
+          return selector;
+        }
+        function addCombinator(matcher, combinator, base) {
+          var dir2 = combinator.dir, skip = combinator.next, key = skip || dir2, checkNonElements = base && key === "parentNode", doneName = done++;
+          return combinator.first ? (
+            // Check against closest ancestor/preceding element
+            function(elem, context, xml) {
+              while (elem = elem[dir2]) {
+                if (elem.nodeType === 1 || checkNonElements) {
+                  return matcher(elem, context, xml);
                 }
               }
+              return false;
             }
-            return newUnmatched;
-          }
-          function setMatcher(preFilter, selector, matcher, postFilter, postFinder, postSelector) {
-            if (postFilter && !postFilter[expando]) {
-              postFilter = setMatcher(postFilter);
-            }
-            if (postFinder && !postFinder[expando]) {
-              postFinder = setMatcher(postFinder, postSelector);
-            }
-            return markFunction(function(seed, results, context, xml) {
-              var temp, i2, elem, preMap = [], postMap = [], preexisting = results.length, elems = seed || multipleContexts(
-                selector || "*",
-                context.nodeType ? [context] : context,
-                []
-              ), matcherIn = preFilter && (seed || !selector) ? condense(elems, preMap, preFilter, context, xml) : elems, matcherOut = matcher ? (
-                // If we have a postFinder, or filtered seed, or non-seed postFilter or preexisting results,
-                postFinder || (seed ? preFilter : preexisting || postFilter) ? (
-                  // ...intermediate processing is necessary
-                  []
-                ) : (
-                  // ...otherwise use results directly
-                  results
-                )
-              ) : matcherIn;
-              if (matcher) {
-                matcher(matcherIn, matcherOut, context, xml);
-              }
-              if (postFilter) {
-                temp = condense(matcherOut, postMap);
-                postFilter(temp, [], context, xml);
-                i2 = temp.length;
-                while (i2--) {
-                  if (elem = temp[i2]) {
-                    matcherOut[postMap[i2]] = !(matcherIn[postMap[i2]] = elem);
+          ) : (
+            // Check against all ancestor/preceding elements
+            function(elem, context, xml) {
+              var oldCache, outerCache, newCache = [dirruns, doneName];
+              if (xml) {
+                while (elem = elem[dir2]) {
+                  if (elem.nodeType === 1 || checkNonElements) {
+                    if (matcher(elem, context, xml)) {
+                      return true;
+                    }
                   }
                 }
-              }
-              if (seed) {
-                if (postFinder || preFilter) {
-                  if (postFinder) {
-                    temp = [];
-                    i2 = matcherOut.length;
-                    while (i2--) {
-                      if (elem = matcherOut[i2]) {
-                        temp.push(matcherIn[i2] = elem);
+              } else {
+                while (elem = elem[dir2]) {
+                  if (elem.nodeType === 1 || checkNonElements) {
+                    outerCache = elem[expando] || (elem[expando] = {});
+                    if (skip && nodeName(elem, skip)) {
+                      elem = elem[dir2] || elem;
+                    } else if ((oldCache = outerCache[key]) && oldCache[0] === dirruns && oldCache[1] === doneName) {
+                      return newCache[2] = oldCache[2];
+                    } else {
+                      outerCache[key] = newCache;
+                      if (newCache[2] = matcher(elem, context, xml)) {
+                        return true;
                       }
                     }
-                    postFinder(null, matcherOut = [], temp, xml);
                   }
+                }
+              }
+              return false;
+            }
+          );
+        }
+        function elementMatcher(matchers) {
+          return matchers.length > 1 ? function(elem, context, xml) {
+            var i2 = matchers.length;
+            while (i2--) {
+              if (!matchers[i2](elem, context, xml)) {
+                return false;
+              }
+            }
+            return true;
+          } : matchers[0];
+        }
+        function multipleContexts(selector, contexts, results) {
+          var i2 = 0, len = contexts.length;
+          for (; i2 < len; i2++) {
+            find(selector, contexts[i2], results);
+          }
+          return results;
+        }
+        function condense(unmatched, map, filter, context, xml) {
+          var elem, newUnmatched = [], i2 = 0, len = unmatched.length, mapped = map != null;
+          for (; i2 < len; i2++) {
+            if (elem = unmatched[i2]) {
+              if (!filter || filter(elem, context, xml)) {
+                newUnmatched.push(elem);
+                if (mapped) {
+                  map.push(i2);
+                }
+              }
+            }
+          }
+          return newUnmatched;
+        }
+        function setMatcher(preFilter, selector, matcher, postFilter, postFinder, postSelector) {
+          if (postFilter && !postFilter[expando]) {
+            postFilter = setMatcher(postFilter);
+          }
+          if (postFinder && !postFinder[expando]) {
+            postFinder = setMatcher(postFinder, postSelector);
+          }
+          return markFunction(function(seed, results, context, xml) {
+            var temp, i2, elem, matcherOut, preMap = [], postMap = [], preexisting = results.length, elems = seed || multipleContexts(
+              selector || "*",
+              context.nodeType ? [context] : context,
+              []
+            ), matcherIn = preFilter && (seed || !selector) ? condense(elems, preMap, preFilter, context, xml) : elems;
+            if (matcher) {
+              matcherOut = postFinder || (seed ? preFilter : preexisting || postFilter) ? (
+                // ...intermediate processing is necessary
+                []
+              ) : (
+                // ...otherwise use results directly
+                results
+              );
+              matcher(matcherIn, matcherOut, context, xml);
+            } else {
+              matcherOut = matcherIn;
+            }
+            if (postFilter) {
+              temp = condense(matcherOut, postMap);
+              postFilter(temp, [], context, xml);
+              i2 = temp.length;
+              while (i2--) {
+                if (elem = temp[i2]) {
+                  matcherOut[postMap[i2]] = !(matcherIn[postMap[i2]] = elem);
+                }
+              }
+            }
+            if (seed) {
+              if (postFinder || preFilter) {
+                if (postFinder) {
+                  temp = [];
                   i2 = matcherOut.length;
                   while (i2--) {
-                    if ((elem = matcherOut[i2]) && (temp = postFinder ? indexOf2(seed, elem) : preMap[i2]) > -1) {
-                      seed[temp] = !(results[temp] = elem);
+                    if (elem = matcherOut[i2]) {
+                      temp.push(matcherIn[i2] = elem);
                     }
                   }
+                  postFinder(null, matcherOut = [], temp, xml);
                 }
-              } else {
-                matcherOut = condense(
-                  matcherOut === results ? matcherOut.splice(preexisting, matcherOut.length) : matcherOut
-                );
-                if (postFinder) {
-                  postFinder(null, results, matcherOut, xml);
-                } else {
-                  push2.apply(results, matcherOut);
-                }
-              }
-            });
-          }
-          function matcherFromTokens(tokens) {
-            var checkContext, matcher, j, len = tokens.length, leadingRelative = Expr.relative[tokens[0].type], implicitRelative = leadingRelative || Expr.relative[" "], i2 = leadingRelative ? 1 : 0, matchContext = addCombinator(function(elem) {
-              return elem === checkContext;
-            }, implicitRelative, true), matchAnyContext = addCombinator(function(elem) {
-              return indexOf2(checkContext, elem) > -1;
-            }, implicitRelative, true), matchers = [function(elem, context, xml) {
-              var ret = !leadingRelative && (xml || context !== outermostContext) || ((checkContext = context).nodeType ? matchContext(elem, context, xml) : matchAnyContext(elem, context, xml));
-              checkContext = null;
-              return ret;
-            }];
-            for (; i2 < len; i2++) {
-              if (matcher = Expr.relative[tokens[i2].type]) {
-                matchers = [addCombinator(elementMatcher(matchers), matcher)];
-              } else {
-                matcher = Expr.filter[tokens[i2].type].apply(null, tokens[i2].matches);
-                if (matcher[expando]) {
-                  j = ++i2;
-                  for (; j < len; j++) {
-                    if (Expr.relative[tokens[j].type]) {
-                      break;
-                    }
-                  }
-                  return setMatcher(
-                    i2 > 1 && elementMatcher(matchers),
-                    i2 > 1 && toSelector(
-                      // If the preceding token was a descendant combinator, insert an implicit any-element `*`
-                      tokens.slice(0, i2 - 1).concat({ value: tokens[i2 - 2].type === " " ? "*" : "" })
-                    ).replace(rtrim2, "$1"),
-                    matcher,
-                    i2 < j && matcherFromTokens(tokens.slice(i2, j)),
-                    j < len && matcherFromTokens(tokens = tokens.slice(j)),
-                    j < len && toSelector(tokens)
-                  );
-                }
-                matchers.push(matcher);
-              }
-            }
-            return elementMatcher(matchers);
-          }
-          function matcherFromGroupMatchers(elementMatchers, setMatchers) {
-            var bySet = setMatchers.length > 0, byElement = elementMatchers.length > 0, superMatcher = function(seed, context, xml, results, outermost) {
-              var elem, j, matcher, matchedCount = 0, i2 = "0", unmatched = seed && [], setMatched = [], contextBackup = outermostContext, elems = seed || byElement && Expr.find["TAG"]("*", outermost), dirrunsUnique = dirruns += contextBackup == null ? 1 : Math.random() || 0.1, len = elems.length;
-              if (outermost) {
-                outermostContext = context == document3 || context || outermost;
-              }
-              for (; i2 !== len && (elem = elems[i2]) != null; i2++) {
-                if (byElement && elem) {
-                  j = 0;
-                  if (!context && elem.ownerDocument != document3) {
-                    setDocument(elem);
-                    xml = !documentIsHTML;
-                  }
-                  while (matcher = elementMatchers[j++]) {
-                    if (matcher(elem, context || document3, xml)) {
-                      results.push(elem);
-                      break;
-                    }
-                  }
-                  if (outermost) {
-                    dirruns = dirrunsUnique;
-                  }
-                }
-                if (bySet) {
-                  if (elem = !matcher && elem) {
-                    matchedCount--;
-                  }
-                  if (seed) {
-                    unmatched.push(elem);
+                i2 = matcherOut.length;
+                while (i2--) {
+                  if ((elem = matcherOut[i2]) && (temp = postFinder ? indexOf.call(seed, elem) : preMap[i2]) > -1) {
+                    seed[temp] = !(results[temp] = elem);
                   }
                 }
               }
-              matchedCount += i2;
-              if (bySet && i2 !== matchedCount) {
-                j = 0;
-                while (matcher = setMatchers[j++]) {
-                  matcher(unmatched, setMatched, context, xml);
-                }
-                if (seed) {
-                  if (matchedCount > 0) {
-                    while (i2--) {
-                      if (!(unmatched[i2] || setMatched[i2])) {
-                        setMatched[i2] = pop.call(results);
-                      }
-                    }
-                  }
-                  setMatched = condense(setMatched);
-                }
-                push2.apply(results, setMatched);
-                if (outermost && !seed && setMatched.length > 0 && matchedCount + setMatchers.length > 1) {
-                  Sizzle2.uniqueSort(results);
-                }
-              }
-              if (outermost) {
-                dirruns = dirrunsUnique;
-                outermostContext = contextBackup;
-              }
-              return unmatched;
-            };
-            return bySet ? markFunction(superMatcher) : superMatcher;
-          }
-          compile = Sizzle2.compile = function(selector, match) {
-            var i2, setMatchers = [], elementMatchers = [], cached = compilerCache[selector + " "];
-            if (!cached) {
-              if (!match) {
-                match = tokenize(selector);
-              }
-              i2 = match.length;
-              while (i2--) {
-                cached = matcherFromTokens(match[i2]);
-                if (cached[expando]) {
-                  setMatchers.push(cached);
-                } else {
-                  elementMatchers.push(cached);
-                }
-              }
-              cached = compilerCache(
-                selector,
-                matcherFromGroupMatchers(elementMatchers, setMatchers)
+            } else {
+              matcherOut = condense(
+                matcherOut === results ? matcherOut.splice(preexisting, matcherOut.length) : matcherOut
               );
-              cached.selector = selector;
-            }
-            return cached;
-          };
-          select = Sizzle2.select = function(selector, context, results, seed) {
-            var i2, tokens, token, type, find, compiled = typeof selector === "function" && selector, match = !seed && tokenize(selector = compiled.selector || selector);
-            results = results || [];
-            if (match.length === 1) {
-              tokens = match[0] = match[0].slice(0);
-              if (tokens.length > 2 && (token = tokens[0]).type === "ID" && context.nodeType === 9 && documentIsHTML && Expr.relative[tokens[1].type]) {
-                context = (Expr.find["ID"](token.matches[0].replace(runescape, funescape), context) || [])[0];
-                if (!context) {
-                  return results;
-                } else if (compiled) {
-                  context = context.parentNode;
-                }
-                selector = selector.slice(tokens.shift().value.length);
+              if (postFinder) {
+                postFinder(null, results, matcherOut, xml);
+              } else {
+                push2.apply(results, matcherOut);
               }
-              i2 = matchExpr["needsContext"].test(selector) ? 0 : tokens.length;
-              while (i2--) {
-                token = tokens[i2];
-                if (Expr.relative[type = token.type]) {
-                  break;
-                }
-                if (find = Expr.find[type]) {
-                  if (seed = find(
-                    token.matches[0].replace(runescape, funescape),
-                    rsibling.test(tokens[0].type) && testContext(context.parentNode) || context
-                  )) {
-                    tokens.splice(i2, 1);
-                    selector = seed.length && toSelector(tokens);
-                    if (!selector) {
-                      push2.apply(results, seed);
-                      return results;
-                    }
+            }
+          });
+        }
+        function matcherFromTokens(tokens) {
+          var checkContext, matcher, j, len = tokens.length, leadingRelative = Expr.relative[tokens[0].type], implicitRelative = leadingRelative || Expr.relative[" "], i2 = leadingRelative ? 1 : 0, matchContext = addCombinator(function(elem) {
+            return elem === checkContext;
+          }, implicitRelative, true), matchAnyContext = addCombinator(function(elem) {
+            return indexOf.call(checkContext, elem) > -1;
+          }, implicitRelative, true), matchers = [function(elem, context, xml) {
+            var ret = !leadingRelative && (xml || context != outermostContext) || ((checkContext = context).nodeType ? matchContext(elem, context, xml) : matchAnyContext(elem, context, xml));
+            checkContext = null;
+            return ret;
+          }];
+          for (; i2 < len; i2++) {
+            if (matcher = Expr.relative[tokens[i2].type]) {
+              matchers = [addCombinator(elementMatcher(matchers), matcher)];
+            } else {
+              matcher = Expr.filter[tokens[i2].type].apply(null, tokens[i2].matches);
+              if (matcher[expando]) {
+                j = ++i2;
+                for (; j < len; j++) {
+                  if (Expr.relative[tokens[j].type]) {
                     break;
                   }
                 }
+                return setMatcher(
+                  i2 > 1 && elementMatcher(matchers),
+                  i2 > 1 && toSelector(
+                    // If the preceding token was a descendant combinator, insert an implicit any-element `*`
+                    tokens.slice(0, i2 - 1).concat({ value: tokens[i2 - 2].type === " " ? "*" : "" })
+                  ).replace(rtrimCSS, "$1"),
+                  matcher,
+                  i2 < j && matcherFromTokens(tokens.slice(i2, j)),
+                  j < len && matcherFromTokens(tokens = tokens.slice(j)),
+                  j < len && toSelector(tokens)
+                );
+              }
+              matchers.push(matcher);
+            }
+          }
+          return elementMatcher(matchers);
+        }
+        function matcherFromGroupMatchers(elementMatchers, setMatchers) {
+          var bySet = setMatchers.length > 0, byElement = elementMatchers.length > 0, superMatcher = function(seed, context, xml, results, outermost) {
+            var elem, j, matcher, matchedCount = 0, i2 = "0", unmatched = seed && [], setMatched = [], contextBackup = outermostContext, elems = seed || byElement && Expr.find.TAG("*", outermost), dirrunsUnique = dirruns += contextBackup == null ? 1 : Math.random() || 0.1, len = elems.length;
+            if (outermost) {
+              outermostContext = context == document3 || context || outermost;
+            }
+            for (; i2 !== len && (elem = elems[i2]) != null; i2++) {
+              if (byElement && elem) {
+                j = 0;
+                if (!context && elem.ownerDocument != document3) {
+                  setDocument(elem);
+                  xml = !documentIsHTML;
+                }
+                while (matcher = elementMatchers[j++]) {
+                  if (matcher(elem, context || document3, xml)) {
+                    push2.call(results, elem);
+                    break;
+                  }
+                }
+                if (outermost) {
+                  dirruns = dirrunsUnique;
+                }
+              }
+              if (bySet) {
+                if (elem = !matcher && elem) {
+                  matchedCount--;
+                }
+                if (seed) {
+                  unmatched.push(elem);
+                }
               }
             }
-            (compiled || compile(selector, match))(
-              seed,
-              context,
-              !documentIsHTML,
-              results,
-              !context || rsibling.test(selector) && testContext(context.parentNode) || context
-            );
-            return results;
+            matchedCount += i2;
+            if (bySet && i2 !== matchedCount) {
+              j = 0;
+              while (matcher = setMatchers[j++]) {
+                matcher(unmatched, setMatched, context, xml);
+              }
+              if (seed) {
+                if (matchedCount > 0) {
+                  while (i2--) {
+                    if (!(unmatched[i2] || setMatched[i2])) {
+                      setMatched[i2] = pop.call(results);
+                    }
+                  }
+                }
+                setMatched = condense(setMatched);
+              }
+              push2.apply(results, setMatched);
+              if (outermost && !seed && setMatched.length > 0 && matchedCount + setMatchers.length > 1) {
+                jQuery2.uniqueSort(results);
+              }
+            }
+            if (outermost) {
+              dirruns = dirrunsUnique;
+              outermostContext = contextBackup;
+            }
+            return unmatched;
           };
-          support2.sortStable = expando.split("").sort(sortOrder).join("") === expando;
-          support2.detectDuplicates = !!hasDuplicate;
-          setDocument();
-          support2.sortDetached = assert(function(el) {
-            return el.compareDocumentPosition(document3.createElement("fieldset")) & 1;
-          });
-          if (!assert(function(el) {
-            el.innerHTML = "<a href='#'></a>";
-            return el.firstChild.getAttribute("href") === "#";
-          })) {
-            addHandle("type|href|height|width", function(elem, name, isXML2) {
-              if (!isXML2) {
-                return elem.getAttribute(name, name.toLowerCase() === "type" ? 1 : 2);
+          return bySet ? markFunction(superMatcher) : superMatcher;
+        }
+        function compile(selector, match) {
+          var i2, setMatchers = [], elementMatchers = [], cached = compilerCache[selector + " "];
+          if (!cached) {
+            if (!match) {
+              match = tokenize(selector);
+            }
+            i2 = match.length;
+            while (i2--) {
+              cached = matcherFromTokens(match[i2]);
+              if (cached[expando]) {
+                setMatchers.push(cached);
+              } else {
+                elementMatchers.push(cached);
               }
-            });
+            }
+            cached = compilerCache(
+              selector,
+              matcherFromGroupMatchers(elementMatchers, setMatchers)
+            );
+            cached.selector = selector;
           }
-          if (!support2.attributes || !assert(function(el) {
-            el.innerHTML = "<input/>";
-            el.firstChild.setAttribute("value", "");
-            return el.firstChild.getAttribute("value") === "";
-          })) {
-            addHandle("value", function(elem, _name, isXML2) {
-              if (!isXML2 && elem.nodeName.toLowerCase() === "input") {
-                return elem.defaultValue;
+          return cached;
+        }
+        function select(selector, context, results, seed) {
+          var i2, tokens, token, type, find2, compiled = typeof selector === "function" && selector, match = !seed && tokenize(selector = compiled.selector || selector);
+          results = results || [];
+          if (match.length === 1) {
+            tokens = match[0] = match[0].slice(0);
+            if (tokens.length > 2 && (token = tokens[0]).type === "ID" && context.nodeType === 9 && documentIsHTML && Expr.relative[tokens[1].type]) {
+              context = (Expr.find.ID(
+                token.matches[0].replace(runescape, funescape),
+                context
+              ) || [])[0];
+              if (!context) {
+                return results;
+              } else if (compiled) {
+                context = context.parentNode;
               }
-            });
-          }
-          if (!assert(function(el) {
-            return el.getAttribute("disabled") == null;
-          })) {
-            addHandle(booleans, function(elem, name, isXML2) {
-              var val;
-              if (!isXML2) {
-                return elem[name] === true ? name.toLowerCase() : (val = elem.getAttributeNode(name)) && val.specified ? val.value : null;
+              selector = selector.slice(tokens.shift().value.length);
+            }
+            i2 = matchExpr.needsContext.test(selector) ? 0 : tokens.length;
+            while (i2--) {
+              token = tokens[i2];
+              if (Expr.relative[type = token.type]) {
+                break;
               }
-            });
+              if (find2 = Expr.find[type]) {
+                if (seed = find2(
+                  token.matches[0].replace(runescape, funescape),
+                  rsibling.test(tokens[0].type) && testContext(context.parentNode) || context
+                )) {
+                  tokens.splice(i2, 1);
+                  selector = seed.length && toSelector(tokens);
+                  if (!selector) {
+                    push2.apply(results, seed);
+                    return results;
+                  }
+                  break;
+                }
+              }
+            }
           }
-          return Sizzle2;
-        }(window2)
-      );
-      jQuery2.find = Sizzle;
-      jQuery2.expr = Sizzle.selectors;
-      jQuery2.expr[":"] = jQuery2.expr.pseudos;
-      jQuery2.uniqueSort = jQuery2.unique = Sizzle.uniqueSort;
-      jQuery2.text = Sizzle.getText;
-      jQuery2.isXMLDoc = Sizzle.isXML;
-      jQuery2.contains = Sizzle.contains;
-      jQuery2.escapeSelector = Sizzle.escape;
+          (compiled || compile(selector, match))(
+            seed,
+            context,
+            !documentIsHTML,
+            results,
+            !context || rsibling.test(selector) && testContext(context.parentNode) || context
+          );
+          return results;
+        }
+        support.sortStable = expando.split("").sort(sortOrder).join("") === expando;
+        setDocument();
+        support.sortDetached = assert(function(el) {
+          return el.compareDocumentPosition(document3.createElement("fieldset")) & 1;
+        });
+        jQuery2.find = find;
+        jQuery2.expr[":"] = jQuery2.expr.pseudos;
+        jQuery2.unique = jQuery2.uniqueSort;
+        find.compile = compile;
+        find.select = select;
+        find.setDocument = setDocument;
+        find.tokenize = tokenize;
+        find.escape = jQuery2.escapeSelector;
+        find.getText = jQuery2.text;
+        find.isXML = jQuery2.isXMLDoc;
+        find.selectors = jQuery2.expr;
+        find.support = jQuery2.support;
+        find.uniqueSort = jQuery2.uniqueSort;
+      })();
       var dir = function(elem, dir2, until) {
         var matched = [], truncate = until !== void 0;
         while ((elem = elem[dir2]) && elem.nodeType !== 9) {
@@ -1673,9 +1556,6 @@ var require_jquery = __commonJS({
         return matched;
       };
       var rneedsContext = jQuery2.expr.match.needsContext;
-      function nodeName(elem, name) {
-        return elem.nodeName && elem.nodeName.toLowerCase() === name.toLowerCase();
-      }
       var rsingleTag = /^<([a-z][^\/\0>:\x20\t\r\n\f]*)[\x20\t\r\n\f]*\/?>(?:<\/\1>|)$/i;
       function winnow(elements, qualifier, not) {
         if (isFunction(qualifier)) {
@@ -1822,7 +1702,7 @@ var require_jquery = __commonJS({
             for (; i < l; i++) {
               for (cur = this[i]; cur && cur !== context; cur = cur.parentNode) {
                 if (cur.nodeType < 11 && (targets ? targets.index(cur) > -1 : (
-                  // Don't pass non-elements to Sizzle
+                  // Don't pass non-elements to jQuery#find
                   cur.nodeType === 1 && jQuery2.find.matchesSelector(cur, selectors)
                 ))) {
                   matched.push(cur);
@@ -2195,7 +2075,7 @@ var require_jquery = __commonJS({
                       if (jQuery2.Deferred.exceptionHook) {
                         jQuery2.Deferred.exceptionHook(
                           e,
-                          process.stackTrace
+                          process.error
                         );
                       }
                       if (depth + 1 >= maxDepth) {
@@ -2210,8 +2090,10 @@ var require_jquery = __commonJS({
                   if (depth) {
                     process();
                   } else {
-                    if (jQuery2.Deferred.getStackHook) {
-                      process.stackTrace = jQuery2.Deferred.getStackHook();
+                    if (jQuery2.Deferred.getErrorHook) {
+                      process.error = jQuery2.Deferred.getErrorHook();
+                    } else if (jQuery2.Deferred.getStackHook) {
+                      process.error = jQuery2.Deferred.getStackHook();
                     }
                     window2.setTimeout(process);
                   }
@@ -2310,9 +2192,13 @@ var require_jquery = __commonJS({
         }
       });
       var rerrorNames = /^(Eval|Internal|Range|Reference|Syntax|Type|URI)Error$/;
-      jQuery2.Deferred.exceptionHook = function(error, stack) {
+      jQuery2.Deferred.exceptionHook = function(error, asyncError) {
         if (window2.console && window2.console.warn && error && rerrorNames.test(error.name)) {
-          window2.console.warn("jQuery.Deferred exception: " + error.message, error.stack, stack);
+          window2.console.warn(
+            "jQuery.Deferred exception: " + error.message,
+            error.stack,
+            asyncError
+          );
         }
       };
       jQuery2.readyException = function(error) {
@@ -2331,7 +2217,7 @@ var require_jquery = __commonJS({
         // Is the DOM ready to be used? Set to true once it occurs.
         isReady: false,
         // A counter to track how many items to wait for before
-        // the ready event fires. See #6781
+        // the ready event fires. See trac-6781
         readyWait: 1,
         // Handle when the DOM is ready
         ready: function(wait) {
@@ -2919,15 +2805,6 @@ var require_jquery = __commonJS({
       function returnFalse() {
         return false;
       }
-      function expectSync(elem, type) {
-        return elem === safeActiveElement() === (type === "focus");
-      }
-      function safeActiveElement() {
-        try {
-          return document2.activeElement;
-        } catch (err) {
-        }
-      }
       function on(elem, types, selector, data, fn2, one) {
         var origFn, type;
         if (typeof types === "object") {
@@ -3193,7 +3070,7 @@ var require_jquery = __commonJS({
             setup: function(data) {
               var el = this || data;
               if (rcheckableType.test(el.type) && el.click && nodeName(el, "input")) {
-                leverageNative(el, "click", returnTrue);
+                leverageNative(el, "click", true);
               }
               return false;
             },
@@ -3220,8 +3097,8 @@ var require_jquery = __commonJS({
           }
         }
       };
-      function leverageNative(el, type, expectSync2) {
-        if (!expectSync2) {
+      function leverageNative(el, type, isSetup) {
+        if (!isSetup) {
           if (dataPriv.get(el, type) === void 0) {
             jQuery2.event.add(el, type, returnTrue);
           }
@@ -3231,38 +3108,30 @@ var require_jquery = __commonJS({
         jQuery2.event.add(el, type, {
           namespace: false,
           handler: function(event) {
-            var notAsync, result, saved = dataPriv.get(this, type);
+            var result, saved = dataPriv.get(this, type);
             if (event.isTrigger & 1 && this[type]) {
-              if (!saved.length) {
+              if (!saved) {
                 saved = slice.call(arguments);
                 dataPriv.set(this, type, saved);
-                notAsync = expectSync2(this, type);
                 this[type]();
                 result = dataPriv.get(this, type);
-                if (saved !== result || notAsync) {
-                  dataPriv.set(this, type, false);
-                } else {
-                  result = {};
-                }
+                dataPriv.set(this, type, false);
                 if (saved !== result) {
                   event.stopImmediatePropagation();
                   event.preventDefault();
-                  return result && result.value;
+                  return result;
                 }
               } else if ((jQuery2.event.special[type] || {}).delegateType) {
                 event.stopPropagation();
               }
-            } else if (saved.length) {
-              dataPriv.set(this, type, {
-                value: jQuery2.event.trigger(
-                  // Support: IE <=9 - 11+
-                  // Extend with the prototype to reset the above stopImmediatePropagation()
-                  jQuery2.extend(saved[0], jQuery2.Event.prototype),
-                  saved.slice(1),
-                  this
-                )
-              });
-              event.stopImmediatePropagation();
+            } else if (saved) {
+              dataPriv.set(this, type, jQuery2.event.trigger(
+                saved[0],
+                saved.slice(1),
+                this
+              ));
+              event.stopPropagation();
+              event.isImmediatePropagationStopped = returnTrue;
             }
           }
         });
@@ -3356,22 +3225,88 @@ var require_jquery = __commonJS({
         which: true
       }, jQuery2.event.addProp);
       jQuery2.each({ focus: "focusin", blur: "focusout" }, function(type, delegateType) {
+        function focusMappedHandler(nativeEvent) {
+          if (document2.documentMode) {
+            var handle = dataPriv.get(this, "handle"), event = jQuery2.event.fix(nativeEvent);
+            event.type = nativeEvent.type === "focusin" ? "focus" : "blur";
+            event.isSimulated = true;
+            handle(nativeEvent);
+            if (event.target === event.currentTarget) {
+              handle(event);
+            }
+          } else {
+            jQuery2.event.simulate(
+              delegateType,
+              nativeEvent.target,
+              jQuery2.event.fix(nativeEvent)
+            );
+          }
+        }
         jQuery2.event.special[type] = {
           // Utilize native event if possible so blur/focus sequence is correct
           setup: function() {
-            leverageNative(this, type, expectSync);
-            return false;
+            var attaches;
+            leverageNative(this, type, true);
+            if (document2.documentMode) {
+              attaches = dataPriv.get(this, delegateType);
+              if (!attaches) {
+                this.addEventListener(delegateType, focusMappedHandler);
+              }
+              dataPriv.set(this, delegateType, (attaches || 0) + 1);
+            } else {
+              return false;
+            }
           },
           trigger: function() {
             leverageNative(this, type);
             return true;
           },
-          // Suppress native focus or blur as it's already being fired
-          // in leverageNative.
-          _default: function() {
-            return true;
+          teardown: function() {
+            var attaches;
+            if (document2.documentMode) {
+              attaches = dataPriv.get(this, delegateType) - 1;
+              if (!attaches) {
+                this.removeEventListener(delegateType, focusMappedHandler);
+                dataPriv.remove(this, delegateType);
+              } else {
+                dataPriv.set(this, delegateType, attaches);
+              }
+            } else {
+              return false;
+            }
+          },
+          // Suppress native focus or blur if we're currently inside
+          // a leveraged native-event stack
+          _default: function(event) {
+            return dataPriv.get(event.target, type);
           },
           delegateType
+        };
+        jQuery2.event.special[delegateType] = {
+          setup: function() {
+            var doc = this.ownerDocument || this.document || this, dataHolder = document2.documentMode ? this : doc, attaches = dataPriv.get(dataHolder, delegateType);
+            if (!attaches) {
+              if (document2.documentMode) {
+                this.addEventListener(delegateType, focusMappedHandler);
+              } else {
+                doc.addEventListener(type, focusMappedHandler, true);
+              }
+            }
+            dataPriv.set(dataHolder, delegateType, (attaches || 0) + 1);
+          },
+          teardown: function() {
+            var doc = this.ownerDocument || this.document || this, dataHolder = document2.documentMode ? this : doc, attaches = dataPriv.get(dataHolder, delegateType) - 1;
+            if (!attaches) {
+              if (document2.documentMode) {
+                this.removeEventListener(delegateType, focusMappedHandler);
+              } else {
+                doc.removeEventListener(type, focusMappedHandler, true);
+              }
+              dataPriv.remove(dataHolder, delegateType);
+            } else {
+              dataPriv.set(dataHolder, delegateType, attaches);
+            }
+          }
         };
       });
       jQuery2.each({
@@ -3430,7 +3365,7 @@ var require_jquery = __commonJS({
           });
         }
       });
-      var rnoInnerhtml = /<script|<style|<link/i, rchecked = /checked\s*(?:[^=]|=\s*.checked.)/i, rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g;
+      var rnoInnerhtml = /<script|<style|<link/i, rchecked = /checked\s*(?:[^=]|=\s*.checked.)/i, rcleanScript = /^\s*<!\[CDATA\[|\]\]>\s*$/g;
       function manipulationTarget(elem, content) {
         if (nodeName(elem, "table") && nodeName(content.nodeType !== 11 ? content : content.firstChild, "tr")) {
           return jQuery2(elem).children("tbody")[0] || elem;
@@ -3720,6 +3655,7 @@ var require_jquery = __commonJS({
         };
       });
       var rnumnonpx = new RegExp("^(" + pnum + ")(?!px)[a-z%]+$", "i");
+      var rcustomProp = /^--/;
       var getStyles = function(elem) {
         var view = elem.ownerDocument.defaultView;
         if (!view || !view.opener) {
@@ -3806,7 +3742,7 @@ var require_jquery = __commonJS({
               tr = document2.createElement("tr");
               trChild = document2.createElement("div");
               table.style.cssText = "position:absolute;left:-11111px;border-collapse:separate";
-              tr.style.cssText = "border:1px solid";
+              tr.style.cssText = "box-sizing:content-box;border:1px solid";
               tr.style.height = "1px";
               trChild.style.height = "9px";
               trChild.style.display = "block";
@@ -3820,10 +3756,13 @@ var require_jquery = __commonJS({
         });
       })();
       function curCSS(elem, name, computed) {
-        var width, minWidth, maxWidth, ret, style = elem.style;
+        var width, minWidth, maxWidth, ret, isCustomProp = rcustomProp.test(name), style = elem.style;
         computed = computed || getStyles(elem);
         if (computed) {
           ret = computed.getPropertyValue(name) || computed[name];
+          if (isCustomProp && ret) {
+            ret = ret.replace(rtrimCSS, "$1") || void 0;
+          }
           if (ret === "" && !isAttached(elem)) {
             ret = jQuery2.style(elem, name);
           }
@@ -3875,7 +3814,7 @@ var require_jquery = __commonJS({
         }
         return vendorProps[name] = vendorPropName(name) || name;
       }
-      var rdisplayswap = /^(none|table(?!-c[ea]).+)/, rcustomProp = /^--/, cssShow = { position: "absolute", visibility: "hidden", display: "block" }, cssNormalTransform = {
+      var rdisplayswap = /^(none|table(?!-c[ea]).+)/, cssShow = { position: "absolute", visibility: "hidden", display: "block" }, cssNormalTransform = {
         letterSpacing: "0",
         fontWeight: "400"
       };
@@ -3887,13 +3826,13 @@ var require_jquery = __commonJS({
         ) : value;
       }
       function boxModelAdjustment(elem, dimension, box, isBorderBox, styles, computedVal) {
-        var i = dimension === "width" ? 1 : 0, extra = 0, delta = 0;
+        var i = dimension === "width" ? 1 : 0, extra = 0, delta = 0, marginDelta = 0;
         if (box === (isBorderBox ? "border" : "content")) {
           return 0;
         }
         for (; i < 4; i += 2) {
           if (box === "margin") {
-            delta += jQuery2.css(elem, box + cssExpand[i], true, styles);
+            marginDelta += jQuery2.css(elem, box + cssExpand[i], true, styles);
           }
           if (!isBorderBox) {
             delta += jQuery2.css(elem, "padding" + cssExpand[i], true, styles);
@@ -3918,7 +3857,7 @@ var require_jquery = __commonJS({
             // Use an explicit zero to avoid NaN (gh-3964)
           )) || 0;
         }
-        return delta;
+        return delta + marginDelta;
       }
       function getWidthOrHeight(elem, dimension, extra) {
         var styles = getStyles(elem), boxSizingNeeded = !support.boxSizingReliable() || extra, isBorderBox = boxSizingNeeded && jQuery2.css(elem, "boxSizing", false, styles) === "border-box", valueIsBorderBox = isBorderBox, val = curCSS(elem, dimension, styles), offsetProp = "offset" + dimension[0].toUpperCase() + dimension.slice(1);
@@ -3970,26 +3909,34 @@ var require_jquery = __commonJS({
         },
         // Don't automatically add "px" to these possibly-unitless properties
         cssNumber: {
-          "animationIterationCount": true,
-          "columnCount": true,
-          "fillOpacity": true,
-          "flexGrow": true,
-          "flexShrink": true,
-          "fontWeight": true,
-          "gridArea": true,
-          "gridColumn": true,
-          "gridColumnEnd": true,
-          "gridColumnStart": true,
-          "gridRow": true,
-          "gridRowEnd": true,
-          "gridRowStart": true,
-          "lineHeight": true,
-          "opacity": true,
-          "order": true,
-          "orphans": true,
-          "widows": true,
-          "zIndex": true,
-          "zoom": true
+          animationIterationCount: true,
+          aspectRatio: true,
+          borderImageSlice: true,
+          columnCount: true,
+          flexGrow: true,
+          flexShrink: true,
+          fontWeight: true,
+          gridArea: true,
+          gridColumn: true,
+          gridColumnEnd: true,
+          gridColumnStart: true,
+          gridRow: true,
+          gridRowEnd: true,
+          gridRowStart: true,
+          lineHeight: true,
+          opacity: true,
+          order: true,
+          orphans: true,
+          scale: true,
+          widows: true,
+          zIndex: true,
+          zoom: true,
+          // SVG-related
+          fillOpacity: true,
+          floodOpacity: true,
+          stopOpacity: true,
+          strokeMiterlimit: true,
+          strokeOpacity: true
         },
         // Add in properties whose names you wish to fix before
         // setting or getting the value
@@ -4892,84 +4839,83 @@ var require_jquery = __commonJS({
       }
       jQuery2.fn.extend({
         addClass: function(value) {
-          var classes, elem, cur, curValue, clazz, j, finalValue, i = 0;
+          var classNames, cur, curValue, className, i, finalValue;
           if (isFunction(value)) {
-            return this.each(function(j2) {
-              jQuery2(this).addClass(value.call(this, j2, getClass(this)));
+            return this.each(function(j) {
+              jQuery2(this).addClass(value.call(this, j, getClass(this)));
             });
           }
-          classes = classesToArray(value);
-          if (classes.length) {
-            while (elem = this[i++]) {
-              curValue = getClass(elem);
-              cur = elem.nodeType === 1 && " " + stripAndCollapse(curValue) + " ";
+          classNames = classesToArray(value);
+          if (classNames.length) {
+            return this.each(function() {
+              curValue = getClass(this);
+              cur = this.nodeType === 1 && " " + stripAndCollapse(curValue) + " ";
               if (cur) {
-                j = 0;
-                while (clazz = classes[j++]) {
-                  if (cur.indexOf(" " + clazz + " ") < 0) {
-                    cur += clazz + " ";
+                for (i = 0; i < classNames.length; i++) {
+                  className = classNames[i];
+                  if (cur.indexOf(" " + className + " ") < 0) {
+                    cur += className + " ";
                   }
                 }
                 finalValue = stripAndCollapse(cur);
                 if (curValue !== finalValue) {
-                  elem.setAttribute("class", finalValue);
+                  this.setAttribute("class", finalValue);
                 }
               }
-            }
+            });
           }
           return this;
         },
         removeClass: function(value) {
-          var classes, elem, cur, curValue, clazz, j, finalValue, i = 0;
+          var classNames, cur, curValue, className, i, finalValue;
           if (isFunction(value)) {
-            return this.each(function(j2) {
-              jQuery2(this).removeClass(value.call(this, j2, getClass(this)));
+            return this.each(function(j) {
+              jQuery2(this).removeClass(value.call(this, j, getClass(this)));
             });
           }
           if (!arguments.length) {
             return this.attr("class", "");
           }
-          classes = classesToArray(value);
-          if (classes.length) {
-            while (elem = this[i++]) {
-              curValue = getClass(elem);
-              cur = elem.nodeType === 1 && " " + stripAndCollapse(curValue) + " ";
+          classNames = classesToArray(value);
+          if (classNames.length) {
+            return this.each(function() {
+              curValue = getClass(this);
+              cur = this.nodeType === 1 && " " + stripAndCollapse(curValue) + " ";
               if (cur) {
-                j = 0;
-                while (clazz = classes[j++]) {
-                  while (cur.indexOf(" " + clazz + " ") > -1) {
-                    cur = cur.replace(" " + clazz + " ", " ");
+                for (i = 0; i < classNames.length; i++) {
+                  className = classNames[i];
+                  while (cur.indexOf(" " + className + " ") > -1) {
+                    cur = cur.replace(" " + className + " ", " ");
                   }
                 }
                 finalValue = stripAndCollapse(cur);
                 if (curValue !== finalValue) {
-                  elem.setAttribute("class", finalValue);
+                  this.setAttribute("class", finalValue);
                 }
               }
-            }
+            });
           }
           return this;
         },
         toggleClass: function(value, stateVal) {
-          var type = typeof value, isValidValue = type === "string" || Array.isArray(value);
-          if (typeof stateVal === "boolean" && isValidValue) {
-            return stateVal ? this.addClass(value) : this.removeClass(value);
-          }
+          var classNames, className, i, self, type = typeof value, isValidValue = type === "string" || Array.isArray(value);
           if (isFunction(value)) {
-            return this.each(function(i) {
+            return this.each(function(i2) {
               jQuery2(this).toggleClass(
-                value.call(this, i, getClass(this), stateVal),
+                value.call(this, i2, getClass(this), stateVal),
                 stateVal
               );
             });
           }
+          if (typeof stateVal === "boolean" && isValidValue) {
+            return stateVal ? this.addClass(value) : this.removeClass(value);
+          }
+          classNames = classesToArray(value);
           return this.each(function() {
-            var className, i, self, classNames;
             if (isValidValue) {
-              i = 0;
               self = jQuery2(this);
-              classNames = classesToArray(value);
-              while (className = classNames[i++]) {
+              for (i = 0; i < classNames.length; i++) {
+                className = classNames[i];
                 if (self.hasClass(className)) {
                   self.removeClass(className);
                 } else {
@@ -5053,7 +4999,7 @@ var require_jquery = __commonJS({
               var val = jQuery2.find.attr(elem, "value");
               return val != null ? val : (
                 // Support: IE <=10 - 11 only
-                // option.text throws exceptions (#14686, #14858)
+                // option.text throws exceptions (trac-14686, trac-14858)
                 // Strip and collapse whitespace
                 // https://html.spec.whatwg.org/#strip-and-collapse-whitespace
                 stripAndCollapse(jQuery2.text(elem))
@@ -5111,7 +5057,26 @@ var require_jquery = __commonJS({
           };
         }
       });
-      support.focusin = "onfocusin" in window2;
+      var location2 = window2.location;
+      var nonce = { guid: Date.now() };
+      var rquery = /\?/;
+      jQuery2.parseXML = function(data) {
+        var xml, parserErrorElem;
+        if (!data || typeof data !== "string") {
+          return null;
+        }
+        try {
+          xml = new window2.DOMParser().parseFromString(data, "text/xml");
+        } catch (e) {
+        }
+        parserErrorElem = xml && xml.getElementsByTagName("parsererror")[0];
+        if (!xml || parserErrorElem) {
+          jQuery2.error("Invalid XML: " + (parserErrorElem ? jQuery2.map(parserErrorElem.childNodes, function(el) {
+            return el.textContent;
+          }).join("\n") : data));
+        }
+        return xml;
+      };
       var rfocusMorph = /^(?:focusinfocus|focusoutblur)$/, stopPropagationCallback = function(e) {
         e.stopPropagation();
       };
@@ -5225,51 +5190,6 @@ var require_jquery = __commonJS({
           }
         }
       });
-      if (!support.focusin) {
-        jQuery2.each({ focus: "focusin", blur: "focusout" }, function(orig, fix) {
-          var handler = function(event) {
-            jQuery2.event.simulate(fix, event.target, jQuery2.event.fix(event));
-          };
-          jQuery2.event.special[fix] = {
-            setup: function() {
-              var doc = this.ownerDocument || this.document || this, attaches = dataPriv.access(doc, fix);
-              if (!attaches) {
-                doc.addEventListener(orig, handler, true);
-              }
-              dataPriv.access(doc, fix, (attaches || 0) + 1);
-            },
-            teardown: function() {
-              var doc = this.ownerDocument || this.document || this, attaches = dataPriv.access(doc, fix) - 1;
-              if (!attaches) {
-                doc.removeEventListener(orig, handler, true);
-                dataPriv.remove(doc, fix);
-              } else {
-                dataPriv.access(doc, fix, attaches);
-              }
-            }
-          };
-        });
-      }
-      var location2 = window2.location;
-      var nonce = { guid: Date.now() };
-      var rquery = /\?/;
-      jQuery2.parseXML = function(data) {
-        var xml, parserErrorElem;
-        if (!data || typeof data !== "string") {
-          return null;
-        }
-        try {
-          xml = new window2.DOMParser().parseFromString(data, "text/xml");
-        } catch (e) {
-        }
-        parserErrorElem = xml && xml.getElementsByTagName("parsererror")[0];
-        if (!xml || parserErrorElem) {
-          jQuery2.error("Invalid XML: " + (parserErrorElem ? jQuery2.map(parserErrorElem.childNodes, function(el) {
-            return el.textContent;
-          }).join("\n") : data));
-        }
-        return xml;
-      };
       var rbracket = /\[\]$/, rCRLF = /\r?\n/g, rsubmitterTypes = /^(?:submit|button|image|reset|file)$/i, rsubmittable = /^(?:input|select|textarea|keygen)/i;
       function buildParams(prefix, obj, traditional, add) {
         var name;
@@ -5831,7 +5751,7 @@ var require_jquery = __commonJS({
       jQuery2._evalUrl = function(url, options, doc) {
         return jQuery2.ajax({
           url,
-          // Make this explicit, since user can override this through ajaxSetup (#11264)
+          // Make this explicit, since user can override this through ajaxSetup (trac-11264)
           type: "GET",
           dataType: "script",
           cache: true,
@@ -5914,7 +5834,7 @@ var require_jquery = __commonJS({
         // File protocol always yields status code 0, assume 200
         0: 200,
         // Support: IE <=9 only
-        // #1450: sometimes IE returns 1223 when it should be 204
+        // trac-1450: sometimes IE returns 1223 when it should be 204
         1223: 204
       }, xhrSupported = jQuery2.ajaxSettings.xhr();
       support.cors = !!xhrSupported && "withCredentials" in xhrSupported;
@@ -5957,7 +5877,7 @@ var require_jquery = __commonJS({
                         complete(0, "error");
                       } else {
                         complete(
-                          // File: protocol always yields status 0; see #8605, #14207
+                          // File: protocol always yields status 0; see trac-8605, trac-14207
                           xhr.status,
                           xhr.statusText
                         );
@@ -6381,7 +6301,7 @@ var require_jquery = __commonJS({
           return arguments.length === 1 ? this.off(selector, "**") : this.off(types, selector || "**", fn2);
         },
         hover: function(fnOver, fnOut) {
-          return this.mouseenter(fnOver).mouseleave(fnOut || fnOver);
+          return this.on("mouseenter", fnOver).on("mouseleave", fnOut || fnOver);
         }
       });
       jQuery2.each(
@@ -6392,7 +6312,7 @@ var require_jquery = __commonJS({
           };
         }
       );
-      var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g;
+      var rtrim = /^[\s\uFEFF\xA0]+|([^\s\uFEFF\xA0])[\s\uFEFF\xA0]+$/g;
       jQuery2.proxy = function(fn2, context) {
         var tmp, args, proxy;
         if (typeof context === "string") {
@@ -6433,7 +6353,7 @@ var require_jquery = __commonJS({
         !isNaN(obj - parseFloat(obj));
       };
       jQuery2.trim = function(text) {
-        return text == null ? "" : (text + "").replace(rtrim, "");
+        return text == null ? "" : (text + "").replace(rtrim, "$1");
       };
       if (typeof define === "function" && define.amd) {
         define("jquery", [], function() {
@@ -8133,14 +8053,14 @@ var onDOMContentLoaded = (callback) => {
 var isRTL = () => document.documentElement.dir === "rtl";
 var defineJQueryPlugin = (plugin) => {
   onDOMContentLoaded(() => {
-    const $2 = getjQuery();
-    if ($2) {
+    const $3 = getjQuery();
+    if ($3) {
       const name = plugin.NAME;
-      const JQUERY_NO_CONFLICT = $2.fn[name];
-      $2.fn[name] = plugin.jQueryInterface;
-      $2.fn[name].Constructor = plugin;
-      $2.fn[name].noConflict = () => {
-        $2.fn[name] = JQUERY_NO_CONFLICT;
+      const JQUERY_NO_CONFLICT = $3.fn[name];
+      $3.fn[name] = plugin.jQueryInterface;
+      $3.fn[name].Constructor = plugin;
+      $3.fn[name].noConflict = () => {
+        $3.fn[name] = JQUERY_NO_CONFLICT;
         return plugin.jQueryInterface;
       };
     }
@@ -8339,16 +8259,16 @@ var EventHandler = {
     if (typeof event !== "string" || !element) {
       return null;
     }
-    const $2 = getjQuery();
+    const $3 = getjQuery();
     const typeEvent = getTypeEvent(event);
     const inNamespace = event !== typeEvent;
     let jQueryEvent = null;
     let bubbles = true;
     let nativeDispatch = true;
     let defaultPrevented = false;
-    if (inNamespace && $2) {
-      jQueryEvent = $2.Event(event, args);
-      $2(element).trigger(jQueryEvent);
+    if (inNamespace && $3) {
+      jQueryEvent = $3.Event(event, args);
+      $3(element).trigger(jQueryEvent);
       bubbles = !jQueryEvent.isPropagationStopped();
       nativeDispatch = !jQueryEvent.isImmediatePropagationStopped();
       defaultPrevented = jQueryEvent.isDefaultPrevented();
@@ -11619,8 +11539,12 @@ defineJQueryPlugin(Toast);
 
 // app/javascript/src/jquery.js
 var import_jquery = __toESM(require_jquery());
-window.jQuery = import_jquery.default;
-window.$ = import_jquery.default;
+window.jQuery = jquery;
+window.$ = jquery;
+console.log(`loaded jquery`);
+(0, import_jquery.default)(document).ready(function() {
+  console.log("jQuery is working!");
+});
 
 // app/javascript/src/jquery-ui.js
 (function(factory) {
@@ -11630,26 +11554,26 @@ window.$ = import_jquery.default;
   } else {
     factory(jQuery);
   }
-})(function($2) {
+})(function($3) {
   "use strict";
-  $2.ui = $2.ui || {};
-  var version = $2.ui.version = "1.13.2";
+  $3.ui = $3.ui || {};
+  var version = $3.ui.version = "1.13.2";
   var widgetUuid = 0;
   var widgetHasOwnProperty = Array.prototype.hasOwnProperty;
   var widgetSlice = Array.prototype.slice;
-  $2.cleanData = /* @__PURE__ */ function(orig) {
+  $3.cleanData = /* @__PURE__ */ function(orig) {
     return function(elems) {
       var events, elem, i;
       for (i = 0; (elem = elems[i]) != null; i++) {
-        events = $2._data(elem, "events");
+        events = $3._data(elem, "events");
         if (events && events.remove) {
-          $2(elem).triggerHandler("remove");
+          $3(elem).triggerHandler("remove");
         }
       }
       orig(elems);
     };
-  }($2.cleanData);
-  $2.widget = function(name, base, prototype) {
+  }($3.cleanData);
+  $3.widget = function(name, base, prototype) {
     var existingConstructor, constructor, basePrototype;
     var proxiedPrototype = {};
     var namespace = name.split(".")[0];
@@ -11657,17 +11581,17 @@ window.$ = import_jquery.default;
     var fullName = namespace + "-" + name;
     if (!prototype) {
       prototype = base;
-      base = $2.Widget;
+      base = $3.Widget;
     }
     if (Array.isArray(prototype)) {
-      prototype = $2.extend.apply(null, [{}].concat(prototype));
+      prototype = $3.extend.apply(null, [{}].concat(prototype));
     }
-    $2.expr.pseudos[fullName.toLowerCase()] = function(elem) {
-      return !!$2.data(elem, fullName);
+    $3.expr.pseudos[fullName.toLowerCase()] = function(elem) {
+      return !!$3.data(elem, fullName);
     };
-    $2[namespace] = $2[namespace] || {};
-    existingConstructor = $2[namespace][name];
-    constructor = $2[namespace][name] = function(options, element) {
+    $3[namespace] = $3[namespace] || {};
+    existingConstructor = $3[namespace][name];
+    constructor = $3[namespace][name] = function(options, element) {
       if (!this || !this._createWidget) {
         return new constructor(options, element);
       }
@@ -11675,18 +11599,18 @@ window.$ = import_jquery.default;
         this._createWidget(options, element);
       }
     };
-    $2.extend(constructor, existingConstructor, {
+    $3.extend(constructor, existingConstructor, {
       version: prototype.version,
       // Copy the object used to create the prototype in case we need to
       // redefine the widget later
-      _proto: $2.extend({}, prototype),
+      _proto: $3.extend({}, prototype),
       // Track widgets that inherit from this widget in case this widget is
       // redefined after a widget inherits from it
       _childConstructors: []
     });
     basePrototype = new base();
-    basePrototype.options = $2.widget.extend({}, basePrototype.options);
-    $2.each(prototype, function(prop, value) {
+    basePrototype.options = $3.widget.extend({}, basePrototype.options);
+    $3.each(prototype, function(prop, value) {
       if (typeof value !== "function") {
         proxiedPrototype[prop] = value;
         return;
@@ -11711,7 +11635,7 @@ window.$ = import_jquery.default;
         };
       }();
     });
-    constructor.prototype = $2.widget.extend(basePrototype, {
+    constructor.prototype = $3.widget.extend(basePrototype, {
       // TODO: remove support for widgetEventPrefix
       // always use the name + a colon as the prefix, e.g., draggable:start
       // don't prefix for widgets that aren't DOM-based
@@ -11723,9 +11647,9 @@ window.$ = import_jquery.default;
       widgetFullName: fullName
     });
     if (existingConstructor) {
-      $2.each(existingConstructor._childConstructors, function(i, child) {
+      $3.each(existingConstructor._childConstructors, function(i, child) {
         var childPrototype = child.prototype;
-        $2.widget(
+        $3.widget(
           childPrototype.namespace + "." + childPrototype.widgetName,
           constructor,
           child._proto
@@ -11735,10 +11659,10 @@ window.$ = import_jquery.default;
     } else {
       base._childConstructors.push(constructor);
     }
-    $2.widget.bridge(name, constructor);
+    $3.widget.bridge(name, constructor);
     return constructor;
   };
-  $2.widget.extend = function(target) {
+  $3.widget.extend = function(target) {
     var input = widgetSlice.call(arguments, 1);
     var inputIndex = 0;
     var inputLength = input.length;
@@ -11748,10 +11672,10 @@ window.$ = import_jquery.default;
       for (key in input[inputIndex]) {
         value = input[inputIndex][key];
         if (widgetHasOwnProperty.call(input[inputIndex], key) && value !== void 0) {
-          if ($2.isPlainObject(value)) {
-            target[key] = $2.isPlainObject(target[key]) ? $2.widget.extend({}, target[key], value) : (
+          if ($3.isPlainObject(value)) {
+            target[key] = $3.isPlainObject(target[key]) ? $3.widget.extend({}, target[key], value) : (
               // Don't extend strings, arrays, etc. with objects
-              $2.widget.extend({}, value)
+              $3.widget.extend({}, value)
             );
           } else {
             target[key] = value;
@@ -11761,9 +11685,9 @@ window.$ = import_jquery.default;
     }
     return target;
   };
-  $2.widget.bridge = function(name, object) {
+  $3.widget.bridge = function(name, object) {
     var fullName = object.prototype.widgetFullName || name;
-    $2.fn[name] = function(options) {
+    $3.fn[name] = function(options) {
       var isMethodCall = typeof options === "string";
       var args = widgetSlice.call(arguments, 1);
       var returnValue = this;
@@ -11773,16 +11697,16 @@ window.$ = import_jquery.default;
         } else {
           this.each(function() {
             var methodValue;
-            var instance = $2.data(this, fullName);
+            var instance = $3.data(this, fullName);
             if (options === "instance") {
               returnValue = instance;
               return false;
             }
             if (!instance) {
-              return $2.error("cannot call methods on " + name + " prior to initialization; attempted to call method '" + options + "'");
+              return $3.error("cannot call methods on " + name + " prior to initialization; attempted to call method '" + options + "'");
             }
             if (typeof instance[options] !== "function" || options.charAt(0) === "_") {
-              return $2.error("no such method '" + options + "' for " + name + " widget instance");
+              return $3.error("no such method '" + options + "' for " + name + " widget instance");
             }
             methodValue = instance[options].apply(instance, args);
             if (methodValue !== instance && methodValue !== void 0) {
@@ -11793,27 +11717,27 @@ window.$ = import_jquery.default;
         }
       } else {
         if (args.length) {
-          options = $2.widget.extend.apply(null, [options].concat(args));
+          options = $3.widget.extend.apply(null, [options].concat(args));
         }
         this.each(function() {
-          var instance = $2.data(this, fullName);
+          var instance = $3.data(this, fullName);
           if (instance) {
             instance.option(options || {});
             if (instance._init) {
               instance._init();
             }
           } else {
-            $2.data(this, fullName, new object(options, this));
+            $3.data(this, fullName, new object(options, this));
           }
         });
       }
       return returnValue;
     };
   };
-  $2.Widget = function() {
+  $3.Widget = function() {
   };
-  $2.Widget._childConstructors = [];
-  $2.Widget.prototype = {
+  $3.Widget._childConstructors = [];
+  $3.Widget.prototype = {
     widgetName: "widget",
     widgetEventPrefix: "",
     defaultElement: "<div>",
@@ -11824,16 +11748,16 @@ window.$ = import_jquery.default;
       create: null
     },
     _createWidget: function(options, element) {
-      element = $2(element || this.defaultElement || this)[0];
-      this.element = $2(element);
+      element = $3(element || this.defaultElement || this)[0];
+      this.element = $3(element);
       this.uuid = widgetUuid++;
       this.eventNamespace = "." + this.widgetName + this.uuid;
-      this.bindings = $2();
-      this.hoverable = $2();
-      this.focusable = $2();
+      this.bindings = $3();
+      this.hoverable = $3();
+      this.focusable = $3();
       this.classesElementLookup = {};
       if (element !== this) {
-        $2.data(element, this.widgetFullName, this);
+        $3.data(element, this.widgetFullName, this);
         this._on(true, this.element, {
           remove: function(event) {
             if (event.target === element) {
@@ -11841,16 +11765,16 @@ window.$ = import_jquery.default;
             }
           }
         });
-        this.document = $2(element.style ? (
+        this.document = $3(element.style ? (
           // Element within the document
           element.ownerDocument
         ) : (
           // Element is window or document
           element.document || element
         ));
-        this.window = $2(this.document[0].defaultView || this.document[0].parentWindow);
+        this.window = $3(this.document[0].defaultView || this.document[0].parentWindow);
       }
-      this.options = $2.widget.extend(
+      this.options = $3.widget.extend(
         {},
         this.options,
         this._getCreateOptions(),
@@ -11866,20 +11790,20 @@ window.$ = import_jquery.default;
     _getCreateOptions: function() {
       return {};
     },
-    _getCreateEventData: $2.noop,
-    _create: $2.noop,
-    _init: $2.noop,
+    _getCreateEventData: $3.noop,
+    _create: $3.noop,
+    _init: $3.noop,
     destroy: function() {
       var that = this;
       this._destroy();
-      $2.each(this.classesElementLookup, function(key, value) {
+      $3.each(this.classesElementLookup, function(key, value) {
         that._removeClass(value, key);
       });
       this.element.off(this.eventNamespace).removeData(this.widgetFullName);
       this.widget().off(this.eventNamespace).removeAttr("aria-disabled");
       this.bindings.off(this.eventNamespace);
     },
-    _destroy: $2.noop,
+    _destroy: $3.noop,
     widget: function() {
       return this.element;
     },
@@ -11889,14 +11813,14 @@ window.$ = import_jquery.default;
       var curOption;
       var i;
       if (arguments.length === 0) {
-        return $2.widget.extend({}, this.options);
+        return $3.widget.extend({}, this.options);
       }
       if (typeof key === "string") {
         options = {};
         parts = key.split(".");
         key = parts.shift();
         if (parts.length) {
-          curOption = options[key] = $2.widget.extend({}, this.options[key]);
+          curOption = options[key] = $3.widget.extend({}, this.options[key]);
           for (i = 0; i < parts.length - 1; i++) {
             curOption[parts[i]] = curOption[parts[i]] || {};
             curOption = curOption[parts[i]];
@@ -11940,7 +11864,7 @@ window.$ = import_jquery.default;
         if (value[classKey] === this.options.classes[classKey] || !currentElements || !currentElements.length) {
           continue;
         }
-        elements = $2(currentElements.get());
+        elements = $3(currentElements.get());
         this._removeClass(currentElements, classKey);
         elements.addClass(this._classes({
           element: elements,
@@ -11966,14 +11890,14 @@ window.$ = import_jquery.default;
     _classes: function(options) {
       var full = [];
       var that = this;
-      options = $2.extend({
+      options = $3.extend({
         element: this.element,
         classes: this.options.classes || {}
       }, options);
       function bindRemoveEvent() {
         var nodesToBind = [];
         options.element.each(function(_, element) {
-          var isTracked = $2.map(that.classesElementLookup, function(elements) {
+          var isTracked = $3.map(that.classesElementLookup, function(elements) {
             return elements;
           }).some(function(elements) {
             return elements.is(element);
@@ -11982,19 +11906,19 @@ window.$ = import_jquery.default;
             nodesToBind.push(element);
           }
         });
-        that._on($2(nodesToBind), {
+        that._on($3(nodesToBind), {
           remove: "_untrackClassesElement"
         });
       }
       function processClassString(classes, checkOption) {
         var current, i;
         for (i = 0; i < classes.length; i++) {
-          current = that.classesElementLookup[classes[i]] || $2();
+          current = that.classesElementLookup[classes[i]] || $3();
           if (options.add) {
             bindRemoveEvent();
-            current = $2($2.uniqueSort(current.get().concat(options.element.get())));
+            current = $3($3.uniqueSort(current.get().concat(options.element.get())));
           } else {
-            current = $2(current.not(options.element).get());
+            current = $3(current.not(options.element).get());
           }
           that.classesElementLookup[classes[i]] = current;
           full.push(classes[i]);
@@ -12013,12 +11937,12 @@ window.$ = import_jquery.default;
     },
     _untrackClassesElement: function(event) {
       var that = this;
-      $2.each(that.classesElementLookup, function(key, value) {
-        if ($2.inArray(event.target, value) !== -1) {
-          that.classesElementLookup[key] = $2(value.not(event.target).get());
+      $3.each(that.classesElementLookup, function(key, value) {
+        if ($3.inArray(event.target, value) !== -1) {
+          that.classesElementLookup[key] = $3(value.not(event.target).get());
         }
       });
-      this._off($2(event.target));
+      this._off($3(event.target));
     },
     _removeClass: function(element, keys, extra) {
       return this._toggleClass(element, keys, extra, false);
@@ -12050,18 +11974,18 @@ window.$ = import_jquery.default;
         element = this.element;
         delegateElement = this.widget();
       } else {
-        element = delegateElement = $2(element);
+        element = delegateElement = $3(element);
         this.bindings = this.bindings.add(element);
       }
-      $2.each(handlers, function(event, handler) {
+      $3.each(handlers, function(event, handler) {
         function handlerProxy() {
-          if (!suppressDisabledCheck && (instance.options.disabled === true || $2(this).hasClass("ui-state-disabled"))) {
+          if (!suppressDisabledCheck && (instance.options.disabled === true || $3(this).hasClass("ui-state-disabled"))) {
             return;
           }
           return (typeof handler === "string" ? instance[handler] : handler).apply(instance, arguments);
         }
         if (typeof handler !== "string") {
-          handlerProxy.guid = handler.guid = handler.guid || handlerProxy.guid || $2.guid++;
+          handlerProxy.guid = handler.guid = handler.guid || handlerProxy.guid || $3.guid++;
         }
         var match = event.match(/^([\w:-]*)\s*(.*)$/);
         var eventName = match[1] + instance.eventNamespace;
@@ -12076,9 +12000,9 @@ window.$ = import_jquery.default;
     _off: function(element, eventName) {
       eventName = (eventName || "").split(" ").join(this.eventNamespace + " ") + this.eventNamespace;
       element.off(eventName);
-      this.bindings = $2(this.bindings.not(element).get());
-      this.focusable = $2(this.focusable.not(element).get());
-      this.hoverable = $2(this.hoverable.not(element).get());
+      this.bindings = $3(this.bindings.not(element).get());
+      this.focusable = $3(this.focusable.not(element).get());
+      this.hoverable = $3(this.hoverable.not(element).get());
     },
     _delay: function(handler, delay) {
       function handlerProxy() {
@@ -12091,10 +12015,10 @@ window.$ = import_jquery.default;
       this.hoverable = this.hoverable.add(element);
       this._on(element, {
         mouseenter: function(event) {
-          this._addClass($2(event.currentTarget), null, "ui-state-hover");
+          this._addClass($3(event.currentTarget), null, "ui-state-hover");
         },
         mouseleave: function(event) {
-          this._removeClass($2(event.currentTarget), null, "ui-state-hover");
+          this._removeClass($3(event.currentTarget), null, "ui-state-hover");
         }
       });
     },
@@ -12102,10 +12026,10 @@ window.$ = import_jquery.default;
       this.focusable = this.focusable.add(element);
       this._on(element, {
         focusin: function(event) {
-          this._addClass($2(event.currentTarget), null, "ui-state-focus");
+          this._addClass($3(event.currentTarget), null, "ui-state-focus");
         },
         focusout: function(event) {
-          this._removeClass($2(event.currentTarget), null, "ui-state-focus");
+          this._removeClass($3(event.currentTarget), null, "ui-state-focus");
         }
       });
     },
@@ -12113,7 +12037,7 @@ window.$ = import_jquery.default;
       var prop, orig;
       var callback = this.options[type];
       data2 = data2 || {};
-      event = $2.Event(event);
+      event = $3.Event(event);
       event.type = (type === this.widgetEventPrefix ? type : this.widgetEventPrefix + type).toLowerCase();
       event.target = this.element[0];
       orig = event.originalEvent;
@@ -12128,8 +12052,8 @@ window.$ = import_jquery.default;
       return !(typeof callback === "function" && callback.apply(this.element[0], [event].concat(data2)) === false || event.isDefaultPrevented());
     }
   };
-  $2.each({ show: "fadeIn", hide: "fadeOut" }, function(method, defaultEffect) {
-    $2.Widget.prototype["_" + method] = function(element, options, callback) {
+  $3.each({ show: "fadeIn", hide: "fadeOut" }, function(method, defaultEffect) {
+    $3.Widget.prototype["_" + method] = function(element, options, callback) {
       if (typeof options === "string") {
         options = { effect: options };
       }
@@ -12141,18 +12065,18 @@ window.$ = import_jquery.default;
       } else if (options === true) {
         options = {};
       }
-      hasOptions = !$2.isEmptyObject(options);
+      hasOptions = !$3.isEmptyObject(options);
       options.complete = callback;
       if (options.delay) {
         element.delay(options.delay);
       }
-      if (hasOptions && $2.effects && $2.effects.effect[effectName]) {
+      if (hasOptions && $3.effects && $3.effects.effect[effectName]) {
         element[method](options);
       } else if (effectName !== method && element[effectName]) {
         element[effectName](options.duration, options.easing, callback);
       } else {
         element.queue(function(next) {
-          $2(this)[method]();
+          $3(this)[method]();
           if (callback) {
             callback.call(element[0]);
           }
@@ -12161,9 +12085,9 @@ window.$ = import_jquery.default;
       }
     };
   });
-  var widget = $2.widget;
+  var widget = $3.widget;
   (function() {
-    var cachedScrollbarWidth, max2 = Math.max, abs = Math.abs, rhorizontal = /left|center|right/, rvertical = /top|center|bottom/, roffset = /[\+\-]\d+(\.[\d]+)?%?/, rposition = /^\w+/, rpercent = /%$/, _position = $2.fn.position;
+    var cachedScrollbarWidth, max2 = Math.max, abs = Math.abs, rhorizontal = /left|center|right/, rvertical = /top|center|bottom/, roffset = /[\+\-]\d+(\.[\d]+)?%?/, rposition = /^\w+/, rpercent = /%$/, _position = $3.fn.position;
     function getOffsets(offsets, width, height) {
       return [
         parseFloat(offsets[0]) * (rpercent.test(offsets[0]) ? width / 100 : 1),
@@ -12171,7 +12095,7 @@ window.$ = import_jquery.default;
       ];
     }
     function parseCss(element, property) {
-      return parseInt($2.css(element, property), 10) || 0;
+      return parseInt($3.css(element, property), 10) || 0;
     }
     function isWindow(obj) {
       return obj != null && obj === obj.window;
@@ -12205,13 +12129,13 @@ window.$ = import_jquery.default;
         offset: elem.offset()
       };
     }
-    $2.position = {
+    $3.position = {
       scrollbarWidth: function() {
         if (cachedScrollbarWidth !== void 0) {
           return cachedScrollbarWidth;
         }
-        var w1, w2, div = $2("<div style='display:block;position:absolute;width:200px;height:200px;overflow:hidden;'><div style='height:300px;width:auto;'></div></div>"), innerDiv = div.children()[0];
-        $2("body").append(div);
+        var w1, w2, div = $3("<div style='display:block;position:absolute;width:200px;height:200px;overflow:hidden;'><div style='height:300px;width:auto;'></div></div>"), innerDiv = div.children()[0];
+        $3("body").append(div);
         w1 = innerDiv.offsetWidth;
         div.css("overflow", "scroll");
         w2 = innerDiv.offsetWidth;
@@ -12224,17 +12148,17 @@ window.$ = import_jquery.default;
       getScrollInfo: function(within2) {
         var overflowX = within2.isWindow || within2.isDocument ? "" : within2.element.css("overflow-x"), overflowY = within2.isWindow || within2.isDocument ? "" : within2.element.css("overflow-y"), hasOverflowX = overflowX === "scroll" || overflowX === "auto" && within2.width < within2.element[0].scrollWidth, hasOverflowY = overflowY === "scroll" || overflowY === "auto" && within2.height < within2.element[0].scrollHeight;
         return {
-          width: hasOverflowY ? $2.position.scrollbarWidth() : 0,
-          height: hasOverflowX ? $2.position.scrollbarWidth() : 0
+          width: hasOverflowY ? $3.position.scrollbarWidth() : 0,
+          height: hasOverflowX ? $3.position.scrollbarWidth() : 0
         };
       },
       getWithinInfo: function(element) {
-        var withinElement = $2(element || window), isElemWindow = isWindow(withinElement[0]), isDocument = !!withinElement[0] && withinElement[0].nodeType === 9, hasOffset = !isElemWindow && !isDocument;
+        var withinElement = $3(element || window), isElemWindow = isWindow(withinElement[0]), isDocument = !!withinElement[0] && withinElement[0].nodeType === 9, hasOffset = !isElemWindow && !isDocument;
         return {
           element: withinElement,
           isWindow: isElemWindow,
           isDocument,
-          offset: hasOffset ? $2(element).offset() : { left: 0, top: 0 },
+          offset: hasOffset ? $3(element).offset() : { left: 0, top: 0 },
           scrollLeft: withinElement.scrollLeft(),
           scrollTop: withinElement.scrollTop(),
           width: withinElement.outerWidth(),
@@ -12242,12 +12166,12 @@ window.$ = import_jquery.default;
         };
       }
     };
-    $2.fn.position = function(options) {
+    $3.fn.position = function(options) {
       if (!options || !options.of) {
         return _position.apply(this, arguments);
       }
-      options = $2.extend({}, options);
-      var atOffset, targetWidth, targetHeight, targetOffset, basePosition, dimensions, target = typeof options.of === "string" ? $2(document).find(options.of) : $2(options.of), within2 = $2.position.getWithinInfo(options.within), scrollInfo = $2.position.getScrollInfo(within2), collision = (options.collision || "flip").split(" "), offsets = {};
+      options = $3.extend({}, options);
+      var atOffset, targetWidth, targetHeight, targetOffset, basePosition, dimensions, target = typeof options.of === "string" ? $3(document).find(options.of) : $3(options.of), within2 = $3.position.getWithinInfo(options.within), scrollInfo = $3.position.getScrollInfo(within2), collision = (options.collision || "flip").split(" "), offsets = {};
       dimensions = getDimensions(target);
       if (target[0].preventDefault) {
         options.at = "left top";
@@ -12255,8 +12179,8 @@ window.$ = import_jquery.default;
       targetWidth = dimensions.width;
       targetHeight = dimensions.height;
       targetOffset = dimensions.offset;
-      basePosition = $2.extend({}, targetOffset);
-      $2.each(["my", "at"], function() {
+      basePosition = $3.extend({}, targetOffset);
+      $3.each(["my", "at"], function() {
         var pos = (options[this] || "").split(" "), horizontalOffset, verticalOffset;
         if (pos.length === 1) {
           pos = rhorizontal.test(pos[0]) ? pos.concat(["center"]) : rvertical.test(pos[0]) ? ["center"].concat(pos) : ["center", "center"];
@@ -12291,7 +12215,7 @@ window.$ = import_jquery.default;
       basePosition.left += atOffset[0];
       basePosition.top += atOffset[1];
       return this.each(function() {
-        var collisionPosition, using, elem = $2(this), elemWidth = elem.outerWidth(), elemHeight = elem.outerHeight(), marginLeft = parseCss(this, "marginLeft"), marginTop = parseCss(this, "marginTop"), collisionWidth = elemWidth + marginLeft + parseCss(this, "marginRight") + scrollInfo.width, collisionHeight = elemHeight + marginTop + parseCss(this, "marginBottom") + scrollInfo.height, position2 = $2.extend({}, basePosition), myOffset = getOffsets(offsets.my, elem.outerWidth(), elem.outerHeight());
+        var collisionPosition, using, elem = $3(this), elemWidth = elem.outerWidth(), elemHeight = elem.outerHeight(), marginLeft = parseCss(this, "marginLeft"), marginTop = parseCss(this, "marginTop"), collisionWidth = elemWidth + marginLeft + parseCss(this, "marginRight") + scrollInfo.width, collisionHeight = elemHeight + marginTop + parseCss(this, "marginBottom") + scrollInfo.height, position2 = $3.extend({}, basePosition), myOffset = getOffsets(offsets.my, elem.outerWidth(), elem.outerHeight());
         if (options.my[0] === "right") {
           position2.left -= elemWidth;
         } else if (options.my[0] === "center") {
@@ -12308,9 +12232,9 @@ window.$ = import_jquery.default;
           marginLeft,
           marginTop
         };
-        $2.each(["left", "top"], function(i, dir) {
-          if ($2.ui.position[collision[i]]) {
-            $2.ui.position[collision[i]][dir](position2, {
+        $3.each(["left", "top"], function(i, dir) {
+          if ($3.ui.position[collision[i]]) {
+            $3.ui.position[collision[i]][dir](position2, {
               targetWidth,
               targetHeight,
               elemWidth,
@@ -12360,10 +12284,10 @@ window.$ = import_jquery.default;
             options.using.call(this, props, feedback);
           };
         }
-        elem.offset($2.extend(position2, { using }));
+        elem.offset($3.extend(position2, { using }));
       });
     };
-    $2.ui.position = {
+    $3.ui.position = {
       fit: {
         left: function(position2, data2) {
           var within2 = data2.within, withinOffset = within2.isWindow ? within2.scrollLeft : within2.offset.left, outerWidth = within2.width, collisionPosLeft = position2.left - data2.collisionPosition.marginLeft, overLeft = withinOffset - collisionPosLeft, overRight = collisionPosLeft + data2.collisionWidth - outerWidth - withinOffset, newOverRight;
@@ -12444,30 +12368,30 @@ window.$ = import_jquery.default;
       },
       flipfit: {
         left: function() {
-          $2.ui.position.flip.left.apply(this, arguments);
-          $2.ui.position.fit.left.apply(this, arguments);
+          $3.ui.position.flip.left.apply(this, arguments);
+          $3.ui.position.fit.left.apply(this, arguments);
         },
         top: function() {
-          $2.ui.position.flip.top.apply(this, arguments);
-          $2.ui.position.fit.top.apply(this, arguments);
+          $3.ui.position.flip.top.apply(this, arguments);
+          $3.ui.position.fit.top.apply(this, arguments);
         }
       }
     };
   })();
-  var position = $2.ui.position;
-  var data = $2.extend($2.expr.pseudos, {
-    data: $2.expr.createPseudo ? $2.expr.createPseudo(function(dataName) {
+  var position = $3.ui.position;
+  var data = $3.extend($3.expr.pseudos, {
+    data: $3.expr.createPseudo ? $3.expr.createPseudo(function(dataName) {
       return function(elem) {
-        return !!$2.data(elem, dataName);
+        return !!$3.data(elem, dataName);
       };
     }) : (
       // Support: jQuery <1.8
       function(elem, i, match) {
-        return !!$2.data(elem, match[3]);
+        return !!$3.data(elem, match[3]);
       }
     )
   });
-  var disableSelection = $2.fn.extend({
+  var disableSelection = $3.fn.extend({
     disableSelection: function() {
       var eventType = "onselectstart" in document.createElement("div") ? "selectstart" : "mousedown";
       return function() {
@@ -12480,7 +12404,7 @@ window.$ = import_jquery.default;
       return this.off(".ui-disableSelection");
     }
   });
-  $2.ui.focusable = function(element, hasTabindex) {
+  $3.ui.focusable = function(element, hasTabindex) {
     var map, mapName, img, focusableIfVisible, fieldset, nodeName = element.nodeName.toLowerCase();
     if ("area" === nodeName) {
       map = element.parentNode;
@@ -12488,13 +12412,13 @@ window.$ = import_jquery.default;
       if (!element.href || !mapName || map.nodeName.toLowerCase() !== "map") {
         return false;
       }
-      img = $2("img[usemap='#" + mapName + "']");
+      img = $3("img[usemap='#" + mapName + "']");
       return img.length > 0 && img.is(":visible");
     }
     if (/^(input|select|textarea|button|object)$/.test(nodeName)) {
       focusableIfVisible = !element.disabled;
       if (focusableIfVisible) {
-        fieldset = $2(element).closest("fieldset")[0];
+        fieldset = $3(element).closest("fieldset")[0];
         if (fieldset) {
           focusableIfVisible = !fieldset.disabled;
         }
@@ -12504,7 +12428,7 @@ window.$ = import_jquery.default;
     } else {
       focusableIfVisible = hasTabindex;
     }
-    return focusableIfVisible && $2(element).is(":visible") && visible($2(element));
+    return focusableIfVisible && $3(element).is(":visible") && visible($3(element));
   };
   function visible(element) {
     var visibility = element.css("visibility");
@@ -12514,21 +12438,21 @@ window.$ = import_jquery.default;
     }
     return visibility === "visible";
   }
-  $2.extend($2.expr.pseudos, {
+  $3.extend($3.expr.pseudos, {
     focusable: function(element) {
-      return $2.ui.focusable(element, $2.attr(element, "tabindex") != null);
+      return $3.ui.focusable(element, $3.attr(element, "tabindex") != null);
     }
   });
-  var focusable = $2.ui.focusable;
-  var form = $2.fn._form = function() {
-    return typeof this[0].form === "string" ? this.closest("form") : $2(this[0].form);
+  var focusable = $3.ui.focusable;
+  var form = $3.fn._form = function() {
+    return typeof this[0].form === "string" ? this.closest("form") : $3(this[0].form);
   };
-  var formResetMixin = $2.ui.formResetMixin = {
+  var formResetMixin = $3.ui.formResetMixin = {
     _formResetHandler: function() {
-      var form2 = $2(this);
+      var form2 = $3(this);
       setTimeout(function() {
         var instances = form2.data("ui-form-reset-instances");
-        $2.each(instances, function() {
+        $3.each(instances, function() {
           this.refresh();
         });
       });
@@ -12550,7 +12474,7 @@ window.$ = import_jquery.default;
         return;
       }
       var instances = this.form.data("ui-form-reset-instances");
-      instances.splice($2.inArray(this, instances), 1);
+      instances.splice($3.inArray(this, instances), 1);
       if (instances.length) {
         this.form.data("ui-form-reset-instances", instances);
       } else {
@@ -12558,13 +12482,13 @@ window.$ = import_jquery.default;
       }
     }
   };
-  if (!$2.expr.pseudos) {
-    $2.expr.pseudos = $2.expr[":"];
+  if (!$3.expr.pseudos) {
+    $3.expr.pseudos = $3.expr[":"];
   }
-  if (!$2.uniqueSort) {
-    $2.uniqueSort = $2.unique;
+  if (!$3.uniqueSort) {
+    $3.uniqueSort = $3.unique;
   }
-  if (!$2.escapeSelector) {
+  if (!$3.escapeSelector) {
     var rcssescape = /([\0-\x1f\x7f]|^-?\d)|^-$|[^\x80-\uFFFF\w-]/g;
     var fcssescape = function(ch, asCodePoint) {
       if (asCodePoint) {
@@ -12575,12 +12499,12 @@ window.$ = import_jquery.default;
       }
       return "\\" + ch;
     };
-    $2.escapeSelector = function(sel) {
+    $3.escapeSelector = function(sel) {
       return (sel + "").replace(rcssescape, fcssescape);
     };
   }
-  if (!$2.fn.even || !$2.fn.odd) {
-    $2.fn.extend({
+  if (!$3.fn.even || !$3.fn.odd) {
+    $3.fn.extend({
       even: function() {
         return this.filter(function(i) {
           return i % 2 === 0;
@@ -12594,7 +12518,7 @@ window.$ = import_jquery.default;
     });
   }
   ;
-  var keycode = $2.ui.keyCode = {
+  var keycode = $3.ui.keyCode = {
     BACKSPACE: 8,
     COMMA: 188,
     DELETE: 46,
@@ -12612,7 +12536,7 @@ window.$ = import_jquery.default;
     TAB: 9,
     UP: 38
   };
-  var labels = $2.fn.labels = function() {
+  var labels = $3.fn.labels = function() {
     var ancestor, selector, id, labels2, ancestors;
     if (!this.length) {
       return this.pushStack([]);
@@ -12625,28 +12549,28 @@ window.$ = import_jquery.default;
     if (id) {
       ancestor = this.eq(0).parents().last();
       ancestors = ancestor.add(ancestor.length ? ancestor.siblings() : this.siblings());
-      selector = "label[for='" + $2.escapeSelector(id) + "']";
+      selector = "label[for='" + $3.escapeSelector(id) + "']";
       labels2 = labels2.add(ancestors.find(selector).addBack(selector));
     }
     return this.pushStack(labels2);
   };
-  var scrollParent = $2.fn.scrollParent = function(includeHidden) {
+  var scrollParent = $3.fn.scrollParent = function(includeHidden) {
     var position2 = this.css("position"), excludeStaticParent = position2 === "absolute", overflowRegex = includeHidden ? /(auto|scroll|hidden)/ : /(auto|scroll)/, scrollParent2 = this.parents().filter(function() {
-      var parent = $2(this);
+      var parent = $3(this);
       if (excludeStaticParent && parent.css("position") === "static") {
         return false;
       }
       return overflowRegex.test(parent.css("overflow") + parent.css("overflow-y") + parent.css("overflow-x"));
     }).eq(0);
-    return position2 === "fixed" || !scrollParent2.length ? $2(this[0].ownerDocument || document) : scrollParent2;
+    return position2 === "fixed" || !scrollParent2.length ? $3(this[0].ownerDocument || document) : scrollParent2;
   };
-  var tabbable = $2.extend($2.expr.pseudos, {
+  var tabbable = $3.extend($3.expr.pseudos, {
     tabbable: function(element) {
-      var tabIndex = $2.attr(element, "tabindex"), hasTabindex = tabIndex != null;
-      return (!hasTabindex || tabIndex >= 0) && $2.ui.focusable(element, hasTabindex);
+      var tabIndex = $3.attr(element, "tabindex"), hasTabindex = tabIndex != null;
+      return (!hasTabindex || tabIndex >= 0) && $3.ui.focusable(element, hasTabindex);
     }
   });
-  var uniqueId = $2.fn.extend({
+  var uniqueId = $3.fn.extend({
     uniqueId: /* @__PURE__ */ function() {
       var uuid = 0;
       return function() {
@@ -12660,17 +12584,17 @@ window.$ = import_jquery.default;
     removeUniqueId: function() {
       return this.each(function() {
         if (/^ui-id-\d+$/.test(this.id)) {
-          $2(this).removeAttr("id");
+          $3(this).removeAttr("id");
         }
       });
     }
   });
-  var ie = $2.ui.ie = !!/msie [\w.]+/.exec(navigator.userAgent.toLowerCase());
+  var ie = $3.ui.ie = !!/msie [\w.]+/.exec(navigator.userAgent.toLowerCase());
   var mouseHandled = false;
-  $2(document).on("mouseup", function() {
+  $3(document).on("mouseup", function() {
     mouseHandled = false;
   });
-  var widgetsMouse = $2.widget("ui.mouse", {
+  var widgetsMouse = $3.widget("ui.mouse", {
     version: "1.13.2",
     options: {
       cancel: "input, textarea, button, select, option",
@@ -12682,8 +12606,8 @@ window.$ = import_jquery.default;
       this.element.on("mousedown." + this.widgetName, function(event) {
         return that._mouseDown(event);
       }).on("click." + this.widgetName, function(event) {
-        if (true === $2.data(event.target, that.widgetName + ".preventClickEvent")) {
-          $2.removeData(event.target, that.widgetName + ".preventClickEvent");
+        if (true === $3.data(event.target, that.widgetName + ".preventClickEvent")) {
+          $3.removeData(event.target, that.widgetName + ".preventClickEvent");
           event.stopImmediatePropagation();
           return false;
         }
@@ -12707,7 +12631,7 @@ window.$ = import_jquery.default;
         this._mouseUp(event);
       }
       this._mouseDownEvent = event;
-      var that = this, btnIsLeft = event.which === 1, elIsCancel = typeof this.options.cancel === "string" && event.target.nodeName ? $2(event.target).closest(this.options.cancel).length : false;
+      var that = this, btnIsLeft = event.which === 1, elIsCancel = typeof this.options.cancel === "string" && event.target.nodeName ? $3(event.target).closest(this.options.cancel).length : false;
       if (!btnIsLeft || elIsCancel || !this._mouseCapture(event)) {
         return true;
       }
@@ -12724,8 +12648,8 @@ window.$ = import_jquery.default;
           return true;
         }
       }
-      if (true === $2.data(event.target, this.widgetName + ".preventClickEvent")) {
-        $2.removeData(event.target, this.widgetName + ".preventClickEvent");
+      if (true === $3.data(event.target, this.widgetName + ".preventClickEvent")) {
+        $3.removeData(event.target, this.widgetName + ".preventClickEvent");
       }
       this._mouseMoveDelegate = function(event2) {
         return that._mouseMove(event2);
@@ -12740,7 +12664,7 @@ window.$ = import_jquery.default;
     },
     _mouseMove: function(event) {
       if (this._mouseMoved) {
-        if ($2.ui.ie && (!document.documentMode || document.documentMode < 9) && !event.button) {
+        if ($3.ui.ie && (!document.documentMode || document.documentMode < 9) && !event.button) {
           return this._mouseUp(event);
         } else if (!event.which) {
           if (event.originalEvent.altKey || event.originalEvent.ctrlKey || event.originalEvent.metaKey || event.originalEvent.shiftKey) {
@@ -12772,7 +12696,7 @@ window.$ = import_jquery.default;
       if (this._mouseStarted) {
         this._mouseStarted = false;
         if (event.target === this._mouseDownEvent.target) {
-          $2.data(event.target, this.widgetName + ".preventClickEvent", true);
+          $3.data(event.target, this.widgetName + ".preventClickEvent", true);
         }
         this._mouseStop(event);
       }
@@ -12804,9 +12728,9 @@ window.$ = import_jquery.default;
       return true;
     }
   });
-  var plugin = $2.ui.plugin = {
+  var plugin = $3.ui.plugin = {
     add: function(module, option, set) {
-      var i, proto = $2.ui[module].prototype;
+      var i, proto = $3.ui[module].prototype;
       for (i in set) {
         proto.plugins[i] = proto.plugins[i] || [];
         proto.plugins[i].push([option, set[i]]);
@@ -12827,7 +12751,7 @@ window.$ = import_jquery.default;
       }
     }
   };
-  var safeActiveElement = $2.ui.safeActiveElement = function(document2) {
+  var safeActiveElement = $3.ui.safeActiveElement = function(document2) {
     var activeElement;
     try {
       activeElement = document2.activeElement;
@@ -12842,12 +12766,12 @@ window.$ = import_jquery.default;
     }
     return activeElement;
   };
-  var safeBlur = $2.ui.safeBlur = function(element) {
+  var safeBlur = $3.ui.safeBlur = function(element) {
     if (element && element.nodeName.toLowerCase() !== "body") {
-      $2(element).trigger("blur");
+      $3(element).trigger("blur");
     }
   };
-  $2.widget("ui.draggable", $2.ui.mouse, {
+  $3.widget("ui.draggable", $3.ui.mouse, {
     version: "1.13.2",
     widgetEventPrefix: "drag",
     options: {
@@ -12907,7 +12831,7 @@ window.$ = import_jquery.default;
     },
     _mouseCapture: function(event) {
       var o = this.options;
-      if (this.helper || o.disabled || $2(event.target).closest(".ui-resizable-handle").length > 0) {
+      if (this.helper || o.disabled || $3(event.target).closest(".ui-resizable-handle").length > 0) {
         return false;
       }
       this.handle = this._getHandle(event);
@@ -12920,8 +12844,8 @@ window.$ = import_jquery.default;
     },
     _blockFrames: function(selector) {
       this.iframeBlocks = this.document.find(selector).map(function() {
-        var iframe = $2(this);
-        return $2("<div>").css("position", "absolute").appendTo(iframe.parent()).outerWidth(iframe.outerWidth()).outerHeight(iframe.outerHeight()).offset(iframe.offset())[0];
+        var iframe = $3(this);
+        return $3("<div>").css("position", "absolute").appendTo(iframe.parent()).outerWidth(iframe.outerWidth()).outerHeight(iframe.outerHeight()).offset(iframe.offset())[0];
       });
     },
     _unblockFrames: function() {
@@ -12931,26 +12855,26 @@ window.$ = import_jquery.default;
       }
     },
     _blurActiveElement: function(event) {
-      var activeElement = $2.ui.safeActiveElement(this.document[0]), target = $2(event.target);
+      var activeElement = $3.ui.safeActiveElement(this.document[0]), target = $3(event.target);
       if (target.closest(activeElement).length) {
         return;
       }
-      $2.ui.safeBlur(activeElement);
+      $3.ui.safeBlur(activeElement);
     },
     _mouseStart: function(event) {
       var o = this.options;
       this.helper = this._createHelper(event);
       this._addClass(this.helper, "ui-draggable-dragging");
       this._cacheHelperProportions();
-      if ($2.ui.ddmanager) {
-        $2.ui.ddmanager.current = this;
+      if ($3.ui.ddmanager) {
+        $3.ui.ddmanager.current = this;
       }
       this._cacheMargins();
       this.cssPosition = this.helper.css("position");
       this.scrollParent = this.helper.scrollParent(true);
       this.offsetParent = this.helper.offsetParent();
       this.hasFixedAncestor = this.helper.parents().filter(function() {
-        return $2(this).css("position") === "fixed";
+        return $3(this).css("position") === "fixed";
       }).length > 0;
       this.positionAbs = this.element.offset();
       this._refreshOffsets(event);
@@ -12966,12 +12890,12 @@ window.$ = import_jquery.default;
         return false;
       }
       this._cacheHelperProportions();
-      if ($2.ui.ddmanager && !o.dropBehaviour) {
-        $2.ui.ddmanager.prepareOffsets(this, event);
+      if ($3.ui.ddmanager && !o.dropBehaviour) {
+        $3.ui.ddmanager.prepareOffsets(this, event);
       }
       this._mouseDrag(event, true);
-      if ($2.ui.ddmanager) {
-        $2.ui.ddmanager.dragStart(this, event);
+      if ($3.ui.ddmanager) {
+        $3.ui.ddmanager.dragStart(this, event);
       }
       return true;
     },
@@ -12997,29 +12921,29 @@ window.$ = import_jquery.default;
       if (!noPropagation) {
         var ui = this._uiHash();
         if (this._trigger("drag", event, ui) === false) {
-          this._mouseUp(new $2.Event("mouseup", event));
+          this._mouseUp(new $3.Event("mouseup", event));
           return false;
         }
         this.position = ui.position;
       }
       this.helper[0].style.left = this.position.left + "px";
       this.helper[0].style.top = this.position.top + "px";
-      if ($2.ui.ddmanager) {
-        $2.ui.ddmanager.drag(this, event);
+      if ($3.ui.ddmanager) {
+        $3.ui.ddmanager.drag(this, event);
       }
       return false;
     },
     _mouseStop: function(event) {
       var that = this, dropped = false;
-      if ($2.ui.ddmanager && !this.options.dropBehaviour) {
-        dropped = $2.ui.ddmanager.drop(this, event);
+      if ($3.ui.ddmanager && !this.options.dropBehaviour) {
+        dropped = $3.ui.ddmanager.drop(this, event);
       }
       if (this.dropped) {
         dropped = this.dropped;
         this.dropped = false;
       }
       if (this.options.revert === "invalid" && !dropped || this.options.revert === "valid" && dropped || this.options.revert === true || typeof this.options.revert === "function" && this.options.revert.call(this.element, dropped)) {
-        $2(this.helper).animate(
+        $3(this.helper).animate(
           this.originalPosition,
           parseInt(this.options.revertDuration, 10),
           function() {
@@ -13037,24 +12961,24 @@ window.$ = import_jquery.default;
     },
     _mouseUp: function(event) {
       this._unblockFrames();
-      if ($2.ui.ddmanager) {
-        $2.ui.ddmanager.dragStop(this, event);
+      if ($3.ui.ddmanager) {
+        $3.ui.ddmanager.dragStop(this, event);
       }
       if (this.handleElement.is(event.target)) {
         this.element.trigger("focus");
       }
-      return $2.ui.mouse.prototype._mouseUp.call(this, event);
+      return $3.ui.mouse.prototype._mouseUp.call(this, event);
     },
     cancel: function() {
       if (this.helper.is(".ui-draggable-dragging")) {
-        this._mouseUp(new $2.Event("mouseup", { target: this.element[0] }));
+        this._mouseUp(new $3.Event("mouseup", { target: this.element[0] }));
       } else {
         this._clear();
       }
       return this;
     },
     _getHandle: function(event) {
-      return this.options.handle ? !!$2(event.target).closest(this.element.find(this.options.handle)).length : true;
+      return this.options.handle ? !!$3(event.target).closest(this.element.find(this.options.handle)).length : true;
     },
     _setHandleClassName: function() {
       this.handleElement = this.options.handle ? this.element.find(this.options.handle) : this.element;
@@ -13064,7 +12988,7 @@ window.$ = import_jquery.default;
       this._removeClass(this.handleElement, "ui-draggable-handle");
     },
     _createHelper: function(event) {
-      var o = this.options, helperIsFunction = typeof o.helper === "function", helper = helperIsFunction ? $2(o.helper.apply(this.element[0], [event])) : o.helper === "clone" ? this.element.clone().removeAttr("id") : this.element;
+      var o = this.options, helperIsFunction = typeof o.helper === "function", helper = helperIsFunction ? $3(o.helper.apply(this.element[0], [event])) : o.helper === "clone" ? this.element.clone().removeAttr("id") : this.element;
       if (!helper.parents("body").length) {
         helper.appendTo(o.appendTo === "parent" ? this.element[0].parentNode : o.appendTo);
       }
@@ -13106,7 +13030,7 @@ window.$ = import_jquery.default;
     },
     _getParentOffset: function() {
       var po = this.offsetParent.offset(), document2 = this.document[0];
-      if (this.cssPosition === "absolute" && this.scrollParent[0] !== document2 && $2.contains(this.scrollParent[0], this.offsetParent[0])) {
+      if (this.cssPosition === "absolute" && this.scrollParent[0] !== document2 && $3.contains(this.scrollParent[0], this.offsetParent[0])) {
         po.left += this.scrollParent.scrollLeft();
         po.top += this.scrollParent.scrollTop();
       }
@@ -13151,10 +13075,10 @@ window.$ = import_jquery.default;
       }
       if (o.containment === "window") {
         this.containment = [
-          $2(window).scrollLeft() - this.offset.relative.left - this.offset.parent.left,
-          $2(window).scrollTop() - this.offset.relative.top - this.offset.parent.top,
-          $2(window).scrollLeft() + $2(window).width() - this.helperProportions.width - this.margins.left,
-          $2(window).scrollTop() + ($2(window).height() || document2.body.parentNode.scrollHeight) - this.helperProportions.height - this.margins.top
+          $3(window).scrollLeft() - this.offset.relative.left - this.offset.parent.left,
+          $3(window).scrollTop() - this.offset.relative.top - this.offset.parent.top,
+          $3(window).scrollLeft() + $3(window).width() - this.helperProportions.width - this.margins.left,
+          $3(window).scrollTop() + ($3(window).height() || document2.body.parentNode.scrollHeight) - this.helperProportions.height - this.margins.top
         ];
         return;
       }
@@ -13162,8 +13086,8 @@ window.$ = import_jquery.default;
         this.containment = [
           0,
           0,
-          $2(document2).width() - this.helperProportions.width - this.margins.left,
-          ($2(document2).height() || document2.body.parentNode.scrollHeight) - this.helperProportions.height - this.margins.top
+          $3(document2).width() - this.helperProportions.width - this.margins.left,
+          ($3(document2).height() || document2.body.parentNode.scrollHeight) - this.helperProportions.height - this.margins.top
         ];
         return;
       }
@@ -13174,7 +13098,7 @@ window.$ = import_jquery.default;
       if (o.containment === "parent") {
         o.containment = this.helper[0].parentNode;
       }
-      c = $2(o.containment);
+      c = $3(o.containment);
       ce = c[0];
       if (!ce) {
         return;
@@ -13286,12 +13210,12 @@ window.$ = import_jquery.default;
     // From now on bulk stuff - mainly helpers
     _trigger: function(type, event, ui) {
       ui = ui || this._uiHash();
-      $2.ui.plugin.call(this, type, [event, ui, this], true);
+      $3.ui.plugin.call(this, type, [event, ui, this], true);
       if (/^(drag|start|stop)/.test(type)) {
         this.positionAbs = this._convertPositionTo("absolute");
         ui.offset = this.positionAbs;
       }
-      return $2.Widget.prototype._trigger.call(this, type, event, ui);
+      return $3.Widget.prototype._trigger.call(this, type, event, ui);
     },
     plugins: {},
     _uiHash: function() {
@@ -13303,14 +13227,14 @@ window.$ = import_jquery.default;
       };
     }
   });
-  $2.ui.plugin.add("draggable", "connectToSortable", {
+  $3.ui.plugin.add("draggable", "connectToSortable", {
     start: function(event, ui, draggable) {
-      var uiSortable = $2.extend({}, ui, {
+      var uiSortable = $3.extend({}, ui, {
         item: draggable.element
       });
       draggable.sortables = [];
-      $2(draggable.options.connectToSortable).each(function() {
-        var sortable = $2(this).sortable("instance");
+      $3(draggable.options.connectToSortable).each(function() {
+        var sortable = $3(this).sortable("instance");
         if (sortable && !sortable.options.disabled) {
           draggable.sortables.push(sortable);
           sortable.refreshPositions();
@@ -13319,11 +13243,11 @@ window.$ = import_jquery.default;
       });
     },
     stop: function(event, ui, draggable) {
-      var uiSortable = $2.extend({}, ui, {
+      var uiSortable = $3.extend({}, ui, {
         item: draggable.element
       });
       draggable.cancelHelperRemoval = false;
-      $2.each(draggable.sortables, function() {
+      $3.each(draggable.sortables, function() {
         var sortable = this;
         if (sortable.isOver) {
           sortable.isOver = 0;
@@ -13343,18 +13267,18 @@ window.$ = import_jquery.default;
       });
     },
     drag: function(event, ui, draggable) {
-      $2.each(draggable.sortables, function() {
+      $3.each(draggable.sortables, function() {
         var innermostIntersecting = false, sortable = this;
         sortable.positionAbs = draggable.positionAbs;
         sortable.helperProportions = draggable.helperProportions;
         sortable.offset.click = draggable.offset.click;
         if (sortable._intersectsWith(sortable.containerCache)) {
           innermostIntersecting = true;
-          $2.each(draggable.sortables, function() {
+          $3.each(draggable.sortables, function() {
             this.positionAbs = draggable.positionAbs;
             this.helperProportions = draggable.helperProportions;
             this.offset.click = draggable.offset.click;
-            if (this !== sortable && this._intersectsWith(this.containerCache) && $2.contains(sortable.element[0], this.element[0])) {
+            if (this !== sortable && this._intersectsWith(this.containerCache) && $3.contains(sortable.element[0], this.element[0])) {
               innermostIntersecting = false;
             }
             return innermostIntersecting;
@@ -13378,7 +13302,7 @@ window.$ = import_jquery.default;
             sortable.offset.parent.top -= draggable.offset.parent.top - sortable.offset.parent.top;
             draggable._trigger("toSortable", event);
             draggable.dropped = sortable.element;
-            $2.each(draggable.sortables, function() {
+            $3.each(draggable.sortables, function() {
               this.refreshPositions();
             });
             draggable.currentItem = draggable.element;
@@ -13406,7 +13330,7 @@ window.$ = import_jquery.default;
             ui.position = draggable._generatePosition(event, true);
             draggable._trigger("fromSortable", event);
             draggable.dropped = false;
-            $2.each(draggable.sortables, function() {
+            $3.each(draggable.sortables, function() {
               this.refreshPositions();
             });
           }
@@ -13414,9 +13338,9 @@ window.$ = import_jquery.default;
       });
     }
   });
-  $2.ui.plugin.add("draggable", "cursor", {
+  $3.ui.plugin.add("draggable", "cursor", {
     start: function(event, ui, instance) {
-      var t = $2("body"), o = instance.options;
+      var t = $3("body"), o = instance.options;
       if (t.css("cursor")) {
         o._cursor = t.css("cursor");
       }
@@ -13425,13 +13349,13 @@ window.$ = import_jquery.default;
     stop: function(event, ui, instance) {
       var o = instance.options;
       if (o._cursor) {
-        $2("body").css("cursor", o._cursor);
+        $3("body").css("cursor", o._cursor);
       }
     }
   });
-  $2.ui.plugin.add("draggable", "opacity", {
+  $3.ui.plugin.add("draggable", "opacity", {
     start: function(event, ui, instance) {
-      var t = $2(ui.helper), o = instance.options;
+      var t = $3(ui.helper), o = instance.options;
       if (t.css("opacity")) {
         o._opacity = t.css("opacity");
       }
@@ -13440,11 +13364,11 @@ window.$ = import_jquery.default;
     stop: function(event, ui, instance) {
       var o = instance.options;
       if (o._opacity) {
-        $2(ui.helper).css("opacity", o._opacity);
+        $3(ui.helper).css("opacity", o._opacity);
       }
     }
   });
-  $2.ui.plugin.add("draggable", "scroll", {
+  $3.ui.plugin.add("draggable", "scroll", {
     start: function(event, ui, i) {
       if (!i.scrollParentNotHidden) {
         i.scrollParentNotHidden = i.helper.scrollParent(false);
@@ -13472,35 +13396,35 @@ window.$ = import_jquery.default;
         }
       } else {
         if (!o.axis || o.axis !== "x") {
-          if (event.pageY - $2(document2).scrollTop() < o.scrollSensitivity) {
-            scrolled = $2(document2).scrollTop($2(document2).scrollTop() - o.scrollSpeed);
-          } else if ($2(window).height() - (event.pageY - $2(document2).scrollTop()) < o.scrollSensitivity) {
-            scrolled = $2(document2).scrollTop($2(document2).scrollTop() + o.scrollSpeed);
+          if (event.pageY - $3(document2).scrollTop() < o.scrollSensitivity) {
+            scrolled = $3(document2).scrollTop($3(document2).scrollTop() - o.scrollSpeed);
+          } else if ($3(window).height() - (event.pageY - $3(document2).scrollTop()) < o.scrollSensitivity) {
+            scrolled = $3(document2).scrollTop($3(document2).scrollTop() + o.scrollSpeed);
           }
         }
         if (!o.axis || o.axis !== "y") {
-          if (event.pageX - $2(document2).scrollLeft() < o.scrollSensitivity) {
-            scrolled = $2(document2).scrollLeft(
-              $2(document2).scrollLeft() - o.scrollSpeed
+          if (event.pageX - $3(document2).scrollLeft() < o.scrollSensitivity) {
+            scrolled = $3(document2).scrollLeft(
+              $3(document2).scrollLeft() - o.scrollSpeed
             );
-          } else if ($2(window).width() - (event.pageX - $2(document2).scrollLeft()) < o.scrollSensitivity) {
-            scrolled = $2(document2).scrollLeft(
-              $2(document2).scrollLeft() + o.scrollSpeed
+          } else if ($3(window).width() - (event.pageX - $3(document2).scrollLeft()) < o.scrollSensitivity) {
+            scrolled = $3(document2).scrollLeft(
+              $3(document2).scrollLeft() + o.scrollSpeed
             );
           }
         }
       }
-      if (scrolled !== false && $2.ui.ddmanager && !o.dropBehaviour) {
-        $2.ui.ddmanager.prepareOffsets(i, event);
+      if (scrolled !== false && $3.ui.ddmanager && !o.dropBehaviour) {
+        $3.ui.ddmanager.prepareOffsets(i, event);
       }
     }
   });
-  $2.ui.plugin.add("draggable", "snap", {
+  $3.ui.plugin.add("draggable", "snap", {
     start: function(event, ui, i) {
       var o = i.options;
       i.snapElements = [];
-      $2(o.snap.constructor !== String ? o.snap.items || ":data(ui-draggable)" : o.snap).each(function() {
-        var $t = $2(this), $o = $t.offset();
+      $3(o.snap.constructor !== String ? o.snap.items || ":data(ui-draggable)" : o.snap).each(function() {
+        var $t = $3(this), $o = $t.offset();
         if (this !== i.element[0]) {
           i.snapElements.push({
             item: this,
@@ -13519,7 +13443,7 @@ window.$ = import_jquery.default;
         r = l + inst.snapElements[i].width;
         t = inst.snapElements[i].top - inst.margins.top;
         b = t + inst.snapElements[i].height;
-        if (x2 < l - d || x1 > r + d || y2 < t - d || y1 > b + d || !$2.contains(
+        if (x2 < l - d || x1 > r + d || y2 < t - d || y1 > b + d || !$3.contains(
           inst.snapElements[i].item.ownerDocument,
           inst.snapElements[i].item
         )) {
@@ -13528,7 +13452,7 @@ window.$ = import_jquery.default;
               inst.options.snap.release.call(
                 inst.element,
                 event,
-                $2.extend(inst._uiHash(), { snapItem: inst.snapElements[i].item })
+                $3.extend(inst._uiHash(), { snapItem: inst.snapElements[i].item })
               );
             }
           }
@@ -13601,7 +13525,7 @@ window.$ = import_jquery.default;
             inst.options.snap.snap.call(
               inst.element,
               event,
-              $2.extend(inst._uiHash(), {
+              $3.extend(inst._uiHash(), {
                 snapItem: inst.snapElements[i].item
               })
             );
@@ -13611,24 +13535,24 @@ window.$ = import_jquery.default;
       }
     }
   });
-  $2.ui.plugin.add("draggable", "stack", {
+  $3.ui.plugin.add("draggable", "stack", {
     start: function(event, ui, instance) {
-      var min2, o = instance.options, group = $2.makeArray($2(o.stack)).sort(function(a, b) {
-        return (parseInt($2(a).css("zIndex"), 10) || 0) - (parseInt($2(b).css("zIndex"), 10) || 0);
+      var min2, o = instance.options, group = $3.makeArray($3(o.stack)).sort(function(a, b) {
+        return (parseInt($3(a).css("zIndex"), 10) || 0) - (parseInt($3(b).css("zIndex"), 10) || 0);
       });
       if (!group.length) {
         return;
       }
-      min2 = parseInt($2(group[0]).css("zIndex"), 10) || 0;
-      $2(group).each(function(i) {
-        $2(this).css("zIndex", min2 + i);
+      min2 = parseInt($3(group[0]).css("zIndex"), 10) || 0;
+      $3(group).each(function(i) {
+        $3(this).css("zIndex", min2 + i);
       });
       this.css("zIndex", min2 + group.length);
     }
   });
-  $2.ui.plugin.add("draggable", "zIndex", {
+  $3.ui.plugin.add("draggable", "zIndex", {
     start: function(event, ui, instance) {
-      var t = $2(ui.helper), o = instance.options;
+      var t = $3(ui.helper), o = instance.options;
       if (t.css("zIndex")) {
         o._zIndex = t.css("zIndex");
       }
@@ -13637,12 +13561,12 @@ window.$ = import_jquery.default;
     stop: function(event, ui, instance) {
       var o = instance.options;
       if (o._zIndex) {
-        $2(ui.helper).css("zIndex", o._zIndex);
+        $3(ui.helper).css("zIndex", o._zIndex);
       }
     }
   });
-  var widgetsDraggable = $2.ui.draggable;
-  $2.widget("ui.droppable", {
+  var widgetsDraggable = $3.ui.draggable;
+  $3.widget("ui.droppable", {
     version: "1.13.2",
     widgetEventPrefix: "drop",
     options: {
@@ -13681,8 +13605,8 @@ window.$ = import_jquery.default;
       }
     },
     _addToManager: function(scope) {
-      $2.ui.ddmanager.droppables[scope] = $2.ui.ddmanager.droppables[scope] || [];
-      $2.ui.ddmanager.droppables[scope].push(this);
+      $3.ui.ddmanager.droppables[scope] = $3.ui.ddmanager.droppables[scope] || [];
+      $3.ui.ddmanager.droppables[scope].push(this);
     },
     _splice: function(drop) {
       var i = 0;
@@ -13693,7 +13617,7 @@ window.$ = import_jquery.default;
       }
     },
     _destroy: function() {
-      var drop = $2.ui.ddmanager.droppables[this.options.scope];
+      var drop = $3.ui.ddmanager.droppables[this.options.scope];
       this._splice(drop);
     },
     _setOption: function(key, value) {
@@ -13702,28 +13626,28 @@ window.$ = import_jquery.default;
           return d.is(value);
         };
       } else if (key === "scope") {
-        var drop = $2.ui.ddmanager.droppables[this.options.scope];
+        var drop = $3.ui.ddmanager.droppables[this.options.scope];
         this._splice(drop);
         this._addToManager(value);
       }
       this._super(key, value);
     },
     _activate: function(event) {
-      var draggable = $2.ui.ddmanager.current;
+      var draggable = $3.ui.ddmanager.current;
       this._addActiveClass();
       if (draggable) {
         this._trigger("activate", event, this.ui(draggable));
       }
     },
     _deactivate: function(event) {
-      var draggable = $2.ui.ddmanager.current;
+      var draggable = $3.ui.ddmanager.current;
       this._removeActiveClass();
       if (draggable) {
         this._trigger("deactivate", event, this.ui(draggable));
       }
     },
     _over: function(event) {
-      var draggable = $2.ui.ddmanager.current;
+      var draggable = $3.ui.ddmanager.current;
       if (!draggable || (draggable.currentItem || draggable.element)[0] === this.element[0]) {
         return;
       }
@@ -13733,7 +13657,7 @@ window.$ = import_jquery.default;
       }
     },
     _out: function(event) {
-      var draggable = $2.ui.ddmanager.current;
+      var draggable = $3.ui.ddmanager.current;
       if (!draggable || (draggable.currentItem || draggable.element)[0] === this.element[0]) {
         return;
       }
@@ -13743,18 +13667,18 @@ window.$ = import_jquery.default;
       }
     },
     _drop: function(event, custom) {
-      var draggable = custom || $2.ui.ddmanager.current, childrenIntersection = false;
+      var draggable = custom || $3.ui.ddmanager.current, childrenIntersection = false;
       if (!draggable || (draggable.currentItem || draggable.element)[0] === this.element[0]) {
         return false;
       }
       this.element.find(":data(ui-droppable)").not(".ui-draggable-dragging").each(function() {
-        var inst = $2(this).droppable("instance");
+        var inst = $3(this).droppable("instance");
         if (inst.options.greedy && !inst.options.disabled && inst.options.scope === draggable.options.scope && inst.accept.call(
           inst.element[0],
           draggable.currentItem || draggable.element
-        ) && $2.ui.intersect(
+        ) && $3.ui.intersect(
           draggable,
-          $2.extend(inst, { offset: inst.element.offset() }),
+          $3.extend(inst, { offset: inst.element.offset() }),
           inst.options.tolerance,
           event
         )) {
@@ -13799,7 +13723,7 @@ window.$ = import_jquery.default;
       this._removeClass("ui-droppable-active");
     }
   });
-  $2.ui.intersect = /* @__PURE__ */ function() {
+  $3.ui.intersect = /* @__PURE__ */ function() {
     function isOverAxis(x, reference2, size) {
       return x >= reference2 && x < reference2 + size;
     }
@@ -13829,11 +13753,11 @@ window.$ = import_jquery.default;
       }
     };
   }();
-  $2.ui.ddmanager = {
+  $3.ui.ddmanager = {
     current: null,
     droppables: { "default": [] },
     prepareOffsets: function(t, event) {
-      var i, j, m = $2.ui.ddmanager.droppables[t.options.scope] || [], type = event ? event.type : null, list = (t.currentItem || t.element).find(":data(ui-droppable)").addBack();
+      var i, j, m = $3.ui.ddmanager.droppables[t.options.scope] || [], type = event ? event.type : null, list = (t.currentItem || t.element).find(":data(ui-droppable)").addBack();
       droppablesLoop:
         for (i = 0; i < m.length; i++) {
           if (m[i].options.disabled || t && !m[i].accept.call(
@@ -13864,11 +13788,11 @@ window.$ = import_jquery.default;
     },
     drop: function(draggable, event) {
       var dropped = false;
-      $2.each(($2.ui.ddmanager.droppables[draggable.options.scope] || []).slice(), function() {
+      $3.each(($3.ui.ddmanager.droppables[draggable.options.scope] || []).slice(), function() {
         if (!this.options) {
           return;
         }
-        if (!this.options.disabled && this.visible && $2.ui.intersect(draggable, this, this.options.tolerance, event)) {
+        if (!this.options.disabled && this.visible && $3.ui.intersect(draggable, this, this.options.tolerance, event)) {
           dropped = this._drop.call(this, event) || dropped;
         }
         if (!this.options.disabled && this.visible && this.accept.call(
@@ -13885,29 +13809,29 @@ window.$ = import_jquery.default;
     dragStart: function(draggable, event) {
       draggable.element.parentsUntil("body").on("scroll.droppable", function() {
         if (!draggable.options.refreshPositions) {
-          $2.ui.ddmanager.prepareOffsets(draggable, event);
+          $3.ui.ddmanager.prepareOffsets(draggable, event);
         }
       });
     },
     drag: function(draggable, event) {
       if (draggable.options.refreshPositions) {
-        $2.ui.ddmanager.prepareOffsets(draggable, event);
+        $3.ui.ddmanager.prepareOffsets(draggable, event);
       }
-      $2.each($2.ui.ddmanager.droppables[draggable.options.scope] || [], function() {
+      $3.each($3.ui.ddmanager.droppables[draggable.options.scope] || [], function() {
         if (this.options.disabled || this.greedyChild || !this.visible) {
           return;
         }
-        var parentInstance, scope, parent, intersects = $2.ui.intersect(draggable, this, this.options.tolerance, event), c = !intersects && this.isover ? "isout" : intersects && !this.isover ? "isover" : null;
+        var parentInstance, scope, parent, intersects = $3.ui.intersect(draggable, this, this.options.tolerance, event), c = !intersects && this.isover ? "isout" : intersects && !this.isover ? "isover" : null;
         if (!c) {
           return;
         }
         if (this.options.greedy) {
           scope = this.options.scope;
           parent = this.element.parents(":data(ui-droppable)").filter(function() {
-            return $2(this).droppable("instance").options.scope === scope;
+            return $3(this).droppable("instance").options.scope === scope;
           });
           if (parent.length) {
-            parentInstance = $2(parent[0]).droppable("instance");
+            parentInstance = $3(parent[0]).droppable("instance");
             parentInstance.greedyChild = c === "isover";
           }
         }
@@ -13929,12 +13853,12 @@ window.$ = import_jquery.default;
     dragStop: function(draggable, event) {
       draggable.element.parentsUntil("body").off("scroll.droppable");
       if (!draggable.options.refreshPositions) {
-        $2.ui.ddmanager.prepareOffsets(draggable, event);
+        $3.ui.ddmanager.prepareOffsets(draggable, event);
       }
     }
   };
-  if ($2.uiBackCompat !== false) {
-    $2.widget("ui.droppable", $2.ui.droppable, {
+  if ($3.uiBackCompat !== false) {
+    $3.widget("ui.droppable", $3.ui.droppable, {
       options: {
         hoverClass: false,
         activeClass: false
@@ -13965,8 +13889,8 @@ window.$ = import_jquery.default;
       }
     });
   }
-  var widgetsDroppable = $2.ui.droppable;
-  $2.widget("ui.resizable", $2.ui.mouse, {
+  var widgetsDroppable = $3.ui.droppable;
+  $3.widget("ui.resizable", $3.ui.mouse, {
     version: "1.13.2",
     widgetEventPrefix: "resize",
     options: {
@@ -14002,7 +13926,7 @@ window.$ = import_jquery.default;
       return !isNaN(parseFloat(value));
     },
     _hasScroll: function(el, a) {
-      if ($2(el).css("overflow") === "hidden") {
+      if ($3(el).css("overflow") === "hidden") {
         return false;
       }
       var scroll = a && a === "left" ? "scrollLeft" : "scrollTop", has = false;
@@ -14020,7 +13944,7 @@ window.$ = import_jquery.default;
     _create: function() {
       var margins, o = this.options, that = this;
       this._addClass("ui-resizable");
-      $2.extend(this, {
+      $3.extend(this, {
         _aspectRatio: !!o.aspectRatio,
         aspectRatio: o.aspectRatio,
         originalElement: this.element,
@@ -14029,7 +13953,7 @@ window.$ = import_jquery.default;
       });
       if (this.element[0].nodeName.match(/^(canvas|textarea|input|select|button|img)$/i)) {
         this.element.wrap(
-          $2("<div class='ui-wrapper'></div>").css({
+          $3("<div class='ui-wrapper'></div>").css({
             overflow: "hidden",
             position: this.element.css("position"),
             width: this.element.outerWidth(),
@@ -14063,7 +13987,7 @@ window.$ = import_jquery.default;
       }
       this._setupHandles();
       if (o.autoHide) {
-        $2(this.element).on("mouseenter", function() {
+        $3(this.element).on("mouseenter", function() {
           if (o.disabled) {
             return;
           }
@@ -14085,7 +14009,7 @@ window.$ = import_jquery.default;
       this._mouseDestroy();
       this._addedHandles.remove();
       var wrapper, _destroy = function(exp) {
-        $2(exp).removeData("resizable").removeData("ui-resizable").off(".resizable");
+        $3(exp).removeData("resizable").removeData("ui-resizable").off(".resizable");
       };
       if (this.elementIsWrapper) {
         _destroy(this.element);
@@ -14119,7 +14043,7 @@ window.$ = import_jquery.default;
     },
     _setupHandles: function() {
       var o = this.options, handle, i, n, hname, axis, that = this;
-      this.handles = o.handles || (!$2(".ui-resizable-handle", this.element).length ? "e,s,se" : {
+      this.handles = o.handles || (!$3(".ui-resizable-handle", this.element).length ? "e,s,se" : {
         n: ".ui-resizable-n",
         e: ".ui-resizable-e",
         s: ".ui-resizable-s",
@@ -14129,8 +14053,8 @@ window.$ = import_jquery.default;
         ne: ".ui-resizable-ne",
         nw: ".ui-resizable-nw"
       });
-      this._handles = $2();
-      this._addedHandles = $2();
+      this._handles = $3();
+      this._addedHandles = $3();
       if (this.handles.constructor === String) {
         if (this.handles === "all") {
           this.handles = "n,e,s,w,se,sw,ne,nw";
@@ -14140,7 +14064,7 @@ window.$ = import_jquery.default;
         for (i = 0; i < n.length; i++) {
           handle = String.prototype.trim.call(n[i]);
           hname = "ui-resizable-" + handle;
-          axis = $2("<div>");
+          axis = $3("<div>");
           this._addClass(axis, "ui-resizable-handle " + hname);
           axis.css({ zIndex: o.zIndex });
           this.handles[handle] = ".ui-resizable-" + handle;
@@ -14157,11 +14081,11 @@ window.$ = import_jquery.default;
           if (this.handles[i2].constructor === String) {
             this.handles[i2] = this.element.children(this.handles[i2]).first().show();
           } else if (this.handles[i2].jquery || this.handles[i2].nodeType) {
-            this.handles[i2] = $2(this.handles[i2]);
+            this.handles[i2] = $3(this.handles[i2]);
             this._on(this.handles[i2], { "mousedown": that._mouseDown });
           }
           if (this.elementIsWrapper && this.originalElement[0].nodeName.match(/^(textarea|input|select|button)$/i)) {
-            axis2 = $2(this.handles[i2], this.element);
+            axis2 = $3(this.handles[i2], this.element);
             padWrapper = /sw|ne|nw|se|n|s/.test(i2) ? axis2.outerHeight() : axis2.outerWidth();
             padPos = [
               "padding",
@@ -14195,8 +14119,8 @@ window.$ = import_jquery.default;
     _mouseCapture: function(event) {
       var i, handle, capture = false;
       for (i in this.handles) {
-        handle = $2(this.handles[i])[0];
-        if (handle === event.target || $2.contains(handle, event.target)) {
+        handle = $3(this.handles[i])[0];
+        if (handle === event.target || $3.contains(handle, event.target)) {
           capture = true;
         }
       }
@@ -14209,8 +14133,8 @@ window.$ = import_jquery.default;
       curleft = this._num(this.helper.css("left"));
       curtop = this._num(this.helper.css("top"));
       if (o.containment) {
-        curleft += $2(o.containment).scrollLeft() || 0;
-        curtop += $2(o.containment).scrollTop() || 0;
+        curleft += $3(o.containment).scrollLeft() || 0;
+        curtop += $3(o.containment).scrollTop() || 0;
       }
       this.offset = this.helper.offset();
       this.position = { left: curleft, top: curtop };
@@ -14235,8 +14159,8 @@ window.$ = import_jquery.default;
       this.originalPosition = { left: curleft, top: curtop };
       this.originalMousePosition = { left: event.pageX, top: event.pageY };
       this.aspectRatio = typeof o.aspectRatio === "number" ? o.aspectRatio : this.originalSize.width / this.originalSize.height || 1;
-      cursor = $2(".ui-resizable-" + this.axis).css("cursor");
-      $2("body").css("cursor", cursor === "auto" ? this.axis + "-resize" : cursor);
+      cursor = $3(".ui-resizable-" + this.axis).css("cursor");
+      $3("body").css("cursor", cursor === "auto" ? this.axis + "-resize" : cursor);
       this._addClass("ui-resizable-resizing");
       this._propagate("start", event);
       return true;
@@ -14259,7 +14183,7 @@ window.$ = import_jquery.default;
       if (!this._helper && this._proportionallyResizeElements.length) {
         this._proportionallyResize();
       }
-      if (!$2.isEmptyObject(props)) {
+      if (!$3.isEmptyObject(props)) {
         this._updatePrevProperties();
         this._trigger("resize", event, this.ui());
         this._applyChanges();
@@ -14281,7 +14205,7 @@ window.$ = import_jquery.default;
         left2 = parseFloat(that.element.css("left")) + (that.position.left - that.originalPosition.left) || null;
         top2 = parseFloat(that.element.css("top")) + (that.position.top - that.originalPosition.top) || null;
         if (!o.animate) {
-          this.element.css($2.extend(s, { top: top2, left: left2 }));
+          this.element.css($3.extend(s, { top: top2, left: left2 }));
         }
         that.helper.height(that.size.height);
         that.helper.width(that.size.width);
@@ -14289,7 +14213,7 @@ window.$ = import_jquery.default;
           this._proportionallyResize();
         }
       }
-      $2("body").css("cursor", "auto");
+      $3("body").css("cursor", "auto");
       this._removeClass("ui-resizable-resizing");
       this._propagate("stop", event);
       if (this._helper) {
@@ -14458,7 +14382,7 @@ window.$ = import_jquery.default;
       var el = this.element, o = this.options;
       this.elementOffset = el.offset();
       if (this._helper) {
-        this.helper = this.helper || $2("<div></div>").css({ overflow: "hidden" });
+        this.helper = this.helper || $3("<div></div>").css({ overflow: "hidden" });
         this._addClass(this.helper, this._helper);
         this.helper.css({
           width: this.element.outerWidth(),
@@ -14490,32 +14414,32 @@ window.$ = import_jquery.default;
         return { height: this.originalSize.height + dy };
       },
       se: function(event, dx, dy) {
-        return $2.extend(
+        return $3.extend(
           this._change.s.apply(this, arguments),
           this._change.e.apply(this, [event, dx, dy])
         );
       },
       sw: function(event, dx, dy) {
-        return $2.extend(
+        return $3.extend(
           this._change.s.apply(this, arguments),
           this._change.w.apply(this, [event, dx, dy])
         );
       },
       ne: function(event, dx, dy) {
-        return $2.extend(
+        return $3.extend(
           this._change.n.apply(this, arguments),
           this._change.e.apply(this, [event, dx, dy])
         );
       },
       nw: function(event, dx, dy) {
-        return $2.extend(
+        return $3.extend(
           this._change.n.apply(this, arguments),
           this._change.w.apply(this, [event, dx, dy])
         );
       }
     },
     _propagate: function(n, event) {
-      $2.ui.plugin.call(this, n, [event, this.ui()]);
+      $3.ui.plugin.call(this, n, [event, this.ui()]);
       if (n !== "resize") {
         this._trigger(n, event, this.ui());
       }
@@ -14533,14 +14457,14 @@ window.$ = import_jquery.default;
       };
     }
   });
-  $2.ui.plugin.add("resizable", "animate", {
+  $3.ui.plugin.add("resizable", "animate", {
     stop: function(event) {
-      var that = $2(this).resizable("instance"), o = that.options, pr = that._proportionallyResizeElements, ista = pr.length && /textarea/i.test(pr[0].nodeName), soffseth = ista && that._hasScroll(pr[0], "left") ? 0 : that.sizeDiff.height, soffsetw = ista ? 0 : that.sizeDiff.width, style = {
+      var that = $3(this).resizable("instance"), o = that.options, pr = that._proportionallyResizeElements, ista = pr.length && /textarea/i.test(pr[0].nodeName), soffseth = ista && that._hasScroll(pr[0], "left") ? 0 : that.sizeDiff.height, soffsetw = ista ? 0 : that.sizeDiff.width, style = {
         width: that.size.width - soffsetw,
         height: that.size.height - soffseth
       }, left2 = parseFloat(that.element.css("left")) + (that.position.left - that.originalPosition.left) || null, top2 = parseFloat(that.element.css("top")) + (that.position.top - that.originalPosition.top) || null;
       that.element.animate(
-        $2.extend(style, top2 && left2 ? { top: top2, left: left2 } : {}),
+        $3.extend(style, top2 && left2 ? { top: top2, left: left2 } : {}),
         {
           duration: o.animateDuration,
           easing: o.animateEasing,
@@ -14552,7 +14476,7 @@ window.$ = import_jquery.default;
               left: parseFloat(that.element.css("left"))
             };
             if (pr && pr.length) {
-              $2(pr[0]).css({ width: data2.width, height: data2.height });
+              $3(pr[0]).css({ width: data2.width, height: data2.height });
             }
             that._updateCache(data2);
             that._propagate("resize", event);
@@ -14561,13 +14485,13 @@ window.$ = import_jquery.default;
       );
     }
   });
-  $2.ui.plugin.add("resizable", "containment", {
+  $3.ui.plugin.add("resizable", "containment", {
     start: function() {
-      var element, p, co, ch, cw, width, height, that = $2(this).resizable("instance"), o = that.options, el = that.element, oc = o.containment, ce = oc instanceof $2 ? oc.get(0) : /parent/.test(oc) ? el.parent().get(0) : oc;
+      var element, p, co, ch, cw, width, height, that = $3(this).resizable("instance"), o = that.options, el = that.element, oc = o.containment, ce = oc instanceof $3 ? oc.get(0) : /parent/.test(oc) ? el.parent().get(0) : oc;
       if (!ce) {
         return;
       }
-      that.containerElement = $2(ce);
+      that.containerElement = $3(ce);
       if (/document/.test(oc) || oc === document) {
         that.containerOffset = {
           left: 0,
@@ -14578,16 +14502,16 @@ window.$ = import_jquery.default;
           top: 0
         };
         that.parentData = {
-          element: $2(document),
+          element: $3(document),
           left: 0,
           top: 0,
-          width: $2(document).width(),
-          height: $2(document).height() || document.body.parentNode.scrollHeight
+          width: $3(document).width(),
+          height: $3(document).height() || document.body.parentNode.scrollHeight
         };
       } else {
-        element = $2(ce);
+        element = $3(ce);
         p = [];
-        $2(["Top", "Right", "Left", "Bottom"]).each(function(i, name) {
+        $3(["Top", "Right", "Left", "Bottom"]).each(function(i, name) {
           p[i] = that._num(element.css("padding" + name));
         });
         that.containerOffset = element.offset();
@@ -14611,7 +14535,7 @@ window.$ = import_jquery.default;
       }
     },
     resize: function(event) {
-      var woset, hoset, isParent, isOffsetRelative, that = $2(this).resizable("instance"), o = that.options, co = that.containerOffset, cp = that.position, pRatio = that._aspectRatio || event.shiftKey, cop = {
+      var woset, hoset, isParent, isOffsetRelative, that = $3(this).resizable("instance"), o = that.options, co = that.containerOffset, cp = that.position, pRatio = that._aspectRatio || event.shiftKey, cop = {
         top: 0,
         left: 0
       }, ce = that.containerElement, continueResize = true;
@@ -14667,16 +14591,16 @@ window.$ = import_jquery.default;
       }
     },
     stop: function() {
-      var that = $2(this).resizable("instance"), o = that.options, co = that.containerOffset, cop = that.containerPosition, ce = that.containerElement, helper = $2(that.helper), ho = helper.offset(), w = helper.outerWidth() - that.sizeDiff.width, h = helper.outerHeight() - that.sizeDiff.height;
+      var that = $3(this).resizable("instance"), o = that.options, co = that.containerOffset, cop = that.containerPosition, ce = that.containerElement, helper = $3(that.helper), ho = helper.offset(), w = helper.outerWidth() - that.sizeDiff.width, h = helper.outerHeight() - that.sizeDiff.height;
       if (that._helper && !o.animate && /relative/.test(ce.css("position"))) {
-        $2(this).css({
+        $3(this).css({
           left: ho.left - cop.left - co.left,
           width: w,
           height: h
         });
       }
       if (that._helper && !o.animate && /static/.test(ce.css("position"))) {
-        $2(this).css({
+        $3(this).css({
           left: ho.left - cop.left - co.left,
           width: w,
           height: h
@@ -14684,11 +14608,11 @@ window.$ = import_jquery.default;
       }
     }
   });
-  $2.ui.plugin.add("resizable", "alsoResize", {
+  $3.ui.plugin.add("resizable", "alsoResize", {
     start: function() {
-      var that = $2(this).resizable("instance"), o = that.options;
-      $2(o.alsoResize).each(function() {
-        var el = $2(this);
+      var that = $3(this).resizable("instance"), o = that.options;
+      $3(o.alsoResize).each(function() {
+        var el = $3(this);
         el.data("ui-resizable-alsoresize", {
           width: parseFloat(el.width()),
           height: parseFloat(el.height()),
@@ -14698,15 +14622,15 @@ window.$ = import_jquery.default;
       });
     },
     resize: function(event, ui) {
-      var that = $2(this).resizable("instance"), o = that.options, os = that.originalSize, op = that.originalPosition, delta = {
+      var that = $3(this).resizable("instance"), o = that.options, os = that.originalSize, op = that.originalPosition, delta = {
         height: that.size.height - os.height || 0,
         width: that.size.width - os.width || 0,
         top: that.position.top - op.top || 0,
         left: that.position.left - op.left || 0
       };
-      $2(o.alsoResize).each(function() {
-        var el = $2(this), start2 = $2(this).data("ui-resizable-alsoresize"), style = {}, css = el.parents(ui.originalElement[0]).length ? ["width", "height"] : ["width", "height", "top", "left"];
-        $2.each(css, function(i, prop) {
+      $3(o.alsoResize).each(function() {
+        var el = $3(this), start2 = $3(this).data("ui-resizable-alsoresize"), style = {}, css = el.parents(ui.originalElement[0]).length ? ["width", "height"] : ["width", "height", "top", "left"];
+        $3.each(css, function(i, prop) {
           var sum = (start2[prop] || 0) + (delta[prop] || 0);
           if (sum && sum >= 0) {
             style[prop] = sum || null;
@@ -14716,12 +14640,12 @@ window.$ = import_jquery.default;
       });
     },
     stop: function() {
-      $2(this).removeData("ui-resizable-alsoresize");
+      $3(this).removeData("ui-resizable-alsoresize");
     }
   });
-  $2.ui.plugin.add("resizable", "ghost", {
+  $3.ui.plugin.add("resizable", "ghost", {
     start: function() {
-      var that = $2(this).resizable("instance"), cs = that.size;
+      var that = $3(this).resizable("instance"), cs = that.size;
       that.ghost = that.originalElement.clone();
       that.ghost.css({
         opacity: 0.25,
@@ -14734,13 +14658,13 @@ window.$ = import_jquery.default;
         top: 0
       });
       that._addClass(that.ghost, "ui-resizable-ghost");
-      if ($2.uiBackCompat !== false && typeof that.options.ghost === "string") {
+      if ($3.uiBackCompat !== false && typeof that.options.ghost === "string") {
         that.ghost.addClass(this.options.ghost);
       }
       that.ghost.appendTo(that.helper);
     },
     resize: function() {
-      var that = $2(this).resizable("instance");
+      var that = $3(this).resizable("instance");
       if (that.ghost) {
         that.ghost.css({
           position: "relative",
@@ -14750,15 +14674,15 @@ window.$ = import_jquery.default;
       }
     },
     stop: function() {
-      var that = $2(this).resizable("instance");
+      var that = $3(this).resizable("instance");
       if (that.ghost && that.helper) {
         that.helper.get(0).removeChild(that.ghost.get(0));
       }
     }
   });
-  $2.ui.plugin.add("resizable", "grid", {
+  $3.ui.plugin.add("resizable", "grid", {
     resize: function() {
-      var outerDimensions, that = $2(this).resizable("instance"), o = that.options, cs = that.size, os = that.originalSize, op = that.originalPosition, a = that.axis, grid = typeof o.grid === "number" ? [o.grid, o.grid] : o.grid, gridX = grid[0] || 1, gridY = grid[1] || 1, ox = Math.round((cs.width - os.width) / gridX) * gridX, oy = Math.round((cs.height - os.height) / gridY) * gridY, newWidth = os.width + ox, newHeight = os.height + oy, isMaxWidth = o.maxWidth && o.maxWidth < newWidth, isMaxHeight = o.maxHeight && o.maxHeight < newHeight, isMinWidth = o.minWidth && o.minWidth > newWidth, isMinHeight = o.minHeight && o.minHeight > newHeight;
+      var outerDimensions, that = $3(this).resizable("instance"), o = that.options, cs = that.size, os = that.originalSize, op = that.originalPosition, a = that.axis, grid = typeof o.grid === "number" ? [o.grid, o.grid] : o.grid, gridX = grid[0] || 1, gridY = grid[1] || 1, ox = Math.round((cs.width - os.width) / gridX) * gridX, oy = Math.round((cs.height - os.height) / gridY) * gridY, newWidth = os.width + ox, newHeight = os.height + oy, isMaxWidth = o.maxWidth && o.maxWidth < newWidth, isMaxHeight = o.maxHeight && o.maxHeight < newHeight, isMinWidth = o.minWidth && o.minWidth > newWidth, isMinHeight = o.minHeight && o.minHeight > newHeight;
       o.grid = grid;
       if (isMinWidth) {
         newWidth += gridX;
@@ -14806,8 +14730,8 @@ window.$ = import_jquery.default;
       }
     }
   });
-  var widgetsResizable = $2.ui.resizable;
-  var widgetsSelectable = $2.widget("ui.selectable", $2.ui.mouse, {
+  var widgetsResizable = $3.ui.resizable;
+  var widgetsSelectable = $3.widget("ui.selectable", $3.ui.mouse, {
     version: "1.13.2",
     options: {
       appendTo: "body",
@@ -14828,15 +14752,15 @@ window.$ = import_jquery.default;
       this._addClass("ui-selectable");
       this.dragged = false;
       this.refresh = function() {
-        that.elementPos = $2(that.element[0]).offset();
-        that.selectees = $2(that.options.filter, that.element[0]);
+        that.elementPos = $3(that.element[0]).offset();
+        that.selectees = $3(that.options.filter, that.element[0]);
         that._addClass(that.selectees, "ui-selectee");
         that.selectees.each(function() {
-          var $this = $2(this), selecteeOffset = $this.offset(), pos = {
+          var $this = $3(this), selecteeOffset = $this.offset(), pos = {
             left: selecteeOffset.left - that.elementPos.left,
             top: selecteeOffset.top - that.elementPos.top
           };
-          $2.data(this, "selectable-item", {
+          $3.data(this, "selectable-item", {
             element: this,
             $element: $this,
             left: pos.left,
@@ -14852,7 +14776,7 @@ window.$ = import_jquery.default;
       };
       this.refresh();
       this._mouseInit();
-      this.helper = $2("<div>");
+      this.helper = $3("<div>");
       this._addClass(this.helper, "ui-selectable-helper");
     },
     _destroy: function() {
@@ -14862,13 +14786,13 @@ window.$ = import_jquery.default;
     _mouseStart: function(event) {
       var that = this, options = this.options;
       this.opos = [event.pageX, event.pageY];
-      this.elementPos = $2(this.element[0]).offset();
+      this.elementPos = $3(this.element[0]).offset();
       if (this.options.disabled) {
         return;
       }
-      this.selectees = $2(options.filter, this.element[0]);
+      this.selectees = $3(options.filter, this.element[0]);
       this._trigger("start", event);
-      $2(options.appendTo).append(this.helper);
+      $3(options.appendTo).append(this.helper);
       this.helper.css({
         "left": event.pageX,
         "top": event.pageY,
@@ -14879,7 +14803,7 @@ window.$ = import_jquery.default;
         this.refresh();
       }
       this.selectees.filter(".ui-selected").each(function() {
-        var selectee = $2.data(this, "selectable-item");
+        var selectee = $3.data(this, "selectable-item");
         selectee.startselected = true;
         if (!event.metaKey && !event.ctrlKey) {
           that._removeClass(selectee.$element, "ui-selected");
@@ -14891,8 +14815,8 @@ window.$ = import_jquery.default;
           });
         }
       });
-      $2(event.target).parents().addBack().each(function() {
-        var doSelect, selectee = $2.data(this, "selectable-item");
+      $3(event.target).parents().addBack().each(function() {
+        var doSelect, selectee = $3.data(this, "selectable-item");
         if (selectee) {
           doSelect = !event.metaKey && !event.ctrlKey || !selectee.$element.hasClass("ui-selected");
           that._removeClass(selectee.$element, doSelect ? "ui-unselecting" : "ui-selected")._addClass(selectee.$element, doSelect ? "ui-selecting" : "ui-unselecting");
@@ -14930,7 +14854,7 @@ window.$ = import_jquery.default;
       }
       this.helper.css({ left: x1, top: y1, width: x2 - x1, height: y2 - y1 });
       this.selectees.each(function() {
-        var selectee = $2.data(this, "selectable-item"), hit = false, offset2 = {};
+        var selectee = $3.data(this, "selectable-item"), hit = false, offset2 = {};
         if (!selectee || selectee.element === that.element[0]) {
           return;
         }
@@ -14996,8 +14920,8 @@ window.$ = import_jquery.default;
     _mouseStop: function(event) {
       var that = this;
       this.dragged = false;
-      $2(".ui-unselecting", this.element[0]).each(function() {
-        var selectee = $2.data(this, "selectable-item");
+      $3(".ui-unselecting", this.element[0]).each(function() {
+        var selectee = $3.data(this, "selectable-item");
         that._removeClass(selectee.$element, "ui-unselecting");
         selectee.unselecting = false;
         selectee.startselected = false;
@@ -15005,8 +14929,8 @@ window.$ = import_jquery.default;
           unselected: selectee.element
         });
       });
-      $2(".ui-selecting", this.element[0]).each(function() {
-        var selectee = $2.data(this, "selectable-item");
+      $3(".ui-selecting", this.element[0]).each(function() {
+        var selectee = $3.data(this, "selectable-item");
         that._removeClass(selectee.$element, "ui-selecting")._addClass(selectee.$element, "ui-selected");
         selectee.selecting = false;
         selectee.selected = true;
@@ -15020,7 +14944,7 @@ window.$ = import_jquery.default;
       return false;
     }
   });
-  var widgetsSortable = $2.widget("ui.sortable", $2.ui.mouse, {
+  var widgetsSortable = $3.widget("ui.sortable", $3.ui.mouse, {
     version: "1.13.2",
     widgetEventPrefix: "sort",
     ready: false,
@@ -15085,7 +15009,7 @@ window.$ = import_jquery.default;
     _setHandleClassName: function() {
       var that = this;
       this._removeClass(this.element.find(".ui-sortable-handle"), "ui-sortable-handle");
-      $2.each(this.items, function() {
+      $3.each(this.items, function() {
         that._addClass(
           this.instance.options.handle ? this.item.find(this.instance.options.handle) : this.item,
           "ui-sortable-handle"
@@ -15108,20 +15032,20 @@ window.$ = import_jquery.default;
         return false;
       }
       this._refreshItems(event);
-      $2(event.target).parents().each(function() {
-        if ($2.data(this, that.widgetName + "-item") === that) {
-          currentItem = $2(this);
+      $3(event.target).parents().each(function() {
+        if ($3.data(this, that.widgetName + "-item") === that) {
+          currentItem = $3(this);
           return false;
         }
       });
-      if ($2.data(event.target, that.widgetName + "-item") === that) {
-        currentItem = $2(event.target);
+      if ($3.data(event.target, that.widgetName + "-item") === that) {
+        currentItem = $3(event.target);
       }
       if (!currentItem) {
         return false;
       }
       if (this.options.handle && !overrideHandle) {
-        $2(this.options.handle, currentItem).find("*").addBack().each(function() {
+        $3(this.options.handle, currentItem).find("*").addBack().each(function() {
           if (this === event.target) {
             validHandle = true;
           }
@@ -15138,7 +15062,7 @@ window.$ = import_jquery.default;
       var i, body, o = this.options;
       this.currentContainer = this;
       this.refreshPositions();
-      this.appendTo = $2(o.appendTo !== "parent" ? o.appendTo : this.currentItem.parent());
+      this.appendTo = $3(o.appendTo !== "parent" ? o.appendTo : this.currentItem.parent());
       this.helper = this._createHelper(event);
       this._cacheHelperProportions();
       this._cacheMargins();
@@ -15147,7 +15071,7 @@ window.$ = import_jquery.default;
         top: this.offset.top - this.margins.top,
         left: this.offset.left - this.margins.left
       };
-      $2.extend(this.offset, {
+      $3.extend(this.offset, {
         click: {
           //Where the click happened, relative to the element
           left: event.pageX - this.offset.left,
@@ -15171,7 +15095,7 @@ window.$ = import_jquery.default;
       }
       this._createPlaceholder();
       this.scrollParent = this.placeholder.scrollParent();
-      $2.extend(this.offset, {
+      $3.extend(this.offset, {
         parent: this._getParentOffset()
       });
       if (o.containment) {
@@ -15181,7 +15105,7 @@ window.$ = import_jquery.default;
         body = this.document.find("body");
         this.storedCursor = body.css("cursor");
         body.css("cursor", o.cursor);
-        this.storedStylesheet = $2("<style>*{ cursor: " + o.cursor + " !important; }</style>").appendTo(body);
+        this.storedStylesheet = $3("<style>*{ cursor: " + o.cursor + " !important; }</style>").appendTo(body);
       }
       if (o.zIndex) {
         if (this.helper.css("zIndex")) {
@@ -15207,11 +15131,11 @@ window.$ = import_jquery.default;
           this.containers[i]._trigger("activate", event, this._uiHash(this));
         }
       }
-      if ($2.ui.ddmanager) {
-        $2.ui.ddmanager.current = this;
+      if ($3.ui.ddmanager) {
+        $3.ui.ddmanager.current = this;
       }
-      if ($2.ui.ddmanager && !o.dropBehaviour) {
-        $2.ui.ddmanager.prepareOffsets(this, event);
+      if ($3.ui.ddmanager && !o.dropBehaviour) {
+        $3.ui.ddmanager.prepareOffsets(this, event);
       }
       this.dragging = true;
       this._addClass(this.helper, "ui-sortable-helper");
@@ -15270,8 +15194,8 @@ window.$ = import_jquery.default;
       if (o.scroll) {
         if (this._scroll(event) !== false) {
           this._refreshItemPositions(true);
-          if ($2.ui.ddmanager && !o.dropBehaviour) {
-            $2.ui.ddmanager.prepareOffsets(this, event);
+          if ($3.ui.ddmanager && !o.dropBehaviour) {
+            $3.ui.ddmanager.prepareOffsets(this, event);
           }
         }
       }
@@ -15289,7 +15213,7 @@ window.$ = import_jquery.default;
         if (item.instance !== this.currentContainer) {
           continue;
         }
-        if (itemElement !== this.currentItem[0] && this.placeholder[intersection === 1 ? "next" : "prev"]()[0] !== itemElement && !$2.contains(this.placeholder[0], itemElement) && (this.options.type === "semi-dynamic" ? !$2.contains(this.element[0], itemElement) : true)) {
+        if (itemElement !== this.currentItem[0] && this.placeholder[intersection === 1 ? "next" : "prev"]()[0] !== itemElement && !$3.contains(this.placeholder[0], itemElement) && (this.options.type === "semi-dynamic" ? !$3.contains(this.element[0], itemElement) : true)) {
           this.direction = intersection === 1 ? "down" : "up";
           if (this.options.tolerance === "pointer" || this._intersectsWithSides(item)) {
             this._rearrange(event, item);
@@ -15301,8 +15225,8 @@ window.$ = import_jquery.default;
         }
       }
       this._contactContainers(event);
-      if ($2.ui.ddmanager) {
-        $2.ui.ddmanager.drag(this, event);
+      if ($3.ui.ddmanager) {
+        $3.ui.ddmanager.drag(this, event);
       }
       this._trigger("sort", event, this._uiHash());
       this.lastPositionAbs = this.positionAbs;
@@ -15312,8 +15236,8 @@ window.$ = import_jquery.default;
       if (!event) {
         return;
       }
-      if ($2.ui.ddmanager && !this.options.dropBehaviour) {
-        $2.ui.ddmanager.drop(this, event);
+      if ($3.ui.ddmanager && !this.options.dropBehaviour) {
+        $3.ui.ddmanager.drop(this, event);
       }
       if (this.options.revert) {
         var that = this, cur = this.placeholder.offset(), axis = this.options.axis, animation = {};
@@ -15324,7 +15248,7 @@ window.$ = import_jquery.default;
           animation.top = cur.top - this.offset.parent.top - this.margins.top + (this.offsetParent[0] === this.document[0].body ? 0 : this.offsetParent[0].scrollTop);
         }
         this.reverting = true;
-        $2(this.helper).animate(
+        $3(this.helper).animate(
           animation,
           parseInt(this.options.revert, 10) || 500,
           function() {
@@ -15338,7 +15262,7 @@ window.$ = import_jquery.default;
     },
     cancel: function() {
       if (this.dragging) {
-        this._mouseUp(new $2.Event("mouseup", { target: null }));
+        this._mouseUp(new $3.Event("mouseup", { target: null }));
         if (this.options.helper === "original") {
           this.currentItem.css(this._storedCSS);
           this._removeClass(this.currentItem, "ui-sortable-helper");
@@ -15360,16 +15284,16 @@ window.$ = import_jquery.default;
         if (this.options.helper !== "original" && this.helper && this.helper[0].parentNode) {
           this.helper.remove();
         }
-        $2.extend(this, {
+        $3.extend(this, {
           helper: null,
           dragging: false,
           reverting: false,
           _noFinalSort: null
         });
         if (this.domPosition.prev) {
-          $2(this.domPosition.prev).after(this.currentItem);
+          $3(this.domPosition.prev).after(this.currentItem);
         } else {
-          $2(this.domPosition.parent).prepend(this.currentItem);
+          $3(this.domPosition.parent).prepend(this.currentItem);
         }
       }
       return this;
@@ -15377,8 +15301,8 @@ window.$ = import_jquery.default;
     serialize: function(o) {
       var items = this._getItemsAsjQuery(o && o.connected), str = [];
       o = o || {};
-      $2(items).each(function() {
-        var res = ($2(o.item || this).attr(o.attribute || "id") || "").match(o.expression || /(.+)[\-=_](.+)/);
+      $3(items).each(function() {
+        var res = ($3(o.item || this).attr(o.attribute || "id") || "").match(o.expression || /(.+)[\-=_](.+)/);
         if (res) {
           str.push(
             (o.key || res[1] + "[]") + "=" + (o.key && o.expression ? res[1] : res[2])
@@ -15394,7 +15318,7 @@ window.$ = import_jquery.default;
       var items = this._getItemsAsjQuery(o && o.connected), ret = [];
       o = o || {};
       items.each(function() {
-        ret.push($2(o.item || this).attr(o.attribute || "id") || "");
+        ret.push($3(o.item || this).attr(o.attribute || "id") || "");
       });
       return ret;
     },
@@ -15457,27 +15381,27 @@ window.$ = import_jquery.default;
       var i, j, cur, inst, items = [], queries = [], connectWith = this._connectWith();
       if (connectWith && connected) {
         for (i = connectWith.length - 1; i >= 0; i--) {
-          cur = $2(connectWith[i], this.document[0]);
+          cur = $3(connectWith[i], this.document[0]);
           for (j = cur.length - 1; j >= 0; j--) {
-            inst = $2.data(cur[j], this.widgetFullName);
+            inst = $3.data(cur[j], this.widgetFullName);
             if (inst && inst !== this && !inst.options.disabled) {
-              queries.push([typeof inst.options.items === "function" ? inst.options.items.call(inst.element) : $2(inst.options.items, inst.element).not(".ui-sortable-helper").not(".ui-sortable-placeholder"), inst]);
+              queries.push([typeof inst.options.items === "function" ? inst.options.items.call(inst.element) : $3(inst.options.items, inst.element).not(".ui-sortable-helper").not(".ui-sortable-placeholder"), inst]);
             }
           }
         }
       }
-      queries.push([typeof this.options.items === "function" ? this.options.items.call(this.element, null, { options: this.options, item: this.currentItem }) : $2(this.options.items, this.element).not(".ui-sortable-helper").not(".ui-sortable-placeholder"), this]);
+      queries.push([typeof this.options.items === "function" ? this.options.items.call(this.element, null, { options: this.options, item: this.currentItem }) : $3(this.options.items, this.element).not(".ui-sortable-helper").not(".ui-sortable-placeholder"), this]);
       function addItems() {
         items.push(this);
       }
       for (i = queries.length - 1; i >= 0; i--) {
         queries[i][0].each(addItems);
       }
-      return $2(items);
+      return $3(items);
     },
     _removeCurrentsFromItems: function() {
       var list = this.currentItem.find(":data(" + this.widgetName + "-item)");
-      this.items = $2.grep(this.items, function(item) {
+      this.items = $3.grep(this.items, function(item) {
         for (var j = 0; j < list.length; j++) {
           if (list[j] === item.item[0]) {
             return false;
@@ -15489,14 +15413,14 @@ window.$ = import_jquery.default;
     _refreshItems: function(event) {
       this.items = [];
       this.containers = [this];
-      var i, j, cur, inst, targetData, _queries, item, queriesLength, items = this.items, queries = [[typeof this.options.items === "function" ? this.options.items.call(this.element[0], event, { item: this.currentItem }) : $2(this.options.items, this.element), this]], connectWith = this._connectWith();
+      var i, j, cur, inst, targetData, _queries, item, queriesLength, items = this.items, queries = [[typeof this.options.items === "function" ? this.options.items.call(this.element[0], event, { item: this.currentItem }) : $3(this.options.items, this.element), this]], connectWith = this._connectWith();
       if (connectWith && this.ready) {
         for (i = connectWith.length - 1; i >= 0; i--) {
-          cur = $2(connectWith[i], this.document[0]);
+          cur = $3(connectWith[i], this.document[0]);
           for (j = cur.length - 1; j >= 0; j--) {
-            inst = $2.data(cur[j], this.widgetFullName);
+            inst = $3.data(cur[j], this.widgetFullName);
             if (inst && inst !== this && !inst.options.disabled) {
-              queries.push([typeof inst.options.items === "function" ? inst.options.items.call(inst.element[0], event, { item: this.currentItem }) : $2(inst.options.items, inst.element), inst]);
+              queries.push([typeof inst.options.items === "function" ? inst.options.items.call(inst.element[0], event, { item: this.currentItem }) : $3(inst.options.items, inst.element), inst]);
               this.containers.push(inst);
             }
           }
@@ -15506,7 +15430,7 @@ window.$ = import_jquery.default;
         targetData = queries[i][1];
         _queries = queries[i][0];
         for (j = 0, queriesLength = _queries.length; j < queriesLength; j++) {
-          item = $2(_queries[j]);
+          item = $3(_queries[j]);
           item.data(this.widgetName + "-item", targetData);
           items.push({
             item,
@@ -15526,7 +15450,7 @@ window.$ = import_jquery.default;
         if (this.currentContainer && item.instance !== this.currentContainer && item.item[0] !== this.currentItem[0]) {
           continue;
         }
-        t = this.options.toleranceElement ? $2(this.options.toleranceElement, item.item) : item.item;
+        t = this.options.toleranceElement ? $3(this.options.toleranceElement, item.item) : item.item;
         if (!fast) {
           item.width = t.outerWidth();
           item.height = t.outerHeight();
@@ -15564,7 +15488,7 @@ window.$ = import_jquery.default;
         nodeName = that.currentItem[0].nodeName.toLowerCase();
         o.placeholder = {
           element: function() {
-            var element = $2("<" + nodeName + ">", that.document[0]);
+            var element = $3("<" + nodeName + ">", that.document[0]);
             that._addClass(
               element,
               "ui-sortable-placeholder",
@@ -15573,7 +15497,7 @@ window.$ = import_jquery.default;
             if (nodeName === "tbody") {
               that._createTrPlaceholder(
                 that.currentItem.find("tr").eq(0),
-                $2("<tr>", that.document[0]).appendTo(element)
+                $3("<tr>", that.document[0]).appendTo(element)
               );
             } else if (nodeName === "tr") {
               that._createTrPlaceholder(that.currentItem, element);
@@ -15602,24 +15526,24 @@ window.$ = import_jquery.default;
           }
         };
       }
-      that.placeholder = $2(o.placeholder.element.call(that.element, that.currentItem));
+      that.placeholder = $3(o.placeholder.element.call(that.element, that.currentItem));
       that.currentItem.after(that.placeholder);
       o.placeholder.update(that, that.placeholder);
     },
     _createTrPlaceholder: function(sourceTr, targetTr) {
       var that = this;
       sourceTr.children().each(function() {
-        $2("<td>&#160;</td>", that.document[0]).attr("colspan", $2(this).attr("colspan") || 1).appendTo(targetTr);
+        $3("<td>&#160;</td>", that.document[0]).attr("colspan", $3(this).attr("colspan") || 1).appendTo(targetTr);
       });
     },
     _contactContainers: function(event) {
       var i, j, dist, itemWithLeastDistance, posProperty, sizeProperty, cur, nearBottom, floating, axis, innermostContainer = null, innermostIndex = null;
       for (i = this.containers.length - 1; i >= 0; i--) {
-        if ($2.contains(this.currentItem[0], this.containers[i].element[0])) {
+        if ($3.contains(this.currentItem[0], this.containers[i].element[0])) {
           continue;
         }
         if (this._intersectsWith(this.containers[i].containerCache)) {
-          if (innermostContainer && $2.contains(
+          if (innermostContainer && $3.contains(
             this.containers[i].element[0],
             innermostContainer.element[0]
           )) {
@@ -15650,7 +15574,7 @@ window.$ = import_jquery.default;
         sizeProperty = floating ? "width" : "height";
         axis = floating ? "pageX" : "pageY";
         for (j = this.items.length - 1; j >= 0; j--) {
-          if (!$2.contains(
+          if (!$3.contains(
             this.containers[innermostIndex].element[0],
             this.items[j].item[0]
           )) {
@@ -15698,7 +15622,7 @@ window.$ = import_jquery.default;
       }
     },
     _createHelper: function(event) {
-      var o = this.options, helper = typeof o.helper === "function" ? $2(o.helper.apply(this.element[0], [event, this.currentItem])) : o.helper === "clone" ? this.currentItem.clone() : this.currentItem;
+      var o = this.options, helper = typeof o.helper === "function" ? $3(o.helper.apply(this.element[0], [event, this.currentItem])) : o.helper === "clone" ? this.currentItem.clone() : this.currentItem;
       if (!helper.parents("body").length) {
         this.appendTo[0].appendChild(helper[0]);
       }
@@ -15742,11 +15666,11 @@ window.$ = import_jquery.default;
     _getParentOffset: function() {
       this.offsetParent = this.helper.offsetParent();
       var po = this.offsetParent.offset();
-      if (this.cssPosition === "absolute" && this.scrollParent[0] !== this.document[0] && $2.contains(this.scrollParent[0], this.offsetParent[0])) {
+      if (this.cssPosition === "absolute" && this.scrollParent[0] !== this.document[0] && $3.contains(this.scrollParent[0], this.offsetParent[0])) {
         po.left += this.scrollParent.scrollLeft();
         po.top += this.scrollParent.scrollTop();
       }
-      if (this.offsetParent[0] === this.document[0].body || this.offsetParent[0].tagName && this.offsetParent[0].tagName.toLowerCase() === "html" && $2.ui.ie) {
+      if (this.offsetParent[0] === this.document[0].body || this.offsetParent[0].tagName && this.offsetParent[0].tagName.toLowerCase() === "html" && $3.ui.ie) {
         po = { top: 0, left: 0 };
       }
       return {
@@ -15791,14 +15715,14 @@ window.$ = import_jquery.default;
         ];
       }
       if (!/^(document|window|parent)$/.test(o.containment)) {
-        ce = $2(o.containment)[0];
-        co = $2(o.containment).offset();
-        over = $2(ce).css("overflow") !== "hidden";
+        ce = $3(o.containment)[0];
+        co = $3(o.containment).offset();
+        over = $3(ce).css("overflow") !== "hidden";
         this.containment = [
-          co.left + (parseInt($2(ce).css("borderLeftWidth"), 10) || 0) + (parseInt($2(ce).css("paddingLeft"), 10) || 0) - this.margins.left,
-          co.top + (parseInt($2(ce).css("borderTopWidth"), 10) || 0) + (parseInt($2(ce).css("paddingTop"), 10) || 0) - this.margins.top,
-          co.left + (over ? Math.max(ce.scrollWidth, ce.offsetWidth) : ce.offsetWidth) - (parseInt($2(ce).css("borderLeftWidth"), 10) || 0) - (parseInt($2(ce).css("paddingRight"), 10) || 0) - this.helperProportions.width - this.margins.left,
-          co.top + (over ? Math.max(ce.scrollHeight, ce.offsetHeight) : ce.offsetHeight) - (parseInt($2(ce).css("borderTopWidth"), 10) || 0) - (parseInt($2(ce).css("paddingBottom"), 10) || 0) - this.helperProportions.height - this.margins.top
+          co.left + (parseInt($3(ce).css("borderLeftWidth"), 10) || 0) + (parseInt($3(ce).css("paddingLeft"), 10) || 0) - this.margins.left,
+          co.top + (parseInt($3(ce).css("borderTopWidth"), 10) || 0) + (parseInt($3(ce).css("paddingTop"), 10) || 0) - this.margins.top,
+          co.left + (over ? Math.max(ce.scrollWidth, ce.offsetWidth) : ce.offsetWidth) - (parseInt($3(ce).css("borderLeftWidth"), 10) || 0) - (parseInt($3(ce).css("paddingRight"), 10) || 0) - this.helperProportions.width - this.margins.left,
+          co.top + (over ? Math.max(ce.scrollHeight, ce.offsetHeight) : ce.offsetHeight) - (parseInt($3(ce).css("borderTopWidth"), 10) || 0) - (parseInt($3(ce).css("paddingBottom"), 10) || 0) - this.helperProportions.height - this.margins.top
         ];
       }
     },
@@ -15806,7 +15730,7 @@ window.$ = import_jquery.default;
       if (!pos) {
         pos = this.position;
       }
-      var mod = d === "absolute" ? 1 : -1, scroll = this.cssPosition === "absolute" && !(this.scrollParent[0] !== this.document[0] && $2.contains(this.scrollParent[0], this.offsetParent[0])) ? this.offsetParent : this.scrollParent, scrollIsRootNode = /(html|body)/i.test(scroll[0].tagName);
+      var mod = d === "absolute" ? 1 : -1, scroll = this.cssPosition === "absolute" && !(this.scrollParent[0] !== this.document[0] && $3.contains(this.scrollParent[0], this.offsetParent[0])) ? this.offsetParent : this.scrollParent, scrollIsRootNode = /(html|body)/i.test(scroll[0].tagName);
       return {
         top: (
           // The absolute mouse position
@@ -15823,7 +15747,7 @@ window.$ = import_jquery.default;
       };
     },
     _generatePosition: function(event) {
-      var top2, left2, o = this.options, pageX = event.pageX, pageY = event.pageY, scroll = this.cssPosition === "absolute" && !(this.scrollParent[0] !== this.document[0] && $2.contains(this.scrollParent[0], this.offsetParent[0])) ? this.offsetParent : this.scrollParent, scrollIsRootNode = /(html|body)/i.test(scroll[0].tagName);
+      var top2, left2, o = this.options, pageX = event.pageX, pageY = event.pageY, scroll = this.cssPosition === "absolute" && !(this.scrollParent[0] !== this.document[0] && $3.contains(this.scrollParent[0], this.offsetParent[0])) ? this.offsetParent : this.scrollParent, scrollIsRootNode = /(html|body)/i.test(scroll[0].tagName);
       if (this.cssPosition === "relative" && !(this.scrollParent[0] !== this.document[0] && this.scrollParent[0] !== this.offsetParent[0])) {
         this.offset.relative = this._getRelativeOffset();
       }
@@ -15973,7 +15897,7 @@ window.$ = import_jquery.default;
       return !this.cancelHelperRemoval;
     },
     _trigger: function() {
-      if ($2.Widget.prototype._trigger.apply(this, arguments) === false) {
+      if ($3.Widget.prototype._trigger.apply(this, arguments) === false) {
         this.cancel();
       }
     },
@@ -15981,7 +15905,7 @@ window.$ = import_jquery.default;
       var inst = _inst || this;
       return {
         helper: inst.helper,
-        placeholder: inst.placeholder || $2([]),
+        placeholder: inst.placeholder || $3([]),
         position: inst.position,
         originalPosition: inst.originalPosition,
         offset: inst.positionAbs,
@@ -15990,7 +15914,7 @@ window.$ = import_jquery.default;
       };
     }
   });
-  var widgetsAccordion = $2.widget("ui.accordion", {
+  var widgetsAccordion = $3.widget("ui.accordion", {
     version: "1.13.2",
     options: {
       active: 0,
@@ -16030,7 +15954,7 @@ window.$ = import_jquery.default;
     },
     _create: function() {
       var options = this.options;
-      this.prevShow = this.prevHide = $2();
+      this.prevShow = this.prevHide = $3();
       this._addClass("ui-accordion", "ui-widget ui-helper-reset");
       this.element.attr("role", "tablist");
       if (!options.collapsible && (options.active === false || options.active == null)) {
@@ -16045,13 +15969,13 @@ window.$ = import_jquery.default;
     _getCreateEventData: function() {
       return {
         header: this.active,
-        panel: !this.active.length ? $2() : this.active.next()
+        panel: !this.active.length ? $3() : this.active.next()
       };
     },
     _createIcons: function() {
       var icon, children, icons = this.options.icons;
       if (icons) {
-        icon = $2("<span>");
+        icon = $3("<span>");
         this._addClass(icon, "ui-accordion-header-icon", "ui-icon " + icons.header);
         icon.prependTo(this.headers);
         children = this.active.children(".ui-accordion-header-icon");
@@ -16109,7 +16033,7 @@ window.$ = import_jquery.default;
       if (event.altKey || event.ctrlKey) {
         return;
       }
-      var keyCode = $2.ui.keyCode, length = this.headers.length, currentIndex = this.headers.index(event.target), toFocus = false;
+      var keyCode = $3.ui.keyCode, length = this.headers.length, currentIndex = this.headers.index(event.target), toFocus = false;
       switch (event.keyCode) {
         case keyCode.RIGHT:
         case keyCode.DOWN:
@@ -16131,15 +16055,15 @@ window.$ = import_jquery.default;
           break;
       }
       if (toFocus) {
-        $2(event.target).attr("tabIndex", -1);
-        $2(toFocus).attr("tabIndex", 0);
-        $2(toFocus).trigger("focus");
+        $3(event.target).attr("tabIndex", -1);
+        $3(toFocus).attr("tabIndex", 0);
+        $3(toFocus).trigger("focus");
         event.preventDefault();
       }
     },
     _panelKeyDown: function(event) {
-      if (event.keyCode === $2.ui.keyCode.UP && event.ctrlKey) {
-        $2(event.currentTarget).prev().trigger("focus");
+      if (event.keyCode === $3.ui.keyCode.UP && event.ctrlKey) {
+        $3(event.currentTarget).prev().trigger("focus");
       }
     },
     refresh: function() {
@@ -16147,13 +16071,13 @@ window.$ = import_jquery.default;
       this._processPanels();
       if (options.active === false && options.collapsible === true || !this.headers.length) {
         options.active = false;
-        this.active = $2();
+        this.active = $3();
       } else if (options.active === false) {
         this._activate(0);
-      } else if (this.active.length && !$2.contains(this.element[0], this.active[0])) {
+      } else if (this.active.length && !$3.contains(this.element[0], this.active[0])) {
         if (this.headers.length === this.headers.find(".ui-state-disabled").length) {
           options.active = false;
-          this.active = $2();
+          this.active = $3();
         } else {
           this._activate(Math.max(0, options.active - 1));
         }
@@ -16189,7 +16113,7 @@ window.$ = import_jquery.default;
       this._addClass(this.active.next(), "ui-accordion-content-active");
       this.active.next().show();
       this.headers.attr("role", "tab").each(function() {
-        var header = $2(this), headerId = header.uniqueId().attr("id"), panel = header.next(), panelId = panel.uniqueId().attr("id");
+        var header = $3(this), headerId = header.uniqueId().attr("id"), panel = header.next(), panelId = panel.uniqueId().attr("id");
         header.attr("aria-controls", panelId);
         panel.attr("aria-labelledby", headerId);
       }).next().attr("role", "tabpanel");
@@ -16216,28 +16140,28 @@ window.$ = import_jquery.default;
       if (heightStyle === "fill") {
         maxHeight = parent.height();
         this.element.siblings(":visible").each(function() {
-          var elem = $2(this), position2 = elem.css("position");
+          var elem = $3(this), position2 = elem.css("position");
           if (position2 === "absolute" || position2 === "fixed") {
             return;
           }
           maxHeight -= elem.outerHeight(true);
         });
         this.headers.each(function() {
-          maxHeight -= $2(this).outerHeight(true);
+          maxHeight -= $3(this).outerHeight(true);
         });
         this.headers.next().each(function() {
-          $2(this).height(Math.max(0, maxHeight - $2(this).innerHeight() + $2(this).height()));
+          $3(this).height(Math.max(0, maxHeight - $3(this).innerHeight() + $3(this).height()));
         }).css("overflow", "auto");
       } else if (heightStyle === "auto") {
         maxHeight = 0;
         this.headers.next().each(function() {
-          var isVisible2 = $2(this).is(":visible");
+          var isVisible2 = $3(this).is(":visible");
           if (!isVisible2) {
-            $2(this).show();
+            $3(this).show();
           }
-          maxHeight = Math.max(maxHeight, $2(this).css("height", "").height());
+          maxHeight = Math.max(maxHeight, $3(this).css("height", "").height());
           if (!isVisible2) {
-            $2(this).hide();
+            $3(this).hide();
           }
         }).height(maxHeight);
       }
@@ -16251,18 +16175,18 @@ window.$ = import_jquery.default;
       this._eventHandler({
         target: active,
         currentTarget: active,
-        preventDefault: $2.noop
+        preventDefault: $3.noop
       });
     },
     _findActive: function(selector) {
-      return typeof selector === "number" ? this.headers.eq(selector) : $2();
+      return typeof selector === "number" ? this.headers.eq(selector) : $3();
     },
     _setupEvents: function(event) {
       var events = {
         keydown: "_keydown"
       };
       if (event) {
-        $2.each(event.split(" "), function(index, eventName) {
+        $3.each(event.split(" "), function(index, eventName) {
           events[eventName] = "_eventHandler";
         });
       }
@@ -16273,10 +16197,10 @@ window.$ = import_jquery.default;
       this._focusable(this.headers);
     },
     _eventHandler: function(event) {
-      var activeChildren, clickedChildren, options = this.options, active = this.active, clicked = $2(event.currentTarget), clickedIsActive = clicked[0] === active[0], collapsing = clickedIsActive && options.collapsible, toShow = collapsing ? $2() : clicked.next(), toHide = active.next(), eventData = {
+      var activeChildren, clickedChildren, options = this.options, active = this.active, clicked = $3(event.currentTarget), clickedIsActive = clicked[0] === active[0], collapsing = clickedIsActive && options.collapsible, toShow = collapsing ? $3() : clicked.next(), toHide = active.next(), eventData = {
         oldHeader: active,
         oldPanel: toHide,
-        newHeader: collapsing ? $2() : clicked,
+        newHeader: collapsing ? $3() : clicked,
         newPanel: toShow
       };
       event.preventDefault();
@@ -16288,7 +16212,7 @@ window.$ = import_jquery.default;
         return;
       }
       options.active = collapsing ? false : this.headers.index(clicked);
-      this.active = clickedIsActive ? $2() : clicked;
+      this.active = clickedIsActive ? $3() : clicked;
       this._toggle(eventData);
       this._removeClass(active, "ui-accordion-header-active", "ui-state-active");
       if (options.icons) {
@@ -16330,7 +16254,7 @@ window.$ = import_jquery.default;
         });
       } else if (toShow.length) {
         this.headers.filter(function() {
-          return parseInt($2(this).attr("tabIndex"), 10) === 0;
+          return parseInt($3(this).attr("tabIndex"), 10) === 0;
         }).attr("tabIndex", -1);
       }
       toShow.attr("aria-hidden", "false").prev().attr({
@@ -16392,7 +16316,7 @@ window.$ = import_jquery.default;
       this._trigger("activate", null, data2);
     }
   });
-  var widgetsMenu = $2.widget("ui.menu", {
+  var widgetsMenu = $3.widget("ui.menu", {
     version: "1.13.2",
     defaultElement: "<ul>",
     delay: 300,
@@ -16429,8 +16353,8 @@ window.$ = import_jquery.default;
           this._activateItem(event);
         },
         "click .ui-menu-item": function(event) {
-          var target = $2(event.target);
-          var active = $2($2.ui.safeActiveElement(this.document[0]));
+          var target = $3(event.target);
+          var active = $3($3.ui.safeActiveElement(this.document[0]));
           if (!this.mouseHandled && target.not(".ui-state-disabled").length) {
             this.select(event);
             if (!event.isPropagationStopped()) {
@@ -16458,9 +16382,9 @@ window.$ = import_jquery.default;
         },
         blur: function(event) {
           this._delay(function() {
-            var notContained = !$2.contains(
+            var notContained = !$3.contains(
               this.element[0],
-              $2.ui.safeActiveElement(this.document[0])
+              $3.ui.safeActiveElement(this.document[0])
             );
             if (notContained) {
               this.collapseAll(event);
@@ -16490,7 +16414,7 @@ window.$ = import_jquery.default;
         x: event.clientX,
         y: event.clientY
       };
-      var actualTarget = $2(event.target).closest(".ui-menu-item"), target = $2(event.currentTarget);
+      var actualTarget = $3(event.target).closest(".ui-menu-item"), target = $3(event.currentTarget);
       if (actualTarget[0] !== target[0]) {
         return;
       }
@@ -16508,7 +16432,7 @@ window.$ = import_jquery.default;
       var items = this.element.find(".ui-menu-item").removeAttr("role aria-disabled"), submenus = items.children(".ui-menu-item-wrapper").removeUniqueId().removeAttr("tabIndex role aria-haspopup");
       this.element.removeAttr("aria-activedescendant").find(".ui-menu").addBack().removeAttr("role aria-labelledby aria-expanded aria-hidden aria-disabled tabIndex").removeUniqueId().show();
       submenus.children().each(function() {
-        var elem = $2(this);
+        var elem = $3(this);
         if (elem.data("ui-menu-submenu-caret")) {
           elem.remove();
         }
@@ -16517,37 +16441,37 @@ window.$ = import_jquery.default;
     _keydown: function(event) {
       var match, prev, character, skip, preventDefault = true;
       switch (event.keyCode) {
-        case $2.ui.keyCode.PAGE_UP:
+        case $3.ui.keyCode.PAGE_UP:
           this.previousPage(event);
           break;
-        case $2.ui.keyCode.PAGE_DOWN:
+        case $3.ui.keyCode.PAGE_DOWN:
           this.nextPage(event);
           break;
-        case $2.ui.keyCode.HOME:
+        case $3.ui.keyCode.HOME:
           this._move("first", "first", event);
           break;
-        case $2.ui.keyCode.END:
+        case $3.ui.keyCode.END:
           this._move("last", "last", event);
           break;
-        case $2.ui.keyCode.UP:
+        case $3.ui.keyCode.UP:
           this.previous(event);
           break;
-        case $2.ui.keyCode.DOWN:
+        case $3.ui.keyCode.DOWN:
           this.next(event);
           break;
-        case $2.ui.keyCode.LEFT:
+        case $3.ui.keyCode.LEFT:
           this.collapse(event);
           break;
-        case $2.ui.keyCode.RIGHT:
+        case $3.ui.keyCode.RIGHT:
           if (this.active && !this.active.is(".ui-state-disabled")) {
             this.expand(event);
           }
           break;
-        case $2.ui.keyCode.ENTER:
-        case $2.ui.keyCode.SPACE:
+        case $3.ui.keyCode.ENTER:
+        case $3.ui.keyCode.SPACE:
           this._activate(event);
           break;
-        case $2.ui.keyCode.ESCAPE:
+        case $3.ui.keyCode.ESCAPE:
           this.collapse(event);
           break;
         default:
@@ -16598,7 +16522,7 @@ window.$ = import_jquery.default;
         "aria-hidden": "true",
         "aria-expanded": "false"
       }).each(function() {
-        var menu = $2(this), item = menu.prev(), submenuCaret = $2("<span>").data("ui-menu-submenu-caret", true);
+        var menu = $3(this), item = menu.prev(), submenuCaret = $3("<span>").data("ui-menu-submenu-caret", true);
         that._addClass(submenuCaret, "ui-menu-icon", "ui-icon " + icon);
         item.attr("aria-haspopup", "true").prepend(submenuCaret);
         menu.attr("aria-labelledby", item.attr("id"));
@@ -16607,7 +16531,7 @@ window.$ = import_jquery.default;
       menus = submenus.add(this.element);
       items = menus.find(this.options.items);
       items.not(".ui-menu-item").each(function() {
-        var item = $2(this);
+        var item = $3(this);
         if (that._isDivider(item)) {
           that._addClass(item, "ui-menu-divider", "ui-widget-content");
         }
@@ -16619,7 +16543,7 @@ window.$ = import_jquery.default;
       });
       this._addClass(newItems, "ui-menu-item")._addClass(newWrappers, "ui-menu-item-wrapper");
       items.filter(".ui-state-disabled").attr("aria-disabled", "true");
-      if (this.active && !$2.contains(this.element[0], this.active[0])) {
+      if (this.active && !$3.contains(this.element[0], this.active[0])) {
         this.blur();
       }
     },
@@ -16670,8 +16594,8 @@ window.$ = import_jquery.default;
     _scrollIntoView: function(item) {
       var borderTop, paddingTop, offset2, scroll, elementHeight, itemHeight;
       if (this._hasScroll()) {
-        borderTop = parseFloat($2.css(this.activeMenu[0], "borderTopWidth")) || 0;
-        paddingTop = parseFloat($2.css(this.activeMenu[0], "paddingTop")) || 0;
+        borderTop = parseFloat($3.css(this.activeMenu[0], "borderTopWidth")) || 0;
+        paddingTop = parseFloat($3.css(this.activeMenu[0], "paddingTop")) || 0;
         offset2 = item.offset().top - this.activeMenu.offset().top - borderTop - paddingTop;
         scroll = this.activeMenu.scrollTop();
         elementHeight = this.activeMenu.height();
@@ -16709,7 +16633,7 @@ window.$ = import_jquery.default;
       }, this.delay);
     },
     _open: function(submenu) {
-      var position2 = $2.extend({
+      var position2 = $3.extend({
         of: this.active
       }, this.options.position);
       clearTimeout(this.timer);
@@ -16719,7 +16643,7 @@ window.$ = import_jquery.default;
     collapseAll: function(event, all) {
       clearTimeout(this.timer);
       this.timer = this._delay(function() {
-        var currentMenu = all ? this.element : $2(event && event.target).closest(this.element.find(".ui-menu"));
+        var currentMenu = all ? this.element : $3(event && event.target).closest(this.element.find(".ui-menu"));
         if (!currentMenu.length) {
           currentMenu = this.element;
         }
@@ -16738,7 +16662,7 @@ window.$ = import_jquery.default;
       startMenu.find(".ui-menu").hide().attr("aria-hidden", "true").attr("aria-expanded", "false");
     },
     _closeOnDocumentClick: function(event) {
-      return !$2(event.target).closest(".ui-menu").length;
+      return !$3(event.target).closest(".ui-menu").length;
     },
     _isDivider: function(item) {
       return !/[^\-\u2014\u2013\s]/.test(item.text());
@@ -16800,11 +16724,11 @@ window.$ = import_jquery.default;
       if (this._hasScroll()) {
         base = this.active.offset().top;
         height = this.element.innerHeight();
-        if ($2.fn.jquery.indexOf("3.2.") === 0) {
+        if ($3.fn.jquery.indexOf("3.2.") === 0) {
           height += this.element[0].offsetHeight - this.element.outerHeight();
         }
         this.active.nextAll(".ui-menu-item").each(function() {
-          item = $2(this);
+          item = $3(this);
           return item.offset().top - base - height < 0;
         });
         this.focus(event, item);
@@ -16824,11 +16748,11 @@ window.$ = import_jquery.default;
       if (this._hasScroll()) {
         base = this.active.offset().top;
         height = this.element.innerHeight();
-        if ($2.fn.jquery.indexOf("3.2.") === 0) {
+        if ($3.fn.jquery.indexOf("3.2.") === 0) {
           height += this.element[0].offsetHeight - this.element.outerHeight();
         }
         this.active.prevAll(".ui-menu-item").each(function() {
-          item = $2(this);
+          item = $3(this);
           return item.offset().top - base + height > 0;
         });
         this.focus(event, item);
@@ -16840,7 +16764,7 @@ window.$ = import_jquery.default;
       return this.element.outerHeight() < this.element.prop("scrollHeight");
     },
     select: function(event) {
-      this.active = this.active || $2(event.target).closest(".ui-menu-item");
+      this.active = this.active || $3(event.target).closest(".ui-menu-item");
       var ui = { item: this.active };
       if (!this.active.has(".ui-menu").length) {
         this.collapseAll(event, true);
@@ -16852,13 +16776,13 @@ window.$ = import_jquery.default;
       return this.activeMenu.find(this.options.items).filter(".ui-menu-item").filter(function() {
         return regex.test(
           String.prototype.trim.call(
-            $2(this).children(".ui-menu-item-wrapper").text()
+            $3(this).children(".ui-menu-item-wrapper").text()
           )
         );
       });
     }
   });
-  $2.widget("ui.autocomplete", {
+  $3.widget("ui.autocomplete", {
     version: "1.13.2",
     defaultElement: "<input>",
     options: {
@@ -16902,7 +16826,7 @@ window.$ = import_jquery.default;
           suppressKeyPress = false;
           suppressInput = false;
           suppressKeyPressRepeat = false;
-          var keyCode = $2.ui.keyCode;
+          var keyCode = $3.ui.keyCode;
           switch (event.keyCode) {
             case keyCode.PAGE_UP:
               suppressKeyPress = true;
@@ -16958,7 +16882,7 @@ window.$ = import_jquery.default;
           if (suppressKeyPressRepeat) {
             return;
           }
-          var keyCode = $2.ui.keyCode;
+          var keyCode = $3.ui.keyCode;
           switch (event.keyCode) {
             case keyCode.PAGE_UP:
               this._move("previousPage", event);
@@ -16993,7 +16917,7 @@ window.$ = import_jquery.default;
         }
       });
       this._initSource();
-      this.menu = $2("<ul>").appendTo(this._appendTo()).menu({
+      this.menu = $3("<ul>").appendTo(this._appendTo()).menu({
         // disable ARIA support, the live region takes care of that
         role: null
       }).hide().attr({
@@ -17011,7 +16935,7 @@ window.$ = import_jquery.default;
             if (event.originalEvent && /^mouse/.test(event.originalEvent.type)) {
               this.menu.blur();
               this.document.one("mousemove", function() {
-                $2(event.target).trigger(event.originalEvent);
+                $3(event.target).trigger(event.originalEvent);
               });
               return;
             }
@@ -17026,13 +16950,13 @@ window.$ = import_jquery.default;
           if (label && String.prototype.trim.call(label).length) {
             clearTimeout(this.liveRegionTimer);
             this.liveRegionTimer = this._delay(function() {
-              this.liveRegion.html($2("<div>").text(label));
+              this.liveRegion.html($3("<div>").text(label));
             }, 100);
           }
         },
         menuselect: function(event, ui) {
           var item = ui.item.data("ui-autocomplete-item"), previous = this.previous;
-          if (this.element[0] !== $2.ui.safeActiveElement(this.document[0])) {
+          if (this.element[0] !== $3.ui.safeActiveElement(this.document[0])) {
             this.element.trigger("focus");
             this.previous = previous;
             this._delay(function() {
@@ -17048,7 +16972,7 @@ window.$ = import_jquery.default;
           this.selectedItem = item;
         }
       });
-      this.liveRegion = $2("<div>", {
+      this.liveRegion = $3("<div>", {
         role: "status",
         "aria-live": "assertive",
         "aria-relevant": "additions"
@@ -17080,7 +17004,7 @@ window.$ = import_jquery.default;
     },
     _isEventTargetInWidget: function(event) {
       var menuElement = this.menu.element[0];
-      return event.target === this.element[0] || event.target === menuElement || $2.contains(menuElement, event.target);
+      return event.target === this.element[0] || event.target === menuElement || $3.contains(menuElement, event.target);
     },
     _closeOnClickOutside: function(event) {
       if (!this._isEventTargetInWidget(event)) {
@@ -17090,7 +17014,7 @@ window.$ = import_jquery.default;
     _appendTo: function() {
       var element = this.options.appendTo;
       if (element) {
-        element = element.jquery || element.nodeType ? $2(element) : this.document.find(element).eq(0);
+        element = element.jquery || element.nodeType ? $3(element) : this.document.find(element).eq(0);
       }
       if (!element || !element[0]) {
         element = this.element.closest(".ui-front, dialog");
@@ -17105,7 +17029,7 @@ window.$ = import_jquery.default;
       if (Array.isArray(this.options.source)) {
         array = this.options.source;
         this.source = function(request, response) {
-          response($2.ui.autocomplete.filter(array, request.term));
+          response($3.ui.autocomplete.filter(array, request.term));
         };
       } else if (typeof this.options.source === "string") {
         url = this.options.source;
@@ -17113,7 +17037,7 @@ window.$ = import_jquery.default;
           if (that.xhr) {
             that.xhr.abort();
           }
-          that.xhr = $2.ajax({
+          that.xhr = $3.ajax({
             url,
             data: request,
             dataType: "json",
@@ -17202,14 +17126,14 @@ window.$ = import_jquery.default;
       if (items.length && items[0].label && items[0].value) {
         return items;
       }
-      return $2.map(items, function(item) {
+      return $3.map(items, function(item) {
         if (typeof item === "string") {
           return {
             label: item,
             value: item
           };
         }
-        return $2.extend({}, item, {
+        return $3.extend({}, item, {
           label: item.label || item.value,
           value: item.value || item.label
         });
@@ -17222,7 +17146,7 @@ window.$ = import_jquery.default;
       this.menu.refresh();
       ul.show();
       this._resizeMenu();
-      ul.position($2.extend({
+      ul.position($3.extend({
         of: this.element
       }, this.options.position));
       if (this.options.autoFocus) {
@@ -17243,7 +17167,7 @@ window.$ = import_jquery.default;
     },
     _renderMenu: function(ul, items) {
       var that = this;
-      $2.each(items, function(index, item) {
+      $3.each(items, function(index, item) {
         that._renderItemData(ul, item);
       });
     },
@@ -17251,7 +17175,7 @@ window.$ = import_jquery.default;
       return this._renderItem(ul, item).data("ui-autocomplete-item", item);
     },
     _renderItem: function(ul, item) {
-      return $2("<li>").append($2("<div>").text(item.label)).appendTo(ul);
+      return $3("<li>").append($3("<div>").text(item.label)).appendTo(ul);
     },
     _move: function(direction, event) {
       if (!this.menu.element.is(":visible")) {
@@ -17294,18 +17218,18 @@ window.$ = import_jquery.default;
       return editable === "true";
     }
   });
-  $2.extend($2.ui.autocomplete, {
+  $3.extend($3.ui.autocomplete, {
     escapeRegex: function(value) {
       return value.replace(/[\-\[\]{}()*+?.,\\\^$|#\s]/g, "\\$&");
     },
     filter: function(array, term) {
-      var matcher = new RegExp($2.ui.autocomplete.escapeRegex(term), "i");
-      return $2.grep(array, function(value) {
+      var matcher = new RegExp($3.ui.autocomplete.escapeRegex(term), "i");
+      return $3.grep(array, function(value) {
         return matcher.test(value.label || value.value || value);
       });
     }
   });
-  $2.widget("ui.autocomplete", $2.ui.autocomplete, {
+  $3.widget("ui.autocomplete", $3.ui.autocomplete, {
     options: {
       messages: {
         noResults: "No search results.",
@@ -17327,13 +17251,13 @@ window.$ = import_jquery.default;
       }
       clearTimeout(this.liveRegionTimer);
       this.liveRegionTimer = this._delay(function() {
-        this.liveRegion.html($2("<div>").text(message));
+        this.liveRegion.html($3("<div>").text(message));
       }, 100);
     }
   });
-  var widgetsAutocomplete = $2.ui.autocomplete;
+  var widgetsAutocomplete = $3.ui.autocomplete;
   var controlgroupCornerRegex = /ui-corner-([a-z]){2,6}/g;
-  var widgetsControlgroup = $2.widget("ui.controlgroup", {
+  var widgetsControlgroup = $3.widget("ui.controlgroup", {
     version: "1.13.2",
     defaultElement: "<div>",
     options: {
@@ -17366,7 +17290,7 @@ window.$ = import_jquery.default;
     },
     _initWidgets: function() {
       var that = this, childWidgets = [];
-      $2.each(this.options.items, function(widget2, selector) {
+      $3.each(this.options.items, function(widget2, selector) {
         var labels2;
         var options = {};
         if (!selector) {
@@ -17375,7 +17299,7 @@ window.$ = import_jquery.default;
         if (widget2 === "controlgroupLabel") {
           labels2 = that.element.find(selector);
           labels2.each(function() {
-            var element = $2(this);
+            var element = $3(this);
             if (element.children(".ui-controlgroup-label-contents").length) {
               return;
             }
@@ -17385,7 +17309,7 @@ window.$ = import_jquery.default;
           childWidgets = childWidgets.concat(labels2.get());
           return;
         }
-        if (!$2.fn[widget2]) {
+        if (!$3.fn[widget2]) {
           return;
         }
         if (that["_" + widget2 + "Options"]) {
@@ -17394,9 +17318,9 @@ window.$ = import_jquery.default;
           options = { classes: {} };
         }
         that.element.find(selector).each(function() {
-          var element = $2(this);
+          var element = $3(this);
           var instance = element[widget2]("instance");
-          var instanceOptions = $2.widget.extend({}, options);
+          var instanceOptions = $3.widget.extend({}, options);
           if (widget2 === "button" && element.parent(".ui-spinner").length) {
             return;
           }
@@ -17408,7 +17332,7 @@ window.$ = import_jquery.default;
           }
           element[widget2](instanceOptions);
           var widgetElement = element[widget2]("widget");
-          $2.data(
+          $3.data(
             widgetElement[0],
             "ui-controlgroup-data",
             instance ? instance : element[widget2]("instance")
@@ -17416,12 +17340,12 @@ window.$ = import_jquery.default;
           childWidgets.push(widgetElement[0]);
         });
       });
-      this.childWidgets = $2($2.uniqueSort(childWidgets));
+      this.childWidgets = $3($3.uniqueSort(childWidgets));
       this._addClass(this.childWidgets, "ui-controlgroup-item");
     },
     _callChildMethod: function(method) {
       this.childWidgets.each(function() {
-        var element = $2(this), data2 = element.data("ui-controlgroup-data");
+        var element = $3(this), data2 = element.data("ui-controlgroup-data");
         if (data2 && data2[method]) {
           data2[method]();
         }
@@ -17484,7 +17408,7 @@ window.$ = import_jquery.default;
     },
     _resolveClassesValues: function(classes, instance) {
       var result = {};
-      $2.each(classes, function(key) {
+      $3.each(classes, function(key) {
         var current = instance.options.classes[key] || "";
         current = String.prototype.trim.call(current.replace(controlgroupCornerRegex, ""));
         result[key] = (current + " " + classes[key]).replace(/\s+/g, " ");
@@ -17514,7 +17438,7 @@ window.$ = import_jquery.default;
         children = children.filter(":visible");
       }
       if (children.length) {
-        $2.each(["first", "last"], function(index, value) {
+        $3.each(["first", "last"], function(index, value) {
           var instance = children[value]().data("ui-controlgroup-data");
           if (instance && that["_" + instance.widgetName + "Options"]) {
             var options = that["_" + instance.widgetName + "Options"](
@@ -17530,7 +17454,7 @@ window.$ = import_jquery.default;
       }
     }
   });
-  $2.widget("ui.checkboxradio", [$2.ui.formResetMixin, {
+  $3.widget("ui.checkboxradio", [$3.ui.formResetMixin, {
     version: "1.13.2",
     options: {
       disabled: null,
@@ -17546,9 +17470,9 @@ window.$ = import_jquery.default;
       var options = this._super() || {};
       this._readType();
       labels2 = this.element.labels();
-      this.label = $2(labels2[labels2.length - 1]);
+      this.label = $3(labels2[labels2.length - 1]);
       if (!this.label.length) {
-        $2.error("No label found for checkboxradio widget");
+        $3.error("No label found for checkboxradio widget");
       }
       this.originalLabel = "";
       labelContents = this.label.contents().not(this.element[0]);
@@ -17599,7 +17523,7 @@ window.$ = import_jquery.default;
       var nodeName = this.element[0].nodeName.toLowerCase();
       this.type = this.element[0].type;
       if (nodeName !== "input" || !/radio|checkbox/.test(this.type)) {
-        $2.error("Can't create checkboxradio on element.nodeName=" + nodeName + " and element.type=" + this.type);
+        $3.error("Can't create checkboxradio on element.nodeName=" + nodeName + " and element.type=" + this.type);
       }
     },
     // Support jQuery Mobile enhanced option
@@ -17612,15 +17536,15 @@ window.$ = import_jquery.default;
     _getRadioGroup: function() {
       var group;
       var name = this.element[0].name;
-      var nameSelector = "input[name='" + $2.escapeSelector(name) + "']";
+      var nameSelector = "input[name='" + $3.escapeSelector(name) + "']";
       if (!name) {
-        return $2([]);
+        return $3([]);
       }
       if (this.form.length) {
-        group = $2(this.form[0].elements).filter(nameSelector);
+        group = $3(this.form[0].elements).filter(nameSelector);
       } else {
-        group = $2(nameSelector).filter(function() {
-          return $2(this)._form().length === 0;
+        group = $3(nameSelector).filter(function() {
+          return $3(this)._form().length === 0;
         });
       }
       return group.not(this.element);
@@ -17633,7 +17557,7 @@ window.$ = import_jquery.default;
       }
       if (this.type === "radio") {
         this._getRadioGroup().each(function() {
-          var instance = $2(this).checkboxradio("instance");
+          var instance = $3(this).checkboxradio("instance");
           if (instance) {
             instance._removeClass(
               instance.label,
@@ -17667,8 +17591,8 @@ window.$ = import_jquery.default;
       var toAdd = "ui-icon ui-icon-background ";
       if (this.options.icon) {
         if (!this.icon) {
-          this.icon = $2("<span>");
-          this.iconSpace = $2("<span> </span>");
+          this.icon = $3("<span>");
+          this.iconSpace = $3("<span> </span>");
           this._addClass(this.iconSpace, "ui-checkboxradio-icon-space");
         }
         if (this.type === "checkbox") {
@@ -17711,8 +17635,8 @@ window.$ = import_jquery.default;
       }
     }
   }]);
-  var widgetsCheckboxradio = $2.ui.checkboxradio;
-  $2.widget("ui.button", {
+  var widgetsCheckboxradio = $3.ui.checkboxradio;
+  $3.widget("ui.button", {
     version: "1.13.2",
     defaultElement: "<button>",
     options: {
@@ -17759,7 +17683,7 @@ window.$ = import_jquery.default;
       if (this.element.is("a")) {
         this._on({
           "keyup": function(event) {
-            if (event.keyCode === $2.ui.keyCode.SPACE) {
+            if (event.keyCode === $3.ui.keyCode.SPACE) {
               event.preventDefault();
               if (this.element[0].click) {
                 this.element[0].click();
@@ -17789,7 +17713,7 @@ window.$ = import_jquery.default;
     _updateIcon: function(option, value) {
       var icon = option !== "iconPosition", position2 = icon ? this.options.iconPosition : value, displayBlock = position2 === "top" || position2 === "bottom";
       if (!this.icon) {
-        this.icon = $2("<span>");
+        this.icon = $3("<span>");
         this._addClass(this.icon, "ui-button-icon", "ui-icon");
         if (!this.options.showLabel) {
           this._addClass("ui-button-icon-only");
@@ -17808,7 +17732,7 @@ window.$ = import_jquery.default;
         }
       } else {
         if (!this.iconSpace) {
-          this.iconSpace = $2("<span> </span>");
+          this.iconSpace = $3("<span> </span>");
           this._addClass(this.iconSpace, "ui-button-icon-space");
         }
         this._removeClass(this.icon, null, "ui-wiget-icon-block");
@@ -17886,8 +17810,8 @@ window.$ = import_jquery.default;
       this._updateTooltip();
     }
   });
-  if ($2.uiBackCompat !== false) {
-    $2.widget("ui.button", $2.ui.button, {
+  if ($3.uiBackCompat !== false) {
+    $3.widget("ui.button", $3.ui.button, {
       options: {
         text: true,
         icons: {
@@ -17937,7 +17861,7 @@ window.$ = import_jquery.default;
         this._superApply(arguments);
       }
     });
-    $2.fn.button = /* @__PURE__ */ function(orig) {
+    $3.fn.button = /* @__PURE__ */ function(orig) {
       return function(options) {
         var isMethodCall = typeof options === "string";
         var args = Array.prototype.slice.call(arguments, 1);
@@ -17948,18 +17872,18 @@ window.$ = import_jquery.default;
           } else {
             this.each(function() {
               var methodValue;
-              var type = $2(this).attr("type");
+              var type = $3(this).attr("type");
               var name = type !== "checkbox" && type !== "radio" ? "button" : "checkboxradio";
-              var instance = $2.data(this, "ui-" + name);
+              var instance = $3.data(this, "ui-" + name);
               if (options === "instance") {
                 returnValue = instance;
                 return false;
               }
               if (!instance) {
-                return $2.error("cannot call methods on button prior to initialization; attempted to call method '" + options + "'");
+                return $3.error("cannot call methods on button prior to initialization; attempted to call method '" + options + "'");
               }
               if (typeof instance[options] !== "function" || options.charAt(0) === "_") {
-                return $2.error("no such method '" + options + "' for button widget instance");
+                return $3.error("no such method '" + options + "' for button widget instance");
               }
               methodValue = instance[options].apply(instance, args);
               if (methodValue !== instance && methodValue !== void 0) {
@@ -17970,12 +17894,12 @@ window.$ = import_jquery.default;
           }
         } else {
           if (args.length) {
-            options = $2.widget.extend.apply(null, [options].concat(args));
+            options = $3.widget.extend.apply(null, [options].concat(args));
           }
           this.each(function() {
-            var type = $2(this).attr("type");
+            var type = $3(this).attr("type");
             var name = type !== "checkbox" && type !== "radio" ? "button" : "checkboxradio";
-            var instance = $2.data(this, "ui-" + name);
+            var instance = $3.data(this, "ui-" + name);
             if (instance) {
               instance.option(options || {});
               if (instance._init) {
@@ -17983,19 +17907,19 @@ window.$ = import_jquery.default;
               }
             } else {
               if (name === "button") {
-                orig.call($2(this), options);
+                orig.call($3(this), options);
                 return;
               }
-              $2(this).checkboxradio($2.extend({ icon: false }, options));
+              $3(this).checkboxradio($3.extend({ icon: false }, options));
             }
           });
         }
         return returnValue;
       };
-    }($2.fn.button);
-    $2.fn.buttonset = function() {
-      if (!$2.ui.controlgroup) {
-        $2.error("Controlgroup widget missing");
+    }($3.fn.button);
+    $3.fn.buttonset = function() {
+      if (!$3.ui.controlgroup) {
+        $3.error("Controlgroup widget missing");
       }
       if (arguments[0] === "option" && arguments[1] === "items" && arguments[2]) {
         return this.controlgroup.apply(
@@ -18014,8 +17938,8 @@ window.$ = import_jquery.default;
       return this.controlgroup.apply(this, arguments);
     };
   }
-  var widgetsButton = $2.ui.button;
-  $2.extend($2.ui, { datepicker: { version: "1.13.2" } });
+  var widgetsButton = $3.ui.button;
+  $3.extend($3.ui, { datepicker: { version: "1.13.2" } });
   var datepicker_instActive;
   function datepicker_getZindex(elem) {
     var position2, value;
@@ -18187,12 +18111,12 @@ window.$ = import_jquery.default;
       disabled: false
       // The initial disabled state
     };
-    $2.extend(this._defaults, this.regional[""]);
-    this.regional.en = $2.extend(true, {}, this.regional[""]);
-    this.regional["en-US"] = $2.extend(true, {}, this.regional.en);
-    this.dpDiv = datepicker_bindHover($2("<div id='" + this._mainDivId + "' class='ui-datepicker ui-widget ui-widget-content ui-helper-clearfix ui-corner-all'></div>"));
+    $3.extend(this._defaults, this.regional[""]);
+    this.regional.en = $3.extend(true, {}, this.regional[""]);
+    this.regional["en-US"] = $3.extend(true, {}, this.regional.en);
+    this.dpDiv = datepicker_bindHover($3("<div id='" + this._mainDivId + "' class='ui-datepicker ui-widget ui-widget-content ui-helper-clearfix ui-corner-all'></div>"));
   }
-  $2.extend(Datepicker.prototype, {
+  $3.extend(Datepicker.prototype, {
     /* Class name added to elements to indicate already configured with a date picker. */
     markerClassName: "hasDatepicker",
     //Keep track of the maximum number of rows displayed (see #7043)
@@ -18221,8 +18145,8 @@ window.$ = import_jquery.default;
         this.uuid += 1;
         target.id = "dp" + this.uuid;
       }
-      inst = this._newInst($2(target), inline);
-      inst.settings = $2.extend({}, settings || {});
+      inst = this._newInst($3(target), inline);
+      inst.settings = $3.extend({}, settings || {});
       if (nodeName === "input") {
         this._connectDatepicker(target, inst);
       } else if (inline) {
@@ -18247,22 +18171,22 @@ window.$ = import_jquery.default;
         // is datepicker inline or not
         dpDiv: !inline ? this.dpDiv : (
           // presentation div
-          datepicker_bindHover($2("<div class='" + this._inlineClass + " ui-datepicker ui-widget ui-widget-content ui-helper-clearfix ui-corner-all'></div>"))
+          datepicker_bindHover($3("<div class='" + this._inlineClass + " ui-datepicker ui-widget ui-widget-content ui-helper-clearfix ui-corner-all'></div>"))
         )
       };
     },
     /* Attach the date picker to an input field. */
     _connectDatepicker: function(target, inst) {
-      var input = $2(target);
-      inst.append = $2([]);
-      inst.trigger = $2([]);
+      var input = $3(target);
+      inst.append = $3([]);
+      inst.trigger = $3([]);
       if (input.hasClass(this.markerClassName)) {
         return;
       }
       this._attachments(input, inst);
       input.addClass(this.markerClassName).on("keydown", this._doKeyDown).on("keypress", this._doKeyPress).on("keyup", this._doKeyUp);
       this._autoSize(inst);
-      $2.data(target, "datepicker", inst);
+      $3.data(target, "datepicker", inst);
       if (inst.settings.disabled) {
         this._disableDatepicker(target);
       }
@@ -18274,7 +18198,7 @@ window.$ = import_jquery.default;
         inst.append.remove();
       }
       if (appendText) {
-        inst.append = $2("<span>").addClass(this._appendClass).text(appendText);
+        inst.append = $3("<span>").addClass(this._appendClass).text(appendText);
         input[isRTL2 ? "before" : "after"](inst.append);
       }
       input.off("focus", this._showDatepicker);
@@ -18289,16 +18213,16 @@ window.$ = import_jquery.default;
         buttonText = this._get(inst, "buttonText");
         buttonImage = this._get(inst, "buttonImage");
         if (this._get(inst, "buttonImageOnly")) {
-          inst.trigger = $2("<img>").addClass(this._triggerClass).attr({
+          inst.trigger = $3("<img>").addClass(this._triggerClass).attr({
             src: buttonImage,
             alt: buttonText,
             title: buttonText
           });
         } else {
-          inst.trigger = $2("<button type='button'>").addClass(this._triggerClass);
+          inst.trigger = $3("<button type='button'>").addClass(this._triggerClass);
           if (buttonImage) {
             inst.trigger.html(
-              $2("<img>").attr({
+              $3("<img>").attr({
                 src: buttonImage,
                 alt: buttonText,
                 title: buttonText
@@ -18310,13 +18234,13 @@ window.$ = import_jquery.default;
         }
         input[isRTL2 ? "before" : "after"](inst.trigger);
         inst.trigger.on("click", function() {
-          if ($2.datepicker._datepickerShowing && $2.datepicker._lastInput === input[0]) {
-            $2.datepicker._hideDatepicker();
-          } else if ($2.datepicker._datepickerShowing && $2.datepicker._lastInput !== input[0]) {
-            $2.datepicker._hideDatepicker();
-            $2.datepicker._showDatepicker(input[0]);
+          if ($3.datepicker._datepickerShowing && $3.datepicker._lastInput === input[0]) {
+            $3.datepicker._hideDatepicker();
+          } else if ($3.datepicker._datepickerShowing && $3.datepicker._lastInput !== input[0]) {
+            $3.datepicker._hideDatepicker();
+            $3.datepicker._showDatepicker(input[0]);
           } else {
-            $2.datepicker._showDatepicker(input[0]);
+            $3.datepicker._showDatepicker(input[0]);
           }
           return false;
         });
@@ -18346,12 +18270,12 @@ window.$ = import_jquery.default;
     },
     /* Attach an inline date picker to a div. */
     _inlineDatepicker: function(target, inst) {
-      var divSpan = $2(target);
+      var divSpan = $3(target);
       if (divSpan.hasClass(this.markerClassName)) {
         return;
       }
       divSpan.addClass(this.markerClassName).append(inst.dpDiv);
-      $2.data(target, "datepicker", inst);
+      $3.data(target, "datepicker", inst);
       this._setDate(inst, this._getDefaultDate(inst), true);
       this._updateDatepicker(inst);
       this._updateAlternate(inst);
@@ -18375,12 +18299,12 @@ window.$ = import_jquery.default;
       if (!inst) {
         this.uuid += 1;
         id = "dp" + this.uuid;
-        this._dialogInput = $2("<input type='text' id='" + id + "' style='position: absolute; top: -100px; width: 0px;'/>");
+        this._dialogInput = $3("<input type='text' id='" + id + "' style='position: absolute; top: -100px; width: 0px;'/>");
         this._dialogInput.on("keydown", this._doKeyDown);
-        $2("body").append(this._dialogInput);
+        $3("body").append(this._dialogInput);
         inst = this._dialogInst = this._newInst(this._dialogInput, false);
         inst.settings = {};
-        $2.data(this._dialogInput[0], "datepicker", inst);
+        $3.data(this._dialogInput[0], "datepicker", inst);
       }
       datepicker_extendRemove(inst.settings, settings || {});
       date = date && date.constructor === Date ? this._formatDate(inst, date) : date;
@@ -18399,22 +18323,22 @@ window.$ = import_jquery.default;
       this._inDialog = true;
       this.dpDiv.addClass(this._dialogClass);
       this._showDatepicker(this._dialogInput[0]);
-      if ($2.blockUI) {
-        $2.blockUI(this.dpDiv);
+      if ($3.blockUI) {
+        $3.blockUI(this.dpDiv);
       }
-      $2.data(this._dialogInput[0], "datepicker", inst);
+      $3.data(this._dialogInput[0], "datepicker", inst);
       return this;
     },
     /* Detach a datepicker from its control.
      * @param  target	element - the target input field or division or span
      */
     _destroyDatepicker: function(target) {
-      var nodeName, $target = $2(target), inst = $2.data(target, "datepicker");
+      var nodeName, $target = $3(target), inst = $3.data(target, "datepicker");
       if (!$target.hasClass(this.markerClassName)) {
         return;
       }
       nodeName = target.nodeName.toLowerCase();
-      $2.removeData(target, "datepicker");
+      $3.removeData(target, "datepicker");
       if (nodeName === "input") {
         inst.append.remove();
         inst.trigger.remove();
@@ -18431,7 +18355,7 @@ window.$ = import_jquery.default;
      * @param  target	element - the target input field or division or span
      */
     _enableDatepicker: function(target) {
-      var nodeName, inline, $target = $2(target), inst = $2.data(target, "datepicker");
+      var nodeName, inline, $target = $3(target), inst = $3.data(target, "datepicker");
       if (!$target.hasClass(this.markerClassName)) {
         return;
       }
@@ -18446,7 +18370,7 @@ window.$ = import_jquery.default;
         inline.children().removeClass("ui-state-disabled");
         inline.find("select.ui-datepicker-month, select.ui-datepicker-year").prop("disabled", false);
       }
-      this._disabledInputs = $2.map(
+      this._disabledInputs = $3.map(
         this._disabledInputs,
         // Delete entry
         function(value) {
@@ -18458,7 +18382,7 @@ window.$ = import_jquery.default;
      * @param  target	element - the target input field or division or span
      */
     _disableDatepicker: function(target) {
-      var nodeName, inline, $target = $2(target), inst = $2.data(target, "datepicker");
+      var nodeName, inline, $target = $3(target), inst = $3.data(target, "datepicker");
       if (!$target.hasClass(this.markerClassName)) {
         return;
       }
@@ -18473,7 +18397,7 @@ window.$ = import_jquery.default;
         inline.children().addClass("ui-state-disabled");
         inline.find("select.ui-datepicker-month, select.ui-datepicker-year").prop("disabled", true);
       }
-      this._disabledInputs = $2.map(
+      this._disabledInputs = $3.map(
         this._disabledInputs,
         // Delete entry
         function(value) {
@@ -18504,7 +18428,7 @@ window.$ = import_jquery.default;
      */
     _getInst: function(target) {
       try {
-        return $2.data(target, "datepicker");
+        return $3.data(target, "datepicker");
       } catch (err) {
         throw "Missing instance data for this datepicker";
       }
@@ -18521,7 +18445,7 @@ window.$ = import_jquery.default;
     _optionDatepicker: function(target, name, value) {
       var settings, date, minDate, maxDate, inst = this._getInst(target);
       if (arguments.length === 2 && typeof name === "string") {
-        return name === "defaults" ? $2.extend({}, $2.datepicker._defaults) : inst ? name === "all" ? $2.extend({}, inst.settings) : this._get(inst, name) : null;
+        return name === "defaults" ? $3.extend({}, $3.datepicker._defaults) : inst ? name === "all" ? $3.extend({}, inst.settings) : this._get(inst, name) : null;
       }
       settings = name || {};
       if (typeof name === "string") {
@@ -18549,7 +18473,7 @@ window.$ = import_jquery.default;
             this._enableDatepicker(target);
           }
         }
-        this._attachments($2(target), inst);
+        this._attachments($3(target), inst);
         this._autoSize(inst);
         this._setDate(inst, date);
         this._updateAlternate(inst);
@@ -18595,75 +18519,75 @@ window.$ = import_jquery.default;
     },
     /* Handle keystrokes. */
     _doKeyDown: function(event) {
-      var onSelect, dateStr, sel, inst = $2.datepicker._getInst(event.target), handled = true, isRTL2 = inst.dpDiv.is(".ui-datepicker-rtl");
+      var onSelect, dateStr, sel, inst = $3.datepicker._getInst(event.target), handled = true, isRTL2 = inst.dpDiv.is(".ui-datepicker-rtl");
       inst._keyEvent = true;
-      if ($2.datepicker._datepickerShowing) {
+      if ($3.datepicker._datepickerShowing) {
         switch (event.keyCode) {
           case 9:
-            $2.datepicker._hideDatepicker();
+            $3.datepicker._hideDatepicker();
             handled = false;
             break;
           case 13:
-            sel = $2("td." + $2.datepicker._dayOverClass + ":not(." + $2.datepicker._currentClass + ")", inst.dpDiv);
+            sel = $3("td." + $3.datepicker._dayOverClass + ":not(." + $3.datepicker._currentClass + ")", inst.dpDiv);
             if (sel[0]) {
-              $2.datepicker._selectDay(event.target, inst.selectedMonth, inst.selectedYear, sel[0]);
+              $3.datepicker._selectDay(event.target, inst.selectedMonth, inst.selectedYear, sel[0]);
             }
-            onSelect = $2.datepicker._get(inst, "onSelect");
+            onSelect = $3.datepicker._get(inst, "onSelect");
             if (onSelect) {
-              dateStr = $2.datepicker._formatDate(inst);
+              dateStr = $3.datepicker._formatDate(inst);
               onSelect.apply(inst.input ? inst.input[0] : null, [dateStr, inst]);
             } else {
-              $2.datepicker._hideDatepicker();
+              $3.datepicker._hideDatepicker();
             }
             return false;
           case 27:
-            $2.datepicker._hideDatepicker();
+            $3.datepicker._hideDatepicker();
             break;
           case 33:
-            $2.datepicker._adjustDate(event.target, event.ctrlKey ? -$2.datepicker._get(inst, "stepBigMonths") : -$2.datepicker._get(inst, "stepMonths"), "M");
+            $3.datepicker._adjustDate(event.target, event.ctrlKey ? -$3.datepicker._get(inst, "stepBigMonths") : -$3.datepicker._get(inst, "stepMonths"), "M");
             break;
           case 34:
-            $2.datepicker._adjustDate(event.target, event.ctrlKey ? +$2.datepicker._get(inst, "stepBigMonths") : +$2.datepicker._get(inst, "stepMonths"), "M");
+            $3.datepicker._adjustDate(event.target, event.ctrlKey ? +$3.datepicker._get(inst, "stepBigMonths") : +$3.datepicker._get(inst, "stepMonths"), "M");
             break;
           case 35:
             if (event.ctrlKey || event.metaKey) {
-              $2.datepicker._clearDate(event.target);
+              $3.datepicker._clearDate(event.target);
             }
             handled = event.ctrlKey || event.metaKey;
             break;
           case 36:
             if (event.ctrlKey || event.metaKey) {
-              $2.datepicker._gotoToday(event.target);
+              $3.datepicker._gotoToday(event.target);
             }
             handled = event.ctrlKey || event.metaKey;
             break;
           case 37:
             if (event.ctrlKey || event.metaKey) {
-              $2.datepicker._adjustDate(event.target, isRTL2 ? 1 : -1, "D");
+              $3.datepicker._adjustDate(event.target, isRTL2 ? 1 : -1, "D");
             }
             handled = event.ctrlKey || event.metaKey;
             if (event.originalEvent.altKey) {
-              $2.datepicker._adjustDate(event.target, event.ctrlKey ? -$2.datepicker._get(inst, "stepBigMonths") : -$2.datepicker._get(inst, "stepMonths"), "M");
+              $3.datepicker._adjustDate(event.target, event.ctrlKey ? -$3.datepicker._get(inst, "stepBigMonths") : -$3.datepicker._get(inst, "stepMonths"), "M");
             }
             break;
           case 38:
             if (event.ctrlKey || event.metaKey) {
-              $2.datepicker._adjustDate(event.target, -7, "D");
+              $3.datepicker._adjustDate(event.target, -7, "D");
             }
             handled = event.ctrlKey || event.metaKey;
             break;
           case 39:
             if (event.ctrlKey || event.metaKey) {
-              $2.datepicker._adjustDate(event.target, isRTL2 ? -1 : 1, "D");
+              $3.datepicker._adjustDate(event.target, isRTL2 ? -1 : 1, "D");
             }
             handled = event.ctrlKey || event.metaKey;
             if (event.originalEvent.altKey) {
-              $2.datepicker._adjustDate(event.target, event.ctrlKey ? +$2.datepicker._get(inst, "stepBigMonths") : +$2.datepicker._get(inst, "stepMonths"), "M");
+              $3.datepicker._adjustDate(event.target, event.ctrlKey ? +$3.datepicker._get(inst, "stepBigMonths") : +$3.datepicker._get(inst, "stepMonths"), "M");
             }
             break;
           case 40:
             if (event.ctrlKey || event.metaKey) {
-              $2.datepicker._adjustDate(event.target, 7, "D");
+              $3.datepicker._adjustDate(event.target, 7, "D");
             }
             handled = event.ctrlKey || event.metaKey;
             break;
@@ -18671,7 +18595,7 @@ window.$ = import_jquery.default;
             handled = false;
         }
       } else if (event.keyCode === 36 && event.ctrlKey) {
-        $2.datepicker._showDatepicker(this);
+        $3.datepicker._showDatepicker(this);
       } else {
         handled = false;
       }
@@ -18682,27 +18606,27 @@ window.$ = import_jquery.default;
     },
     /* Filter entered characters - based on date format. */
     _doKeyPress: function(event) {
-      var chars, chr, inst = $2.datepicker._getInst(event.target);
-      if ($2.datepicker._get(inst, "constrainInput")) {
-        chars = $2.datepicker._possibleChars($2.datepicker._get(inst, "dateFormat"));
+      var chars, chr, inst = $3.datepicker._getInst(event.target);
+      if ($3.datepicker._get(inst, "constrainInput")) {
+        chars = $3.datepicker._possibleChars($3.datepicker._get(inst, "dateFormat"));
         chr = String.fromCharCode(event.charCode == null ? event.keyCode : event.charCode);
         return event.ctrlKey || event.metaKey || (chr < " " || !chars || chars.indexOf(chr) > -1);
       }
     },
     /* Synchronise manual entry and field/alternate field. */
     _doKeyUp: function(event) {
-      var date, inst = $2.datepicker._getInst(event.target);
+      var date, inst = $3.datepicker._getInst(event.target);
       if (inst.input.val() !== inst.lastVal) {
         try {
-          date = $2.datepicker.parseDate(
-            $2.datepicker._get(inst, "dateFormat"),
+          date = $3.datepicker.parseDate(
+            $3.datepicker._get(inst, "dateFormat"),
             inst.input ? inst.input.val() : null,
-            $2.datepicker._getFormatConfig(inst)
+            $3.datepicker._getFormatConfig(inst)
           );
           if (date) {
-            $2.datepicker._setDateFromField(inst);
-            $2.datepicker._updateAlternate(inst);
-            $2.datepicker._updateDatepicker(inst);
+            $3.datepicker._setDateFromField(inst);
+            $3.datepicker._updateAlternate(inst);
+            $3.datepicker._updateDatepicker(inst);
           }
         } catch (err) {
         }
@@ -18717,66 +18641,66 @@ window.$ = import_jquery.default;
     _showDatepicker: function(input) {
       input = input.target || input;
       if (input.nodeName.toLowerCase() !== "input") {
-        input = $2("input", input.parentNode)[0];
+        input = $3("input", input.parentNode)[0];
       }
-      if ($2.datepicker._isDisabledDatepicker(input) || $2.datepicker._lastInput === input) {
+      if ($3.datepicker._isDisabledDatepicker(input) || $3.datepicker._lastInput === input) {
         return;
       }
       var inst, beforeShow, beforeShowSettings, isFixed, offset2, showAnim, duration;
-      inst = $2.datepicker._getInst(input);
-      if ($2.datepicker._curInst && $2.datepicker._curInst !== inst) {
-        $2.datepicker._curInst.dpDiv.stop(true, true);
-        if (inst && $2.datepicker._datepickerShowing) {
-          $2.datepicker._hideDatepicker($2.datepicker._curInst.input[0]);
+      inst = $3.datepicker._getInst(input);
+      if ($3.datepicker._curInst && $3.datepicker._curInst !== inst) {
+        $3.datepicker._curInst.dpDiv.stop(true, true);
+        if (inst && $3.datepicker._datepickerShowing) {
+          $3.datepicker._hideDatepicker($3.datepicker._curInst.input[0]);
         }
       }
-      beforeShow = $2.datepicker._get(inst, "beforeShow");
+      beforeShow = $3.datepicker._get(inst, "beforeShow");
       beforeShowSettings = beforeShow ? beforeShow.apply(input, [input, inst]) : {};
       if (beforeShowSettings === false) {
         return;
       }
       datepicker_extendRemove(inst.settings, beforeShowSettings);
       inst.lastVal = null;
-      $2.datepicker._lastInput = input;
-      $2.datepicker._setDateFromField(inst);
-      if ($2.datepicker._inDialog) {
+      $3.datepicker._lastInput = input;
+      $3.datepicker._setDateFromField(inst);
+      if ($3.datepicker._inDialog) {
         input.value = "";
       }
-      if (!$2.datepicker._pos) {
-        $2.datepicker._pos = $2.datepicker._findPos(input);
-        $2.datepicker._pos[1] += input.offsetHeight;
+      if (!$3.datepicker._pos) {
+        $3.datepicker._pos = $3.datepicker._findPos(input);
+        $3.datepicker._pos[1] += input.offsetHeight;
       }
       isFixed = false;
-      $2(input).parents().each(function() {
-        isFixed |= $2(this).css("position") === "fixed";
+      $3(input).parents().each(function() {
+        isFixed |= $3(this).css("position") === "fixed";
         return !isFixed;
       });
-      offset2 = { left: $2.datepicker._pos[0], top: $2.datepicker._pos[1] };
-      $2.datepicker._pos = null;
+      offset2 = { left: $3.datepicker._pos[0], top: $3.datepicker._pos[1] };
+      $3.datepicker._pos = null;
       inst.dpDiv.empty();
       inst.dpDiv.css({ position: "absolute", display: "block", top: "-1000px" });
-      $2.datepicker._updateDatepicker(inst);
-      offset2 = $2.datepicker._checkOffset(inst, offset2, isFixed);
+      $3.datepicker._updateDatepicker(inst);
+      offset2 = $3.datepicker._checkOffset(inst, offset2, isFixed);
       inst.dpDiv.css({
-        position: $2.datepicker._inDialog && $2.blockUI ? "static" : isFixed ? "fixed" : "absolute",
+        position: $3.datepicker._inDialog && $3.blockUI ? "static" : isFixed ? "fixed" : "absolute",
         display: "none",
         left: offset2.left + "px",
         top: offset2.top + "px"
       });
       if (!inst.inline) {
-        showAnim = $2.datepicker._get(inst, "showAnim");
-        duration = $2.datepicker._get(inst, "duration");
-        inst.dpDiv.css("z-index", datepicker_getZindex($2(input)) + 1);
-        $2.datepicker._datepickerShowing = true;
-        if ($2.effects && $2.effects.effect[showAnim]) {
-          inst.dpDiv.show(showAnim, $2.datepicker._get(inst, "showOptions"), duration);
+        showAnim = $3.datepicker._get(inst, "showAnim");
+        duration = $3.datepicker._get(inst, "duration");
+        inst.dpDiv.css("z-index", datepicker_getZindex($3(input)) + 1);
+        $3.datepicker._datepickerShowing = true;
+        if ($3.effects && $3.effects.effect[showAnim]) {
+          inst.dpDiv.show(showAnim, $3.datepicker._get(inst, "showOptions"), duration);
         } else {
           inst.dpDiv[showAnim || "show"](showAnim ? duration : null);
         }
-        if ($2.datepicker._shouldFocusInput(inst)) {
+        if ($3.datepicker._shouldFocusInput(inst)) {
           inst.input.trigger("focus");
         }
-        $2.datepicker._curInst = inst;
+        $3.datepicker._curInst = inst;
       }
     },
     /* Generate the date picker content. */
@@ -18785,7 +18709,7 @@ window.$ = import_jquery.default;
       datepicker_instActive = inst;
       inst.dpDiv.empty().append(this._generateHTML(inst));
       this._attachHandlers(inst);
-      var origyearshtml, numMonths = this._getNumberOfMonths(inst), cols = numMonths[1], width = 17, activeCell = inst.dpDiv.find("." + this._dayOverClass + " a"), onUpdateDatepicker = $2.datepicker._get(inst, "onUpdateDatepicker");
+      var origyearshtml, numMonths = this._getNumberOfMonths(inst), cols = numMonths[1], width = 17, activeCell = inst.dpDiv.find("." + this._dayOverClass + " a"), onUpdateDatepicker = $3.datepicker._get(inst, "onUpdateDatepicker");
       if (activeCell.length > 0) {
         datepicker_handleMouseover.apply(activeCell.get(0));
       }
@@ -18795,7 +18719,7 @@ window.$ = import_jquery.default;
       }
       inst.dpDiv[(numMonths[0] !== 1 || numMonths[1] !== 1 ? "add" : "remove") + "Class"]("ui-datepicker-multi");
       inst.dpDiv[(this._get(inst, "isRTL") ? "add" : "remove") + "Class"]("ui-datepicker-rtl");
-      if (inst === $2.datepicker._curInst && $2.datepicker._datepickerShowing && $2.datepicker._shouldFocusInput(inst)) {
+      if (inst === $3.datepicker._curInst && $3.datepicker._datepickerShowing && $3.datepicker._shouldFocusInput(inst)) {
         inst.input.trigger("focus");
       }
       if (inst.yearshtml) {
@@ -18819,10 +18743,10 @@ window.$ = import_jquery.default;
     },
     /* Check positioning to remain on screen. */
     _checkOffset: function(inst, offset2, isFixed) {
-      var dpWidth = inst.dpDiv.outerWidth(), dpHeight = inst.dpDiv.outerHeight(), inputWidth = inst.input ? inst.input.outerWidth() : 0, inputHeight = inst.input ? inst.input.outerHeight() : 0, viewWidth = document.documentElement.clientWidth + (isFixed ? 0 : $2(document).scrollLeft()), viewHeight = document.documentElement.clientHeight + (isFixed ? 0 : $2(document).scrollTop());
+      var dpWidth = inst.dpDiv.outerWidth(), dpHeight = inst.dpDiv.outerHeight(), inputWidth = inst.input ? inst.input.outerWidth() : 0, inputHeight = inst.input ? inst.input.outerHeight() : 0, viewWidth = document.documentElement.clientWidth + (isFixed ? 0 : $3(document).scrollLeft()), viewHeight = document.documentElement.clientHeight + (isFixed ? 0 : $3(document).scrollTop());
       offset2.left -= this._get(inst, "isRTL") ? dpWidth - inputWidth : 0;
-      offset2.left -= isFixed && offset2.left === inst.input.offset().left ? $2(document).scrollLeft() : 0;
-      offset2.top -= isFixed && offset2.top === inst.input.offset().top + inputHeight ? $2(document).scrollTop() : 0;
+      offset2.left -= isFixed && offset2.left === inst.input.offset().left ? $3(document).scrollLeft() : 0;
+      offset2.top -= isFixed && offset2.top === inst.input.offset().top + inputHeight ? $3(document).scrollTop() : 0;
       offset2.left -= Math.min(offset2.left, offset2.left + dpWidth > viewWidth && viewWidth > dpWidth ? Math.abs(offset2.left + dpWidth - viewWidth) : 0);
       offset2.top -= Math.min(offset2.top, offset2.top + dpHeight > viewHeight && viewHeight > dpHeight ? Math.abs(dpHeight + inputHeight) : 0);
       return offset2;
@@ -18830,10 +18754,10 @@ window.$ = import_jquery.default;
     /* Find an object's position on the screen. */
     _findPos: function(obj) {
       var position2, inst = this._getInst(obj), isRTL2 = this._get(inst, "isRTL");
-      while (obj && (obj.type === "hidden" || obj.nodeType !== 1 || $2.expr.pseudos.hidden(obj))) {
+      while (obj && (obj.type === "hidden" || obj.nodeType !== 1 || $3.expr.pseudos.hidden(obj))) {
         obj = obj[isRTL2 ? "previousSibling" : "nextSibling"];
       }
-      position2 = $2(obj).offset();
+      position2 = $3(obj).offset();
       return [position2.left, position2.top];
     },
     /* Hide the date picker from view.
@@ -18841,17 +18765,17 @@ window.$ = import_jquery.default;
      */
     _hideDatepicker: function(input) {
       var showAnim, duration, postProcess, onClose, inst = this._curInst;
-      if (!inst || input && inst !== $2.data(input, "datepicker")) {
+      if (!inst || input && inst !== $3.data(input, "datepicker")) {
         return;
       }
       if (this._datepickerShowing) {
         showAnim = this._get(inst, "showAnim");
         duration = this._get(inst, "duration");
         postProcess = function() {
-          $2.datepicker._tidyDialog(inst);
+          $3.datepicker._tidyDialog(inst);
         };
-        if ($2.effects && ($2.effects.effect[showAnim] || $2.effects[showAnim])) {
-          inst.dpDiv.hide(showAnim, $2.datepicker._get(inst, "showOptions"), duration, postProcess);
+        if ($3.effects && ($3.effects.effect[showAnim] || $3.effects[showAnim])) {
+          inst.dpDiv.hide(showAnim, $3.datepicker._get(inst, "showOptions"), duration, postProcess);
         } else {
           inst.dpDiv[showAnim === "slideDown" ? "slideUp" : showAnim === "fadeIn" ? "fadeOut" : "hide"](showAnim ? duration : null, postProcess);
         }
@@ -18866,9 +18790,9 @@ window.$ = import_jquery.default;
         this._lastInput = null;
         if (this._inDialog) {
           this._dialogInput.css({ position: "absolute", left: "0", top: "-100px" });
-          if ($2.blockUI) {
-            $2.unblockUI();
-            $2("body").append(this.dpDiv);
+          if ($3.blockUI) {
+            $3.unblockUI();
+            $3("body").append(this.dpDiv);
           }
         }
         this._inDialog = false;
@@ -18880,17 +18804,17 @@ window.$ = import_jquery.default;
     },
     /* Close date picker if clicked elsewhere. */
     _checkExternalClick: function(event) {
-      if (!$2.datepicker._curInst) {
+      if (!$3.datepicker._curInst) {
         return;
       }
-      var $target = $2(event.target), inst = $2.datepicker._getInst($target[0]);
-      if ($target[0].id !== $2.datepicker._mainDivId && $target.parents("#" + $2.datepicker._mainDivId).length === 0 && !$target.hasClass($2.datepicker.markerClassName) && !$target.closest("." + $2.datepicker._triggerClass).length && $2.datepicker._datepickerShowing && !($2.datepicker._inDialog && $2.blockUI) || $target.hasClass($2.datepicker.markerClassName) && $2.datepicker._curInst !== inst) {
-        $2.datepicker._hideDatepicker();
+      var $target = $3(event.target), inst = $3.datepicker._getInst($target[0]);
+      if ($target[0].id !== $3.datepicker._mainDivId && $target.parents("#" + $3.datepicker._mainDivId).length === 0 && !$target.hasClass($3.datepicker.markerClassName) && !$target.closest("." + $3.datepicker._triggerClass).length && $3.datepicker._datepickerShowing && !($3.datepicker._inDialog && $3.blockUI) || $target.hasClass($3.datepicker.markerClassName) && $3.datepicker._curInst !== inst) {
+        $3.datepicker._hideDatepicker();
       }
     },
     /* Adjust one of the date sub-fields. */
     _adjustDate: function(id, offset2, period) {
-      var target = $2(id), inst = this._getInst(target[0]);
+      var target = $3(id), inst = this._getInst(target[0]);
       if (this._isDisabledDatepicker(target[0])) {
         return;
       }
@@ -18899,7 +18823,7 @@ window.$ = import_jquery.default;
     },
     /* Action for current link. */
     _gotoToday: function(id) {
-      var date, target = $2(id), inst = this._getInst(target[0]);
+      var date, target = $3(id), inst = this._getInst(target[0]);
       if (this._get(inst, "gotoCurrent") && inst.currentDay) {
         inst.selectedDay = inst.currentDay;
         inst.drawMonth = inst.selectedMonth = inst.currentMonth;
@@ -18915,19 +18839,19 @@ window.$ = import_jquery.default;
     },
     /* Action for selecting a new month/year. */
     _selectMonthYear: function(id, select, period) {
-      var target = $2(id), inst = this._getInst(target[0]);
+      var target = $3(id), inst = this._getInst(target[0]);
       inst["selected" + (period === "M" ? "Month" : "Year")] = inst["draw" + (period === "M" ? "Month" : "Year")] = parseInt(select.options[select.selectedIndex].value, 10);
       this._notifyChange(inst);
       this._adjustDate(target);
     },
     /* Action for selecting a day. */
     _selectDay: function(id, month, year, td) {
-      var inst, target = $2(id);
-      if ($2(td).hasClass(this._unselectableClass) || this._isDisabledDatepicker(target[0])) {
+      var inst, target = $3(id);
+      if ($3(td).hasClass(this._unselectableClass) || this._isDisabledDatepicker(target[0])) {
         return;
       }
       inst = this._getInst(target[0]);
-      inst.selectedDay = inst.currentDay = parseInt($2("a", td).attr("data-date"));
+      inst.selectedDay = inst.currentDay = parseInt($3("a", td).attr("data-date"));
       inst.selectedMonth = inst.currentMonth = month;
       inst.selectedYear = inst.currentYear = year;
       this._selectDate(id, this._formatDate(
@@ -18939,12 +18863,12 @@ window.$ = import_jquery.default;
     },
     /* Erase the input field and hide the date picker. */
     _clearDate: function(id) {
-      var target = $2(id);
+      var target = $3(id);
       this._selectDate(target, "");
     },
     /* Update the input field with the selected date. */
     _selectDate: function(id, dateStr) {
-      var onSelect, target = $2(id), inst = this._getInst(target[0]);
+      var onSelect, target = $3(id), inst = this._getInst(target[0]);
       dateStr = dateStr != null ? dateStr : this._formatDate(inst);
       if (inst.input) {
         inst.input.val(dateStr);
@@ -18974,7 +18898,7 @@ window.$ = import_jquery.default;
         altFormat = this._get(inst, "altFormat") || this._get(inst, "dateFormat");
         date = this._getDate(inst);
         dateStr = this.formatDate(altFormat, date, this._getFormatConfig(inst));
-        $2(document).find(altField).val(dateStr);
+        $3(document).find(altField).val(dateStr);
       }
     },
     /* Set as beforeShowDay function to prevent selection of weekends.
@@ -19032,12 +18956,12 @@ window.$ = import_jquery.default;
         iValue += num[0].length;
         return parseInt(num[0], 10);
       }, getName = function(match, shortNames, longNames) {
-        var index = -1, names = $2.map(lookAhead(match) ? longNames : shortNames, function(v, k) {
+        var index = -1, names = $3.map(lookAhead(match) ? longNames : shortNames, function(v, k) {
           return [[k, v]];
         }).sort(function(a, b) {
           return -(a[1].length - b[1].length);
         });
-        $2.each(names, function(i, pair) {
+        $3.each(names, function(i, pair) {
           var name = pair[1];
           if (value.substr(iValue, name.length).toLowerCase() === name.toLowerCase()) {
             index = pair[0];
@@ -19334,14 +19258,14 @@ window.$ = import_jquery.default;
         return date2;
       }, offsetString = function(offset2) {
         try {
-          return $2.datepicker.parseDate(
-            $2.datepicker._get(inst, "dateFormat"),
+          return $3.datepicker.parseDate(
+            $3.datepicker._get(inst, "dateFormat"),
             offset2,
-            $2.datepicker._getFormatConfig(inst)
+            $3.datepicker._getFormatConfig(inst)
           );
         } catch (e) {
         }
-        var date2 = (offset2.toLowerCase().match(/^c/) ? $2.datepicker._getDate(inst) : null) || /* @__PURE__ */ new Date(), year = date2.getFullYear(), month = date2.getMonth(), day = date2.getDate(), pattern = /([+\-]?[0-9]+)\s*(d|D|w|W|m|M|y|Y)?/g, matches = pattern.exec(offset2);
+        var date2 = (offset2.toLowerCase().match(/^c/) ? $3.datepicker._getDate(inst) : null) || /* @__PURE__ */ new Date(), year = date2.getFullYear(), month = date2.getMonth(), day = date2.getDate(), pattern = /([+\-]?[0-9]+)\s*(d|D|w|W|m|M|y|Y)?/g, matches = pattern.exec(offset2);
         while (matches) {
           switch (matches[2] || "d") {
             case "d":
@@ -19355,12 +19279,12 @@ window.$ = import_jquery.default;
             case "m":
             case "M":
               month += parseInt(matches[1], 10);
-              day = Math.min(day, $2.datepicker._getDaysInMonth(year, month));
+              day = Math.min(day, $3.datepicker._getDaysInMonth(year, month));
               break;
             case "y":
             case "Y":
               year += parseInt(matches[1], 10);
-              day = Math.min(day, $2.datepicker._getDaysInMonth(year, month));
+              day = Math.min(day, $3.datepicker._getDaysInMonth(year, month));
               break;
           }
           matches = pattern.exec(offset2);
@@ -19421,31 +19345,31 @@ window.$ = import_jquery.default;
       inst.dpDiv.find("[data-handler]").map(function() {
         var handler = {
           prev: function() {
-            $2.datepicker._adjustDate(id, -stepMonths, "M");
+            $3.datepicker._adjustDate(id, -stepMonths, "M");
           },
           next: function() {
-            $2.datepicker._adjustDate(id, +stepMonths, "M");
+            $3.datepicker._adjustDate(id, +stepMonths, "M");
           },
           hide: function() {
-            $2.datepicker._hideDatepicker();
+            $3.datepicker._hideDatepicker();
           },
           today: function() {
-            $2.datepicker._gotoToday(id);
+            $3.datepicker._gotoToday(id);
           },
           selectDay: function() {
-            $2.datepicker._selectDay(id, +this.getAttribute("data-month"), +this.getAttribute("data-year"), this);
+            $3.datepicker._selectDay(id, +this.getAttribute("data-month"), +this.getAttribute("data-year"), this);
             return false;
           },
           selectMonth: function() {
-            $2.datepicker._selectMonthYear(id, this, "M");
+            $3.datepicker._selectMonthYear(id, this, "M");
             return false;
           },
           selectYear: function() {
-            $2.datepicker._selectMonthYear(id, this, "Y");
+            $3.datepicker._selectMonthYear(id, this, "Y");
             return false;
           }
         };
-        $2(this).on(this.getAttribute("data-event"), handler[this.getAttribute("data-handler")]);
+        $3(this).on(this.getAttribute("data-event"), handler[this.getAttribute("data-handler")]);
       });
     },
     /* Generate the HTML for the current state of the date picker. */
@@ -19481,22 +19405,22 @@ window.$ = import_jquery.default;
         this._getFormatConfig(inst)
       );
       if (this._canAdjustMonth(inst, -1, drawYear, drawMonth)) {
-        prev = $2("<a>").attr({
+        prev = $3("<a>").attr({
           "class": "ui-datepicker-prev ui-corner-all",
           "data-handler": "prev",
           "data-event": "click",
           title: prevText
         }).append(
-          $2("<span>").addClass("ui-icon ui-icon-circle-triangle-" + (isRTL2 ? "e" : "w")).text(prevText)
+          $3("<span>").addClass("ui-icon ui-icon-circle-triangle-" + (isRTL2 ? "e" : "w")).text(prevText)
         )[0].outerHTML;
       } else if (hideIfNoPrevNext) {
         prev = "";
       } else {
-        prev = $2("<a>").attr({
+        prev = $3("<a>").attr({
           "class": "ui-datepicker-prev ui-corner-all ui-state-disabled",
           title: prevText
         }).append(
-          $2("<span>").addClass("ui-icon ui-icon-circle-triangle-" + (isRTL2 ? "e" : "w")).text(prevText)
+          $3("<span>").addClass("ui-icon ui-icon-circle-triangle-" + (isRTL2 ? "e" : "w")).text(prevText)
         )[0].outerHTML;
       }
       nextText = this._get(inst, "nextText");
@@ -19506,22 +19430,22 @@ window.$ = import_jquery.default;
         this._getFormatConfig(inst)
       );
       if (this._canAdjustMonth(inst, 1, drawYear, drawMonth)) {
-        next = $2("<a>").attr({
+        next = $3("<a>").attr({
           "class": "ui-datepicker-next ui-corner-all",
           "data-handler": "next",
           "data-event": "click",
           title: nextText
         }).append(
-          $2("<span>").addClass("ui-icon ui-icon-circle-triangle-" + (isRTL2 ? "w" : "e")).text(nextText)
+          $3("<span>").addClass("ui-icon ui-icon-circle-triangle-" + (isRTL2 ? "w" : "e")).text(nextText)
         )[0].outerHTML;
       } else if (hideIfNoPrevNext) {
         next = "";
       } else {
-        next = $2("<a>").attr({
+        next = $3("<a>").attr({
           "class": "ui-datepicker-next ui-corner-all ui-state-disabled",
           title: nextText
         }).append(
-          $2("<span>").attr("class", "ui-icon ui-icon-circle-triangle-" + (isRTL2 ? "w" : "e")).text(nextText)
+          $3("<span>").attr("class", "ui-icon ui-icon-circle-triangle-" + (isRTL2 ? "w" : "e")).text(nextText)
         )[0].outerHTML;
       }
       currentText = this._get(inst, "currentText");
@@ -19529,7 +19453,7 @@ window.$ = import_jquery.default;
       currentText = !navigationAsDateFormat ? currentText : this.formatDate(currentText, gotoDate, this._getFormatConfig(inst));
       controls = "";
       if (!inst.inline) {
-        controls = $2("<button>").attr({
+        controls = $3("<button>").attr({
           type: "button",
           "class": "ui-datepicker-close ui-state-default ui-priority-primary ui-corner-all",
           "data-handler": "hide",
@@ -19538,7 +19462,7 @@ window.$ = import_jquery.default;
       }
       buttonPanel = "";
       if (showButtonPanel) {
-        buttonPanel = $2("<div class='ui-datepicker-buttonpane ui-widget-content'>").append(isRTL2 ? controls : "").append(this._isInRange(inst, gotoDate) ? $2("<button>").attr({
+        buttonPanel = $3("<div class='ui-datepicker-buttonpane ui-widget-content'>").append(isRTL2 ? controls : "").append(this._isInRange(inst, gotoDate) ? $3("<button>").attr({
           type: "button",
           "class": "ui-datepicker-current ui-state-default ui-priority-secondary ui-corner-all",
           "data-handler": "today",
@@ -19804,29 +19728,29 @@ window.$ = import_jquery.default;
   function datepicker_bindHover(dpDiv) {
     var selector = "button, .ui-datepicker-prev, .ui-datepicker-next, .ui-datepicker-calendar td a";
     return dpDiv.on("mouseout", selector, function() {
-      $2(this).removeClass("ui-state-hover");
+      $3(this).removeClass("ui-state-hover");
       if (this.className.indexOf("ui-datepicker-prev") !== -1) {
-        $2(this).removeClass("ui-datepicker-prev-hover");
+        $3(this).removeClass("ui-datepicker-prev-hover");
       }
       if (this.className.indexOf("ui-datepicker-next") !== -1) {
-        $2(this).removeClass("ui-datepicker-next-hover");
+        $3(this).removeClass("ui-datepicker-next-hover");
       }
     }).on("mouseover", selector, datepicker_handleMouseover);
   }
   function datepicker_handleMouseover() {
-    if (!$2.datepicker._isDisabledDatepicker(datepicker_instActive.inline ? datepicker_instActive.dpDiv.parent()[0] : datepicker_instActive.input[0])) {
-      $2(this).parents(".ui-datepicker-calendar").find("a").removeClass("ui-state-hover");
-      $2(this).addClass("ui-state-hover");
+    if (!$3.datepicker._isDisabledDatepicker(datepicker_instActive.inline ? datepicker_instActive.dpDiv.parent()[0] : datepicker_instActive.input[0])) {
+      $3(this).parents(".ui-datepicker-calendar").find("a").removeClass("ui-state-hover");
+      $3(this).addClass("ui-state-hover");
       if (this.className.indexOf("ui-datepicker-prev") !== -1) {
-        $2(this).addClass("ui-datepicker-prev-hover");
+        $3(this).addClass("ui-datepicker-prev-hover");
       }
       if (this.className.indexOf("ui-datepicker-next") !== -1) {
-        $2(this).addClass("ui-datepicker-next-hover");
+        $3(this).addClass("ui-datepicker-next-hover");
       }
     }
   }
   function datepicker_extendRemove(target, props) {
-    $2.extend(target, props);
+    $3.extend(target, props);
     for (var name in props) {
       if (props[name] == null) {
         target[name] = props[name];
@@ -19834,38 +19758,38 @@ window.$ = import_jquery.default;
     }
     return target;
   }
-  $2.fn.datepicker = function(options) {
+  $3.fn.datepicker = function(options) {
     if (!this.length) {
       return this;
     }
-    if (!$2.datepicker.initialized) {
-      $2(document).on("mousedown", $2.datepicker._checkExternalClick);
-      $2.datepicker.initialized = true;
+    if (!$3.datepicker.initialized) {
+      $3(document).on("mousedown", $3.datepicker._checkExternalClick);
+      $3.datepicker.initialized = true;
     }
-    if ($2("#" + $2.datepicker._mainDivId).length === 0) {
-      $2("body").append($2.datepicker.dpDiv);
+    if ($3("#" + $3.datepicker._mainDivId).length === 0) {
+      $3("body").append($3.datepicker.dpDiv);
     }
     var otherArgs = Array.prototype.slice.call(arguments, 1);
     if (typeof options === "string" && (options === "isDisabled" || options === "getDate" || options === "widget")) {
-      return $2.datepicker["_" + options + "Datepicker"].apply($2.datepicker, [this[0]].concat(otherArgs));
+      return $3.datepicker["_" + options + "Datepicker"].apply($3.datepicker, [this[0]].concat(otherArgs));
     }
     if (options === "option" && arguments.length === 2 && typeof arguments[1] === "string") {
-      return $2.datepicker["_" + options + "Datepicker"].apply($2.datepicker, [this[0]].concat(otherArgs));
+      return $3.datepicker["_" + options + "Datepicker"].apply($3.datepicker, [this[0]].concat(otherArgs));
     }
     return this.each(function() {
       if (typeof options === "string") {
-        $2.datepicker["_" + options + "Datepicker"].apply($2.datepicker, [this].concat(otherArgs));
+        $3.datepicker["_" + options + "Datepicker"].apply($3.datepicker, [this].concat(otherArgs));
       } else {
-        $2.datepicker._attachDatepicker(this, options);
+        $3.datepicker._attachDatepicker(this, options);
       }
     });
   };
-  $2.datepicker = new Datepicker();
-  $2.datepicker.initialized = false;
-  $2.datepicker.uuid = (/* @__PURE__ */ new Date()).getTime();
-  $2.datepicker.version = "1.13.2";
-  var widgetsDatepicker = $2.datepicker;
-  $2.widget("ui.dialog", {
+  $3.datepicker = new Datepicker();
+  $3.datepicker.initialized = false;
+  $3.datepicker.uuid = (/* @__PURE__ */ new Date()).getTime();
+  $3.datepicker.version = "1.13.2";
+  var widgetsDatepicker = $3.datepicker;
+  $3.widget("ui.dialog", {
     version: "1.13.2",
     options: {
       appendTo: "body",
@@ -19892,9 +19816,9 @@ window.$ = import_jquery.default;
         collision: "fit",
         // Ensure the titlebar is always visible
         using: function(pos) {
-          var topOffset = $2(this).css(pos).offset().top;
+          var topOffset = $3(this).css(pos).offset().top;
           if (topOffset < 0) {
-            $2(this).css("top", pos.top - topOffset);
+            $3(this).css("top", pos.top - topOffset);
           }
         }
       },
@@ -19953,10 +19877,10 @@ window.$ = import_jquery.default;
       this._addClass("ui-dialog-content", "ui-widget-content");
       this._createTitlebar();
       this._createButtonPane();
-      if (this.options.draggable && $2.fn.draggable) {
+      if (this.options.draggable && $3.fn.draggable) {
         this._makeDraggable();
       }
-      if (this.options.resizable && $2.fn.resizable) {
+      if (this.options.resizable && $3.fn.resizable) {
         this._makeResizable();
       }
       this._isOpen = false;
@@ -19970,7 +19894,7 @@ window.$ = import_jquery.default;
     _appendTo: function() {
       var element = this.options.appendTo;
       if (element && (element.jquery || element.nodeType)) {
-        return $2(element);
+        return $3(element);
       }
       return this.document.find(element || "body").eq(0);
     },
@@ -19993,8 +19917,8 @@ window.$ = import_jquery.default;
     widget: function() {
       return this.uiDialog;
     },
-    disable: $2.noop,
-    enable: $2.noop,
+    disable: $3.noop,
+    enable: $3.noop,
     close: function(event) {
       var that = this;
       if (!this._isOpen || this._trigger("beforeClose", event) === false) {
@@ -20005,7 +19929,7 @@ window.$ = import_jquery.default;
       this._destroyOverlay();
       this._untrackInstance();
       if (!this.opener.filter(":focusable").trigger("focus").length) {
-        $2.ui.safeBlur($2.ui.safeActiveElement(this.document[0]));
+        $3.ui.safeBlur($3.ui.safeActiveElement(this.document[0]));
       }
       this._hide(this.uiDialog, this.options.hide, function() {
         that._trigger("close", event);
@@ -20019,7 +19943,7 @@ window.$ = import_jquery.default;
     },
     _moveToTop: function(event, silent) {
       var moved = false, zIndices = this.uiDialog.siblings(".ui-front:visible").map(function() {
-        return +$2(this).css("z-index");
+        return +$3(this).css("z-index");
       }).get(), zIndexMax = Math.max.apply(null, zIndices);
       if (zIndexMax >= +this.uiDialog.css("z-index")) {
         this.uiDialog.css("z-index", zIndexMax + 1);
@@ -20039,7 +19963,7 @@ window.$ = import_jquery.default;
         return;
       }
       this._isOpen = true;
-      this.opener = $2($2.ui.safeActiveElement(this.document[0]));
+      this.opener = $3($3.ui.safeActiveElement(this.document[0]));
       this._size();
       this._position();
       this._createOverlay();
@@ -20074,7 +19998,7 @@ window.$ = import_jquery.default;
       hasFocus.eq(0).trigger("focus");
     },
     _restoreTabbableFocus: function() {
-      var activeElement = $2.ui.safeActiveElement(this.document[0]), isActive = this.uiDialog[0] === activeElement || $2.contains(this.uiDialog[0], activeElement);
+      var activeElement = $3.ui.safeActiveElement(this.document[0]), isActive = this.uiDialog[0] === activeElement || $3.contains(this.uiDialog[0], activeElement);
       if (!isActive) {
         this._focusTabbable();
       }
@@ -20085,7 +20009,7 @@ window.$ = import_jquery.default;
       this._delay(this._restoreTabbableFocus);
     },
     _createWrapper: function() {
-      this.uiDialog = $2("<div>").hide().attr({
+      this.uiDialog = $3("<div>").hide().attr({
         // Setting tabIndex makes the div focusable
         tabIndex: -1,
         role: "dialog"
@@ -20093,12 +20017,12 @@ window.$ = import_jquery.default;
       this._addClass(this.uiDialog, "ui-dialog", "ui-widget ui-widget-content ui-front");
       this._on(this.uiDialog, {
         keydown: function(event) {
-          if (this.options.closeOnEscape && !event.isDefaultPrevented() && event.keyCode && event.keyCode === $2.ui.keyCode.ESCAPE) {
+          if (this.options.closeOnEscape && !event.isDefaultPrevented() && event.keyCode && event.keyCode === $3.ui.keyCode.ESCAPE) {
             event.preventDefault();
             this.close(event);
             return;
           }
-          if (event.keyCode !== $2.ui.keyCode.TAB || event.isDefaultPrevented()) {
+          if (event.keyCode !== $3.ui.keyCode.TAB || event.isDefaultPrevented()) {
             return;
           }
           var tabbables = this.uiDialog.find(":tabbable"), first = tabbables.first(), last = tabbables.last();
@@ -20128,7 +20052,7 @@ window.$ = import_jquery.default;
     },
     _createTitlebar: function() {
       var uiDialogTitle;
-      this.uiDialogTitlebar = $2("<div>");
+      this.uiDialogTitlebar = $3("<div>");
       this._addClass(
         this.uiDialogTitlebar,
         "ui-dialog-titlebar",
@@ -20136,13 +20060,13 @@ window.$ = import_jquery.default;
       );
       this._on(this.uiDialogTitlebar, {
         mousedown: function(event) {
-          if (!$2(event.target).closest(".ui-dialog-titlebar-close")) {
+          if (!$3(event.target).closest(".ui-dialog-titlebar-close")) {
             this.uiDialog.trigger("focus");
           }
         }
       });
-      this.uiDialogTitlebarClose = $2("<button type='button'></button>").button({
-        label: $2("<a>").text(this.options.closeText).html(),
+      this.uiDialogTitlebarClose = $3("<button type='button'></button>").button({
+        label: $3("<a>").text(this.options.closeText).html(),
         icon: "ui-icon-closethick",
         showLabel: false
       }).appendTo(this.uiDialogTitlebar);
@@ -20153,7 +20077,7 @@ window.$ = import_jquery.default;
           this.close(event);
         }
       });
-      uiDialogTitle = $2("<span>").uniqueId().prependTo(this.uiDialogTitlebar);
+      uiDialogTitle = $3("<span>").uniqueId().prependTo(this.uiDialogTitlebar);
       this._addClass(uiDialogTitle, "ui-dialog-title");
       this._title(uiDialogTitle);
       this.uiDialogTitlebar.prependTo(this.uiDialog);
@@ -20169,13 +20093,13 @@ window.$ = import_jquery.default;
       }
     },
     _createButtonPane: function() {
-      this.uiDialogButtonPane = $2("<div>");
+      this.uiDialogButtonPane = $3("<div>");
       this._addClass(
         this.uiDialogButtonPane,
         "ui-dialog-buttonpane",
         "ui-widget-content ui-helper-clearfix"
       );
-      this.uiButtonSet = $2("<div>").appendTo(this.uiDialogButtonPane);
+      this.uiButtonSet = $3("<div>").appendTo(this.uiDialogButtonPane);
       this._addClass(this.uiButtonSet, "ui-dialog-buttonset");
       this._createButtons();
     },
@@ -20183,14 +20107,14 @@ window.$ = import_jquery.default;
       var that = this, buttons = this.options.buttons;
       this.uiDialogButtonPane.remove();
       this.uiButtonSet.empty();
-      if ($2.isEmptyObject(buttons) || Array.isArray(buttons) && !buttons.length) {
+      if ($3.isEmptyObject(buttons) || Array.isArray(buttons) && !buttons.length) {
         this._removeClass(this.uiDialog, "ui-dialog-buttons");
         return;
       }
-      $2.each(buttons, function(name, props) {
+      $3.each(buttons, function(name, props) {
         var click, buttonOptions;
         props = typeof props === "function" ? { click: props, text: name } : props;
-        props = $2.extend({ type: "button" }, props);
+        props = $3.extend({ type: "button" }, props);
         click = props.click;
         buttonOptions = {
           icon: props.icon,
@@ -20208,7 +20132,7 @@ window.$ = import_jquery.default;
         if (typeof props.text === "boolean") {
           delete props.text;
         }
-        $2("<button></button>", props).button(buttonOptions).appendTo(that.uiButtonSet).on("click", function() {
+        $3("<button></button>", props).button(buttonOptions).appendTo(that.uiButtonSet).on("click", function() {
           click.apply(that.element[0], arguments);
         });
       });
@@ -20228,7 +20152,7 @@ window.$ = import_jquery.default;
         handle: ".ui-dialog-titlebar",
         containment: "document",
         start: function(event, ui) {
-          that._addClass($2(this), "ui-dialog-dragging");
+          that._addClass($3(this), "ui-dialog-dragging");
           that._blockFrames();
           that._trigger("dragStart", event, filteredUi(ui));
         },
@@ -20242,7 +20166,7 @@ window.$ = import_jquery.default;
             at: "left" + (left2 >= 0 ? "+" : "") + left2 + " top" + (top2 >= 0 ? "+" : "") + top2,
             of: that.window
           };
-          that._removeClass($2(this), "ui-dialog-dragging");
+          that._removeClass($3(this), "ui-dialog-dragging");
           that._unblockFrames();
           that._trigger("dragStop", event, filteredUi(ui));
         }
@@ -20268,7 +20192,7 @@ window.$ = import_jquery.default;
         minHeight: this._minHeight(),
         handles: resizeHandles,
         start: function(event, ui) {
-          that._addClass($2(this), "ui-dialog-resizing");
+          that._addClass($3(this), "ui-dialog-resizing");
           that._blockFrames();
           that._trigger("resizeStart", event, filteredUi(ui));
         },
@@ -20284,7 +20208,7 @@ window.$ = import_jquery.default;
             at: "left" + (left2 >= 0 ? "+" : "") + left2 + " top" + (top2 >= 0 ? "+" : "") + top2,
             of: that.window
           };
-          that._removeClass($2(this), "ui-dialog-resizing");
+          that._removeClass($3(this), "ui-dialog-resizing");
           that._unblockFrames();
           that._trigger("resizeStop", event, filteredUi(ui));
         }
@@ -20294,7 +20218,7 @@ window.$ = import_jquery.default;
       this._on(this.widget(), {
         focusin: function(event) {
           this._makeFocusTarget();
-          this._focusedElement = $2(event.target);
+          this._focusedElement = $3(event.target);
         }
       });
     },
@@ -20303,7 +20227,7 @@ window.$ = import_jquery.default;
       this._trackingInstances().unshift(this);
     },
     _untrackInstance: function() {
-      var instances = this._trackingInstances(), exists = $2.inArray(this, instances);
+      var instances = this._trackingInstances(), exists = $3.inArray(this, instances);
       if (exists !== -1) {
         instances.splice(exists, 1);
       }
@@ -20332,7 +20256,7 @@ window.$ = import_jquery.default;
     },
     _setOptions: function(options) {
       var that = this, resize = false, resizableOptions = {};
-      $2.each(options, function(key, value) {
+      $3.each(options, function(key, value) {
         that._setOption(key, value);
         if (key in that.sizeRelatedOptions) {
           resize = true;
@@ -20364,7 +20288,7 @@ window.$ = import_jquery.default;
       if (key === "closeText") {
         this.uiDialogTitlebarClose.button({
           // Ensure that we always pass a string
-          label: $2("<a>").text("" + this.options.closeText).html()
+          label: $3("<a>").text("" + this.options.closeText).html()
         });
       }
       if (key === "draggable") {
@@ -20427,8 +20351,8 @@ window.$ = import_jquery.default;
     },
     _blockFrames: function() {
       this.iframeBlocks = this.document.find("iframe").map(function() {
-        var iframe = $2(this);
-        return $2("<div>").css({
+        var iframe = $3(this);
+        return $3("<div>").css({
           position: "absolute",
           width: iframe.outerWidth(),
           height: iframe.outerHeight()
@@ -20442,16 +20366,16 @@ window.$ = import_jquery.default;
       }
     },
     _allowInteraction: function(event) {
-      if ($2(event.target).closest(".ui-dialog").length) {
+      if ($3(event.target).closest(".ui-dialog").length) {
         return true;
       }
-      return !!$2(event.target).closest(".ui-datepicker").length;
+      return !!$3(event.target).closest(".ui-datepicker").length;
     },
     _createOverlay: function() {
       if (!this.options.modal) {
         return;
       }
-      var jqMinor = $2.fn.jquery.substring(0, 4);
+      var jqMinor = $3.fn.jquery.substring(0, 4);
       var isOpening = true;
       this._delay(function() {
         isOpening = false;
@@ -20471,7 +20395,7 @@ window.$ = import_jquery.default;
           }
         }.bind(this));
       }
-      this.overlay = $2("<div>").appendTo(this._appendTo());
+      this.overlay = $3("<div>").appendTo(this._appendTo());
       this._addClass(this.overlay, null, "ui-widget-overlay ui-front");
       this._on(this.overlay, {
         mousedown: "_keepFocus"
@@ -20498,8 +20422,8 @@ window.$ = import_jquery.default;
       }
     }
   });
-  if ($2.uiBackCompat !== false) {
-    $2.widget("ui.dialog", $2.ui.dialog, {
+  if ($3.uiBackCompat !== false) {
+    $3.widget("ui.dialog", $3.ui.dialog, {
       options: {
         dialogClass: ""
       },
@@ -20515,8 +20439,8 @@ window.$ = import_jquery.default;
       }
     });
   }
-  var widgetsDialog = $2.ui.dialog;
-  var widgetsProgressbar = $2.widget("ui.progressbar", {
+  var widgetsDialog = $3.ui.dialog;
+  var widgetsProgressbar = $3.widget("ui.progressbar", {
     version: "1.13.2",
     options: {
       classes: {
@@ -20539,7 +20463,7 @@ window.$ = import_jquery.default;
         "aria-valuemin": this.min
       });
       this._addClass("ui-progressbar", "ui-widget ui-widget-content");
-      this.valueDiv = $2("<div>").appendTo(this.element);
+      this.valueDiv = $3("<div>").appendTo(this.element);
       this._addClass(this.valueDiv, "ui-progressbar-value", "ui-widget-header");
       this._refreshValue();
     },
@@ -20597,7 +20521,7 @@ window.$ = import_jquery.default;
       if (this.indeterminate) {
         this.element.removeAttr("aria-valuenow");
         if (!this.overlayDiv) {
-          this.overlayDiv = $2("<div>").appendTo(this.valueDiv);
+          this.overlayDiv = $3("<div>").appendTo(this.valueDiv);
           this._addClass(this.overlayDiv, "ui-progressbar-overlay");
         }
       } else {
@@ -20619,7 +20543,7 @@ window.$ = import_jquery.default;
       }
     }
   });
-  var widgetsSelectmenu = $2.widget("ui.selectmenu", [$2.ui.formResetMixin, {
+  var widgetsSelectmenu = $3.widget("ui.selectmenu", [$3.ui.formResetMixin, {
     version: "1.13.2",
     defaultElement: "<select>",
     options: {
@@ -20656,7 +20580,7 @@ window.$ = import_jquery.default;
       this._drawMenu();
       this._bindFormResetHandler();
       this._rendered = false;
-      this.menuItems = $2();
+      this.menuItems = $3();
     },
     _drawButton: function() {
       var icon, that = this, item = this._parseOption(
@@ -20671,7 +20595,7 @@ window.$ = import_jquery.default;
         }
       });
       this.element.hide();
-      this.button = $2("<span>", {
+      this.button = $3("<span>", {
         tabindex: this.options.disabled ? -1 : 0,
         id: this.ids.button,
         role: "combobox",
@@ -20686,7 +20610,7 @@ window.$ = import_jquery.default;
         "ui-selectmenu-button ui-selectmenu-button-closed",
         "ui-button ui-widget"
       );
-      icon = $2("<span>").appendTo(this.button);
+      icon = $3("<span>").appendTo(this.button);
       this._addClass(icon, "ui-selectmenu-icon", "ui-icon " + this.options.icons.button);
       this.buttonItem = this._renderButtonItem(item).appendTo(this.button);
       if (this.options.width !== false) {
@@ -20701,12 +20625,12 @@ window.$ = import_jquery.default;
     },
     _drawMenu: function() {
       var that = this;
-      this.menu = $2("<ul>", {
+      this.menu = $3("<ul>", {
         "aria-hidden": "true",
         "aria-labelledby": this.ids.button,
         id: this.ids.menu
       });
-      this.menuWrap = $2("<div>").append(this.menu);
+      this.menuWrap = $3("<div>").append(this.menu);
       this._addClass(this.menuWrap, "ui-selectmenu-menu", "ui-front");
       this.menuWrap.appendTo(this._appendTo());
       this.menuInstance = this.menu.menu({
@@ -20791,7 +20715,7 @@ window.$ = import_jquery.default;
       this._trigger("open", event);
     },
     _position: function() {
-      this.menuWrap.position($2.extend({ of: this.button }, this.options.position));
+      this.menuWrap.position($3.extend({ of: this.button }, this.options.position));
     },
     close: function(event) {
       if (!this.isOpen) {
@@ -20810,17 +20734,17 @@ window.$ = import_jquery.default;
       return this.menu;
     },
     _renderButtonItem: function(item) {
-      var buttonItem = $2("<span>");
+      var buttonItem = $3("<span>");
       this._setText(buttonItem, item.label);
       this._addClass(buttonItem, "ui-selectmenu-text");
       return buttonItem;
     },
     _renderMenu: function(ul, items) {
       var that = this, currentOptgroup = "";
-      $2.each(items, function(index, item) {
+      $3.each(items, function(index, item) {
         var li;
         if (item.optgroup !== currentOptgroup) {
-          li = $2("<li>", {
+          li = $3("<li>", {
             text: item.optgroup
           });
           that._addClass(li, "ui-selectmenu-optgroup", "ui-menu-divider" + (item.element.parent("optgroup").prop("disabled") ? " ui-state-disabled" : ""));
@@ -20834,7 +20758,7 @@ window.$ = import_jquery.default;
       return this._renderItem(ul, item).data("ui-selectmenu-item", item);
     },
     _renderItem: function(ul, item) {
-      var li = $2("<li>"), wrapper = $2("<div>", {
+      var li = $3("<li>"), wrapper = $3("<div>", {
         title: item.element.attr("title")
       });
       if (item.disabled) {
@@ -20892,7 +20816,7 @@ window.$ = import_jquery.default;
         if (!this.isOpen) {
           return;
         }
-        if (!$2(event.target).closest(".ui-selectmenu-menu, #" + $2.escapeSelector(this.ids.button)).length) {
+        if (!$3(event.target).closest(".ui-selectmenu-menu, #" + $3.escapeSelector(this.ids.button)).length) {
           this.close(event);
         }
       }
@@ -20917,49 +20841,49 @@ window.$ = import_jquery.default;
       keydown: function(event) {
         var preventDefault = true;
         switch (event.keyCode) {
-          case $2.ui.keyCode.TAB:
-          case $2.ui.keyCode.ESCAPE:
+          case $3.ui.keyCode.TAB:
+          case $3.ui.keyCode.ESCAPE:
             this.close(event);
             preventDefault = false;
             break;
-          case $2.ui.keyCode.ENTER:
+          case $3.ui.keyCode.ENTER:
             if (this.isOpen) {
               this._selectFocusedItem(event);
             }
             break;
-          case $2.ui.keyCode.UP:
+          case $3.ui.keyCode.UP:
             if (event.altKey) {
               this._toggle(event);
             } else {
               this._move("prev", event);
             }
             break;
-          case $2.ui.keyCode.DOWN:
+          case $3.ui.keyCode.DOWN:
             if (event.altKey) {
               this._toggle(event);
             } else {
               this._move("next", event);
             }
             break;
-          case $2.ui.keyCode.SPACE:
+          case $3.ui.keyCode.SPACE:
             if (this.isOpen) {
               this._selectFocusedItem(event);
             } else {
               this._toggle(event);
             }
             break;
-          case $2.ui.keyCode.LEFT:
+          case $3.ui.keyCode.LEFT:
             this._move("prev", event);
             break;
-          case $2.ui.keyCode.RIGHT:
+          case $3.ui.keyCode.RIGHT:
             this._move("next", event);
             break;
-          case $2.ui.keyCode.HOME:
-          case $2.ui.keyCode.PAGE_UP:
+          case $3.ui.keyCode.HOME:
+          case $3.ui.keyCode.PAGE_UP:
             this._move("first", event);
             break;
-          case $2.ui.keyCode.END:
-          case $2.ui.keyCode.PAGE_DOWN:
+          case $3.ui.keyCode.END:
+          case $3.ui.keyCode.PAGE_DOWN:
             this._move("last", event);
             break;
           default:
@@ -21025,7 +20949,7 @@ window.$ = import_jquery.default;
     _appendTo: function() {
       var element = this.options.appendTo;
       if (element) {
-        element = element.jquery || element.nodeType ? $2(element) : this.document.find(element).eq(0);
+        element = element.jquery || element.nodeType ? $3(element) : this.document.find(element).eq(0);
       }
       if (!element || !element[0]) {
         element = this.element.closest(".ui-front, dialog");
@@ -21072,7 +20996,7 @@ window.$ = import_jquery.default;
         if (item.hidden) {
           return;
         }
-        data2.push(that._parseOption($2(item), index));
+        data2.push(that._parseOption($3(item), index));
       });
       this.items = data2;
     },
@@ -21096,7 +21020,7 @@ window.$ = import_jquery.default;
       this.labels.attr("for", this.ids.element);
     }
   }]);
-  var widgetsSlider = $2.widget("ui.slider", $2.ui.mouse, {
+  var widgetsSlider = $3.widget("ui.slider", $3.ui.mouse, {
     version: "1.13.2",
     widgetEventPrefix: "slide",
     options: {
@@ -21156,11 +21080,11 @@ window.$ = import_jquery.default;
       for (i = existingHandles.length; i < handleCount; i++) {
         handles.push(handle);
       }
-      this.handles = existingHandles.add($2(handles.join("")).appendTo(this.element));
+      this.handles = existingHandles.add($3(handles.join("")).appendTo(this.element));
       this._addClass(this.handles, "ui-slider-handle", "ui-state-default");
       this.handle = this.handles.eq(0);
       this.handles.each(function(i2) {
-        $2(this).data("ui-slider-handle-index", i2).attr("tabIndex", 0);
+        $3(this).data("ui-slider-handle-index", i2).attr("tabIndex", 0);
       });
     },
     _createRange: function() {
@@ -21176,7 +21100,7 @@ window.$ = import_jquery.default;
           }
         }
         if (!this.range || !this.range.length) {
-          this.range = $2("<div>").appendTo(this.element);
+          this.range = $3("<div>").appendTo(this.element);
           this._addClass(this.range, "ui-slider-range");
         } else {
           this._removeClass(this.range, "ui-slider-range-min ui-slider-range-max");
@@ -21225,7 +21149,7 @@ window.$ = import_jquery.default;
         var thisDistance = Math.abs(normValue - that.values(i));
         if (distance > thisDistance || distance === thisDistance && (i === that._lastChangedValue || that.values(i) === o.min)) {
           distance = thisDistance;
-          closestHandle = $2(this);
+          closestHandle = $3(this);
           index = i;
         }
       });
@@ -21238,7 +21162,7 @@ window.$ = import_jquery.default;
       this._addClass(closestHandle, null, "ui-state-active");
       closestHandle.trigger("focus");
       offset2 = closestHandle.offset();
-      mouseOverHandle = !$2(event.target).parents().addBack().is(".ui-slider-handle");
+      mouseOverHandle = !$3(event.target).parents().addBack().is(".ui-slider-handle");
       this._clickOffset = mouseOverHandle ? { left: 0, top: 0 } : {
         left: event.pageX - offset2.left - closestHandle.width() / 2,
         top: event.pageY - offset2.top - closestHandle.height() / 2 - (parseInt(closestHandle.css("borderTopWidth"), 10) || 0) - (parseInt(closestHandle.css("borderBottomWidth"), 10) || 0) + (parseInt(closestHandle.css("marginTop"), 10) || 0)
@@ -21517,7 +21441,7 @@ window.$ = import_jquery.default;
         this.handles.each(function(i) {
           valPercent = (that.values(i) - that._valueMin()) / (that._valueMax() - that._valueMin()) * 100;
           _set[that.orientation === "horizontal" ? "left" : "bottom"] = valPercent + "%";
-          $2(this).stop(1, 1)[animate ? "animate" : "css"](_set, o.animate);
+          $3(this).stop(1, 1)[animate ? "animate" : "css"](_set, o.animate);
           if (that.options.range === true) {
             if (that.orientation === "horizontal") {
               if (i === 0) {
@@ -21582,20 +21506,20 @@ window.$ = import_jquery.default;
     },
     _handleEvents: {
       keydown: function(event) {
-        var allowed, curVal, newVal, step, index = $2(event.target).data("ui-slider-handle-index");
+        var allowed, curVal, newVal, step, index = $3(event.target).data("ui-slider-handle-index");
         switch (event.keyCode) {
-          case $2.ui.keyCode.HOME:
-          case $2.ui.keyCode.END:
-          case $2.ui.keyCode.PAGE_UP:
-          case $2.ui.keyCode.PAGE_DOWN:
-          case $2.ui.keyCode.UP:
-          case $2.ui.keyCode.RIGHT:
-          case $2.ui.keyCode.DOWN:
-          case $2.ui.keyCode.LEFT:
+          case $3.ui.keyCode.HOME:
+          case $3.ui.keyCode.END:
+          case $3.ui.keyCode.PAGE_UP:
+          case $3.ui.keyCode.PAGE_DOWN:
+          case $3.ui.keyCode.UP:
+          case $3.ui.keyCode.RIGHT:
+          case $3.ui.keyCode.DOWN:
+          case $3.ui.keyCode.LEFT:
             event.preventDefault();
             if (!this._keySliding) {
               this._keySliding = true;
-              this._addClass($2(event.target), null, "ui-state-active");
+              this._addClass($3(event.target), null, "ui-state-active");
               allowed = this._start(event, index);
               if (allowed === false) {
                 return;
@@ -21610,31 +21534,31 @@ window.$ = import_jquery.default;
           curVal = newVal = this.value();
         }
         switch (event.keyCode) {
-          case $2.ui.keyCode.HOME:
+          case $3.ui.keyCode.HOME:
             newVal = this._valueMin();
             break;
-          case $2.ui.keyCode.END:
+          case $3.ui.keyCode.END:
             newVal = this._valueMax();
             break;
-          case $2.ui.keyCode.PAGE_UP:
+          case $3.ui.keyCode.PAGE_UP:
             newVal = this._trimAlignValue(
               curVal + (this._valueMax() - this._valueMin()) / this.numPages
             );
             break;
-          case $2.ui.keyCode.PAGE_DOWN:
+          case $3.ui.keyCode.PAGE_DOWN:
             newVal = this._trimAlignValue(
               curVal - (this._valueMax() - this._valueMin()) / this.numPages
             );
             break;
-          case $2.ui.keyCode.UP:
-          case $2.ui.keyCode.RIGHT:
+          case $3.ui.keyCode.UP:
+          case $3.ui.keyCode.RIGHT:
             if (curVal === this._valueMax()) {
               return;
             }
             newVal = this._trimAlignValue(curVal + step);
             break;
-          case $2.ui.keyCode.DOWN:
-          case $2.ui.keyCode.LEFT:
+          case $3.ui.keyCode.DOWN:
+          case $3.ui.keyCode.LEFT:
             if (curVal === this._valueMin()) {
               return;
             }
@@ -21644,12 +21568,12 @@ window.$ = import_jquery.default;
         this._slide(event, index, newVal);
       },
       keyup: function(event) {
-        var index = $2(event.target).data("ui-slider-handle-index");
+        var index = $3(event.target).data("ui-slider-handle-index");
         if (this._keySliding) {
           this._keySliding = false;
           this._stop(event, index);
           this._change(event, index);
-          this._removeClass($2(event.target), null, "ui-state-active");
+          this._removeClass($3(event.target), null, "ui-state-active");
         }
       }
     }
@@ -21664,7 +21588,7 @@ window.$ = import_jquery.default;
       }
     };
   }
-  $2.widget("ui.spinner", {
+  $3.widget("ui.spinner", {
     version: "1.13.2",
     defaultElement: "<input>",
     widgetEventPrefix: "spin",
@@ -21709,7 +21633,7 @@ window.$ = import_jquery.default;
     _getCreateOptions: function() {
       var options = this._super();
       var element = this.element;
-      $2.each(["min", "max", "step"], function(i, option) {
+      $3.each(["min", "max", "step"], function(i, option) {
         var value = element.attr(option);
         if (value != null && value.length) {
           options[option] = value;
@@ -21739,7 +21663,7 @@ window.$ = import_jquery.default;
         }
       },
       mousewheel: function(event, delta) {
-        var activeElement = $2.ui.safeActiveElement(this.document[0]);
+        var activeElement = $3.ui.safeActiveElement(this.document[0]);
         var isActive = this.element[0] === activeElement;
         if (!isActive || !delta) {
           return;
@@ -21758,9 +21682,9 @@ window.$ = import_jquery.default;
       },
       "mousedown .ui-spinner-button": function(event) {
         var previous;
-        previous = this.element[0] === $2.ui.safeActiveElement(this.document[0]) ? this.previous : this.element.val();
+        previous = this.element[0] === $3.ui.safeActiveElement(this.document[0]) ? this.previous : this.element.val();
         function checkFocus() {
-          var isActive = this.element[0] === $2.ui.safeActiveElement(this.document[0]);
+          var isActive = this.element[0] === $3.ui.safeActiveElement(this.document[0]);
           if (!isActive) {
             this.element.trigger("focus");
             this.previous = previous;
@@ -21779,17 +21703,17 @@ window.$ = import_jquery.default;
         if (this._start(event) === false) {
           return;
         }
-        this._repeat(null, $2(event.currentTarget).hasClass("ui-spinner-up") ? 1 : -1, event);
+        this._repeat(null, $3(event.currentTarget).hasClass("ui-spinner-up") ? 1 : -1, event);
       },
       "mouseup .ui-spinner-button": "_stop",
       "mouseenter .ui-spinner-button": function(event) {
-        if (!$2(event.currentTarget).hasClass("ui-state-active")) {
+        if (!$3(event.currentTarget).hasClass("ui-state-active")) {
           return;
         }
         if (this._start(event) === false) {
           return false;
         }
-        this._repeat(null, $2(event.currentTarget).hasClass("ui-spinner-up") ? 1 : -1, event);
+        this._repeat(null, $3(event.currentTarget).hasClass("ui-spinner-up") ? 1 : -1, event);
       },
       // TODO: do we really want to consider this a stop?
       // shouldn't we just stop the repeater and wait until mouseup before
@@ -21828,7 +21752,7 @@ window.$ = import_jquery.default;
       }
     },
     _keydown: function(event) {
-      var options = this.options, keyCode = $2.ui.keyCode;
+      var options = this.options, keyCode = $3.ui.keyCode;
       switch (event.keyCode) {
         case keyCode.UP:
           this._repeat(null, 1, event);
@@ -22029,8 +21953,8 @@ window.$ = import_jquery.default;
       return this.uiSpinner;
     }
   });
-  if ($2.uiBackCompat !== false) {
-    $2.widget("ui.spinner", $2.ui.spinner, {
+  if ($3.uiBackCompat !== false) {
+    $3.widget("ui.spinner", $3.ui.spinner, {
       _enhance: function() {
         this.uiSpinner = this.element.attr("autocomplete", "off").wrap(this._uiSpinnerHtml()).parent().append(this._buttonHtml());
       },
@@ -22042,8 +21966,8 @@ window.$ = import_jquery.default;
       }
     });
   }
-  var widgetsSpinner = $2.ui.spinner;
-  $2.widget("ui.tabs", {
+  var widgetsSpinner = $3.ui.spinner;
+  $3.widget("ui.tabs", {
     version: "1.13.2",
     delay: 300,
     options: {
@@ -22090,8 +22014,8 @@ window.$ = import_jquery.default;
       this._processTabs();
       options.active = this._initialActive();
       if (Array.isArray(options.disabled)) {
-        options.disabled = $2.uniqueSort(options.disabled.concat(
-          $2.map(this.tabs.filter(".ui-state-disabled"), function(li) {
+        options.disabled = $3.uniqueSort(options.disabled.concat(
+          $3.map(this.tabs.filter(".ui-state-disabled"), function(li) {
             return that.tabs.index(li);
           })
         )).sort();
@@ -22099,7 +22023,7 @@ window.$ = import_jquery.default;
       if (this.options.active !== false && this.anchors.length) {
         this.active = this._findActive(options.active);
       } else {
-        this.active = $2();
+        this.active = $3();
       }
       this._refresh();
       if (this.active.length) {
@@ -22111,7 +22035,7 @@ window.$ = import_jquery.default;
       if (active === null) {
         if (locationHash) {
           this.tabs.each(function(i, tab) {
-            if ($2(tab).attr("aria-controls") === locationHash) {
+            if ($3(tab).attr("aria-controls") === locationHash) {
               active = i;
               return false;
             }
@@ -22138,36 +22062,36 @@ window.$ = import_jquery.default;
     _getCreateEventData: function() {
       return {
         tab: this.active,
-        panel: !this.active.length ? $2() : this._getPanelForTab(this.active)
+        panel: !this.active.length ? $3() : this._getPanelForTab(this.active)
       };
     },
     _tabKeydown: function(event) {
-      var focusedTab = $2($2.ui.safeActiveElement(this.document[0])).closest("li"), selectedIndex = this.tabs.index(focusedTab), goingForward = true;
+      var focusedTab = $3($3.ui.safeActiveElement(this.document[0])).closest("li"), selectedIndex = this.tabs.index(focusedTab), goingForward = true;
       if (this._handlePageNav(event)) {
         return;
       }
       switch (event.keyCode) {
-        case $2.ui.keyCode.RIGHT:
-        case $2.ui.keyCode.DOWN:
+        case $3.ui.keyCode.RIGHT:
+        case $3.ui.keyCode.DOWN:
           selectedIndex++;
           break;
-        case $2.ui.keyCode.UP:
-        case $2.ui.keyCode.LEFT:
+        case $3.ui.keyCode.UP:
+        case $3.ui.keyCode.LEFT:
           goingForward = false;
           selectedIndex--;
           break;
-        case $2.ui.keyCode.END:
+        case $3.ui.keyCode.END:
           selectedIndex = this.anchors.length - 1;
           break;
-        case $2.ui.keyCode.HOME:
+        case $3.ui.keyCode.HOME:
           selectedIndex = 0;
           break;
-        case $2.ui.keyCode.SPACE:
+        case $3.ui.keyCode.SPACE:
           event.preventDefault();
           clearTimeout(this.activating);
           this._activate(selectedIndex);
           return;
-        case $2.ui.keyCode.ENTER:
+        case $3.ui.keyCode.ENTER:
           event.preventDefault();
           clearTimeout(this.activating);
           this._activate(selectedIndex === this.options.active ? false : selectedIndex);
@@ -22190,18 +22114,18 @@ window.$ = import_jquery.default;
       if (this._handlePageNav(event)) {
         return;
       }
-      if (event.ctrlKey && event.keyCode === $2.ui.keyCode.UP) {
+      if (event.ctrlKey && event.keyCode === $3.ui.keyCode.UP) {
         event.preventDefault();
         this.active.trigger("focus");
       }
     },
     // Alt+page up/down moves focus to the previous/next tab (and activates)
     _handlePageNav: function(event) {
-      if (event.altKey && event.keyCode === $2.ui.keyCode.PAGE_UP) {
+      if (event.altKey && event.keyCode === $3.ui.keyCode.PAGE_UP) {
         this._activate(this._focusNextTab(this.options.active - 1, false));
         return true;
       }
-      if (event.altKey && event.keyCode === $2.ui.keyCode.PAGE_DOWN) {
+      if (event.altKey && event.keyCode === $3.ui.keyCode.PAGE_DOWN) {
         this._activate(this._focusNextTab(this.options.active + 1, true));
         return true;
       }
@@ -22217,7 +22141,7 @@ window.$ = import_jquery.default;
         }
         return index;
       }
-      while ($2.inArray(constrain(), this.options.disabled) !== -1) {
+      while ($3.inArray(constrain(), this.options.disabled) !== -1) {
         index = goingForward ? index + 1 : index - 1;
       }
       return index;
@@ -22251,17 +22175,17 @@ window.$ = import_jquery.default;
     },
     refresh: function() {
       var options = this.options, lis = this.tablist.children(":has(a[href])");
-      options.disabled = $2.map(lis.filter(".ui-state-disabled"), function(tab) {
+      options.disabled = $3.map(lis.filter(".ui-state-disabled"), function(tab) {
         return lis.index(tab);
       });
       this._processTabs();
       if (options.active === false || !this.anchors.length) {
         options.active = false;
-        this.active = $2();
-      } else if (this.active.length && !$2.contains(this.tablist[0], this.active[0])) {
+        this.active = $3();
+      } else if (this.active.length && !$3.contains(this.tablist[0], this.active[0])) {
         if (this.tabs.length === options.disabled.length) {
           options.active = false;
-          this.active = $2();
+          this.active = $3();
         } else {
           this._activate(this._findNextTab(Math.max(0, options.active - 1), false));
         }
@@ -22305,11 +22229,11 @@ window.$ = import_jquery.default;
         "ui-helper-reset ui-helper-clearfix ui-widget-header"
       );
       this.tablist.on("mousedown" + this.eventNamespace, "> li", function(event) {
-        if ($2(this).is(".ui-state-disabled")) {
+        if ($3(this).is(".ui-state-disabled")) {
           event.preventDefault();
         }
       }).on("focus" + this.eventNamespace, ".ui-tabs-anchor", function() {
-        if ($2(this).closest("li").is(".ui-state-disabled")) {
+        if ($3(this).closest("li").is(".ui-state-disabled")) {
           this.blur();
         }
       });
@@ -22319,20 +22243,20 @@ window.$ = import_jquery.default;
       });
       this._addClass(this.tabs, "ui-tabs-tab", "ui-state-default");
       this.anchors = this.tabs.map(function() {
-        return $2("a", this)[0];
+        return $3("a", this)[0];
       }).attr({
         tabIndex: -1
       });
       this._addClass(this.anchors, "ui-tabs-anchor");
-      this.panels = $2();
+      this.panels = $3();
       this.anchors.each(function(i, anchor) {
-        var selector, panel, panelId, anchorId = $2(anchor).uniqueId().attr("id"), tab = $2(anchor).closest("li"), originalAriaControls = tab.attr("aria-controls");
+        var selector, panel, panelId, anchorId = $3(anchor).uniqueId().attr("id"), tab = $3(anchor).closest("li"), originalAriaControls = tab.attr("aria-controls");
         if (that._isLocal(anchor)) {
           selector = anchor.hash;
           panelId = selector.substring(1);
           panel = that.element.find(that._sanitizeSelector(selector));
         } else {
-          panelId = tab.attr("aria-controls") || $2({}).uniqueId()[0].id;
+          panelId = tab.attr("aria-controls") || $3({}).uniqueId()[0].id;
           selector = "#" + panelId;
           panel = that.element.find(selector);
           if (!panel.length) {
@@ -22366,7 +22290,7 @@ window.$ = import_jquery.default;
       return this.tablist || this.element.find("ol, ul").eq(0);
     },
     _createPanel: function(id) {
-      return $2("<div>").attr("id", id).data("ui-tabs-destroy", true);
+      return $3("<div>").attr("id", id).data("ui-tabs-destroy", true);
     },
     _setOptionDisabled: function(disabled) {
       var currentItem, li, i;
@@ -22378,8 +22302,8 @@ window.$ = import_jquery.default;
         }
       }
       for (i = 0; li = this.tabs[i]; i++) {
-        currentItem = $2(li);
-        if (disabled === true || $2.inArray(i, disabled) !== -1) {
+        currentItem = $3(li);
+        if (disabled === true || $3.inArray(i, disabled) !== -1) {
           currentItem.attr("aria-disabled", "true");
           this._addClass(currentItem, null, "ui-state-disabled");
         } else {
@@ -22398,7 +22322,7 @@ window.$ = import_jquery.default;
     _setupEvents: function(event) {
       var events = {};
       if (event) {
-        $2.each(event.split(" "), function(index, eventName) {
+        $3.each(event.split(" "), function(index, eventName) {
           events[eventName] = "_eventHandler";
         });
       }
@@ -22420,30 +22344,30 @@ window.$ = import_jquery.default;
         maxHeight = parent.height();
         maxHeight -= this.element.outerHeight() - this.element.height();
         this.element.siblings(":visible").each(function() {
-          var elem = $2(this), position2 = elem.css("position");
+          var elem = $3(this), position2 = elem.css("position");
           if (position2 === "absolute" || position2 === "fixed") {
             return;
           }
           maxHeight -= elem.outerHeight(true);
         });
         this.element.children().not(this.panels).each(function() {
-          maxHeight -= $2(this).outerHeight(true);
+          maxHeight -= $3(this).outerHeight(true);
         });
         this.panels.each(function() {
-          $2(this).height(Math.max(0, maxHeight - $2(this).innerHeight() + $2(this).height()));
+          $3(this).height(Math.max(0, maxHeight - $3(this).innerHeight() + $3(this).height()));
         }).css("overflow", "auto");
       } else if (heightStyle === "auto") {
         maxHeight = 0;
         this.panels.each(function() {
-          maxHeight = Math.max(maxHeight, $2(this).height("").height());
+          maxHeight = Math.max(maxHeight, $3(this).height("").height());
         }).height(maxHeight);
       }
     },
     _eventHandler: function(event) {
-      var options = this.options, active = this.active, anchor = $2(event.currentTarget), tab = anchor.closest("li"), clickedIsActive = tab[0] === active[0], collapsing = clickedIsActive && options.collapsible, toShow = collapsing ? $2() : this._getPanelForTab(tab), toHide = !active.length ? $2() : this._getPanelForTab(active), eventData = {
+      var options = this.options, active = this.active, anchor = $3(event.currentTarget), tab = anchor.closest("li"), clickedIsActive = tab[0] === active[0], collapsing = clickedIsActive && options.collapsible, toShow = collapsing ? $3() : this._getPanelForTab(tab), toHide = !active.length ? $3() : this._getPanelForTab(active), eventData = {
         oldTab: active,
         oldPanel: toHide,
-        newTab: collapsing ? $2() : tab,
+        newTab: collapsing ? $3() : tab,
         newPanel: toShow
       };
       event.preventDefault();
@@ -22455,12 +22379,12 @@ window.$ = import_jquery.default;
         return;
       }
       options.active = collapsing ? false : this.tabs.index(tab);
-      this.active = clickedIsActive ? $2() : tab;
+      this.active = clickedIsActive ? $3() : tab;
       if (this.xhr) {
         this.xhr.abort();
       }
       if (!toHide.length && !toShow.length) {
-        $2.error("jQuery UI Tabs: Mismatching fragment identifier.");
+        $3.error("jQuery UI Tabs: Mismatching fragment identifier.");
       }
       if (toShow.length) {
         this.load(this.tabs.index(tab), event);
@@ -22511,7 +22435,7 @@ window.$ = import_jquery.default;
         eventData.oldTab.attr("tabIndex", -1);
       } else if (toShow.length) {
         this.tabs.filter(function() {
-          return $2(this).attr("tabIndex") === 0;
+          return $3(this).attr("tabIndex") === 0;
         }).attr("tabIndex", -1);
       }
       toShow.attr("aria-hidden", "false");
@@ -22533,15 +22457,15 @@ window.$ = import_jquery.default;
       this._eventHandler({
         target: anchor,
         currentTarget: anchor,
-        preventDefault: $2.noop
+        preventDefault: $3.noop
       });
     },
     _findActive: function(index) {
-      return index === false ? $2() : this.tabs.eq(index);
+      return index === false ? $3() : this.tabs.eq(index);
     },
     _getIndex: function(index) {
       if (typeof index === "string") {
-        index = this.anchors.index(this.anchors.filter("[href$='" + $2.escapeSelector(index) + "']"));
+        index = this.anchors.index(this.anchors.filter("[href$='" + $3.escapeSelector(index) + "']"));
       }
       return index;
     },
@@ -22552,14 +22476,14 @@ window.$ = import_jquery.default;
       this.tablist.removeAttr("role").off(this.eventNamespace);
       this.anchors.removeAttr("role tabIndex").removeUniqueId();
       this.tabs.add(this.panels).each(function() {
-        if ($2.data(this, "ui-tabs-destroy")) {
-          $2(this).remove();
+        if ($3.data(this, "ui-tabs-destroy")) {
+          $3(this).remove();
         } else {
-          $2(this).removeAttr("role tabIndex aria-live aria-busy aria-selected aria-labelledby aria-hidden aria-expanded");
+          $3(this).removeAttr("role tabIndex aria-live aria-busy aria-selected aria-labelledby aria-hidden aria-expanded");
         }
       });
       this.tabs.each(function() {
-        var li = $2(this), prev = li.data("ui-tabs-aria-controls");
+        var li = $3(this), prev = li.data("ui-tabs-aria-controls");
         if (prev) {
           li.attr("aria-controls", prev).removeData("ui-tabs-aria-controls");
         } else {
@@ -22581,11 +22505,11 @@ window.$ = import_jquery.default;
       } else {
         index = this._getIndex(index);
         if (Array.isArray(disabled)) {
-          disabled = $2.map(disabled, function(num) {
+          disabled = $3.map(disabled, function(num) {
             return num !== index ? num : null;
           });
         } else {
-          disabled = $2.map(this.tabs, function(li, num) {
+          disabled = $3.map(this.tabs, function(li, num) {
             return num !== index ? num : null;
           });
         }
@@ -22601,11 +22525,11 @@ window.$ = import_jquery.default;
         disabled = true;
       } else {
         index = this._getIndex(index);
-        if ($2.inArray(index, disabled) !== -1) {
+        if ($3.inArray(index, disabled) !== -1) {
           return;
         }
         if (Array.isArray(disabled)) {
-          disabled = $2.merge([index], disabled).sort();
+          disabled = $3.merge([index], disabled).sort();
         } else {
           disabled = [index];
         }
@@ -22630,7 +22554,7 @@ window.$ = import_jquery.default;
       if (this._isLocal(anchor[0])) {
         return;
       }
-      this.xhr = $2.ajax(this._ajaxSettings(anchor, event, eventData));
+      this.xhr = $3.ajax(this._ajaxSettings(anchor, event, eventData));
       if (this.xhr && this.xhr.statusText !== "canceled") {
         this._addClass(tab, "ui-tabs-loading");
         panel.attr("aria-busy", "true");
@@ -22657,34 +22581,34 @@ window.$ = import_jquery.default;
           return that._trigger(
             "beforeLoad",
             event,
-            $2.extend({ jqXHR, ajaxSettings: settings }, eventData)
+            $3.extend({ jqXHR, ajaxSettings: settings }, eventData)
           );
         }
       };
     },
     _getPanelForTab: function(tab) {
-      var id = $2(tab).attr("aria-controls");
+      var id = $3(tab).attr("aria-controls");
       return this.element.find(this._sanitizeSelector("#" + id));
     }
   });
-  if ($2.uiBackCompat !== false) {
-    $2.widget("ui.tabs", $2.ui.tabs, {
+  if ($3.uiBackCompat !== false) {
+    $3.widget("ui.tabs", $3.ui.tabs, {
       _processTabs: function() {
         this._superApply(arguments);
         this._addClass(this.tabs, "ui-tab");
       }
     });
   }
-  var widgetsTabs = $2.ui.tabs;
-  $2.widget("ui.tooltip", {
+  var widgetsTabs = $3.ui.tabs;
+  $3.widget("ui.tooltip", {
     version: "1.13.2",
     options: {
       classes: {
         "ui-tooltip": "ui-corner-all ui-widget-shadow"
       },
       content: function() {
-        var title = $2(this).attr("title");
-        return $2("<a>").text(title).html();
+        var title = $3(this).attr("title");
+        return $3("<a>").text(title).html();
       },
       hide: true,
       // Disabled elements have inconsistent behavior across browsers (#8661)
@@ -22706,7 +22630,7 @@ window.$ = import_jquery.default;
       elem.data("ui-tooltip-id", id).attr("aria-describedby", String.prototype.trim.call(describedby.join(" ")));
     },
     _removeDescribedBy: function(elem) {
-      var id = elem.data("ui-tooltip-id"), describedby = (elem.attr("aria-describedby") || "").split(/\s+/), index = $2.inArray(id, describedby);
+      var id = elem.data("ui-tooltip-id"), describedby = (elem.attr("aria-describedby") || "").split(/\s+/), index = $3.inArray(id, describedby);
       if (index !== -1) {
         describedby.splice(index, 1);
       }
@@ -22725,19 +22649,19 @@ window.$ = import_jquery.default;
       });
       this.tooltips = {};
       this.parents = {};
-      this.liveRegion = $2("<div>").attr({
+      this.liveRegion = $3("<div>").attr({
         role: "log",
         "aria-live": "assertive",
         "aria-relevant": "additions"
       }).appendTo(this.document[0].body);
       this._addClass(this.liveRegion, null, "ui-helper-hidden-accessible");
-      this.disabledTitles = $2([]);
+      this.disabledTitles = $3([]);
     },
     _setOption: function(key, value) {
       var that = this;
       this._super(key, value);
       if (key === "content") {
-        $2.each(this.tooltips, function(id, tooltipData) {
+        $3.each(this.tooltips, function(id, tooltipData) {
           that._updateContent(tooltipData.element);
         });
       }
@@ -22747,14 +22671,14 @@ window.$ = import_jquery.default;
     },
     _disable: function() {
       var that = this;
-      $2.each(this.tooltips, function(id, tooltipData) {
-        var event = $2.Event("blur");
+      $3.each(this.tooltips, function(id, tooltipData) {
+        var event = $3.Event("blur");
         event.target = event.currentTarget = tooltipData.element[0];
         that.close(event, true);
       });
       this.disabledTitles = this.disabledTitles.add(
         this.element.find(this.options.items).addBack().filter(function() {
-          var element = $2(this);
+          var element = $3(this);
           if (element.is("[title]")) {
             return element.data("ui-tooltip-title", element.attr("title")).removeAttr("title");
           }
@@ -22763,15 +22687,15 @@ window.$ = import_jquery.default;
     },
     _enable: function() {
       this.disabledTitles.each(function() {
-        var element = $2(this);
+        var element = $3(this);
         if (element.data("ui-tooltip-title")) {
           element.attr("title", element.data("ui-tooltip-title"));
         }
       });
-      this.disabledTitles = $2([]);
+      this.disabledTitles = $3([]);
     },
     open: function(event) {
-      var that = this, target = $2(event ? event.target : this.element).closest(this.options.items);
+      var that = this, target = $3(event ? event.target : this.element).closest(this.options.items);
       if (!target.length || target.data("ui-tooltip-id")) {
         return;
       }
@@ -22781,9 +22705,9 @@ window.$ = import_jquery.default;
       target.data("ui-tooltip-open", true);
       if (event && event.type === "mouseover") {
         target.parents().each(function() {
-          var parent = $2(this), blurEvent;
+          var parent = $3(this), blurEvent;
           if (parent.data("ui-tooltip-open")) {
-            blurEvent = $2.Event("blur");
+            blurEvent = $3.Event("blur");
             blurEvent.target = blurEvent.currentTarget = this;
             that.close(blurEvent, true);
           }
@@ -22821,7 +22745,7 @@ window.$ = import_jquery.default;
       }
     },
     _open: function(event, target, content) {
-      var tooltipData, tooltip, delayedShow, a11yContent, positionOption = $2.extend({}, this.options.position);
+      var tooltipData, tooltip, delayedShow, a11yContent, positionOption = $3.extend({}, this.options.position);
       if (!content) {
         return;
       }
@@ -22842,7 +22766,7 @@ window.$ = import_jquery.default;
       this._addDescribedBy(target, tooltip.attr("id"));
       tooltip.find(".ui-tooltip-content").html(content);
       this.liveRegion.children().hide();
-      a11yContent = $2("<div>").html(tooltip.find(".ui-tooltip-content").html());
+      a11yContent = $3("<div>").html(tooltip.find(".ui-tooltip-content").html());
       a11yContent.removeAttr("name").find("[name]").removeAttr("name");
       a11yContent.removeAttr("id").find("[id]").removeAttr("id");
       a11yContent.appendTo(this.liveRegion);
@@ -22859,7 +22783,7 @@ window.$ = import_jquery.default;
         });
         position2(event);
       } else {
-        tooltip.position($2.extend({
+        tooltip.position($3.extend({
           of: target
         }, this.options.position));
       }
@@ -22878,8 +22802,8 @@ window.$ = import_jquery.default;
     _registerCloseHandlers: function(event, target) {
       var events = {
         keyup: function(event2) {
-          if (event2.keyCode === $2.ui.keyCode.ESCAPE) {
-            var fakeEvent = $2.Event(event2);
+          if (event2.keyCode === $3.ui.keyCode.ESCAPE) {
+            var fakeEvent = $3.Event(event2);
             fakeEvent.currentTarget = target[0];
             this.close(fakeEvent, true);
           }
@@ -22902,7 +22826,7 @@ window.$ = import_jquery.default;
       this._on(true, target, events);
     },
     close: function(event) {
-      var tooltip, that = this, target = $2(event ? event.currentTarget : this.element), tooltipData = this._find(target);
+      var tooltip, that = this, target = $3(event ? event.currentTarget : this.element), tooltipData = this._find(target);
       if (!tooltipData) {
         target.removeData("ui-tooltip-open");
         return;
@@ -22919,7 +22843,7 @@ window.$ = import_jquery.default;
       tooltipData.hiding = true;
       tooltip.stop(true);
       this._hide(tooltip, this.options.hide, function() {
-        that._removeTooltip($2(this));
+        that._removeTooltip($3(this));
       });
       target.removeData("ui-tooltip-open");
       this._off(target, "mouseleave focusout keyup");
@@ -22928,8 +22852,8 @@ window.$ = import_jquery.default;
       }
       this._off(this.document, "mousemove");
       if (event && event.type === "mouseleave") {
-        $2.each(this.parents, function(id, parent) {
-          $2(parent.element).attr("title", parent.title);
+        $3.each(this.parents, function(id, parent) {
+          $3(parent.element).attr("title", parent.title);
           delete that.parents[id];
         });
       }
@@ -22940,7 +22864,7 @@ window.$ = import_jquery.default;
       }
     },
     _tooltip: function(element) {
-      var tooltip = $2("<div>").attr("role", "tooltip"), content = $2("<div>").appendTo(tooltip), id = tooltip.uniqueId().attr("id");
+      var tooltip = $3("<div>").attr("role", "tooltip"), content = $3("<div>").appendTo(tooltip), id = tooltip.uniqueId().attr("id");
       this._addClass(content, "ui-tooltip-content");
       this._addClass(tooltip, "ui-tooltip", "ui-widget ui-widget-content");
       tooltip.appendTo(this._appendTo(element));
@@ -22967,11 +22891,11 @@ window.$ = import_jquery.default;
     },
     _destroy: function() {
       var that = this;
-      $2.each(this.tooltips, function(id, tooltipData) {
-        var event = $2.Event("blur"), element = tooltipData.element;
+      $3.each(this.tooltips, function(id, tooltipData) {
+        var event = $3.Event("blur"), element = tooltipData.element;
         event.target = event.currentTarget = element[0];
         that.close(event, true);
-        $2("#" + id).remove();
+        $3("#" + id).remove();
         if (element.data("ui-tooltip-title")) {
           if (!element.attr("title")) {
             element.attr("title", element.data("ui-tooltip-title"));
@@ -22982,8 +22906,8 @@ window.$ = import_jquery.default;
       this.liveRegion.remove();
     }
   });
-  if ($2.uiBackCompat !== false) {
-    $2.widget("ui.tooltip", $2.ui.tooltip, {
+  if ($3.uiBackCompat !== false) {
+    $3.widget("ui.tooltip", $3.ui.tooltip, {
       options: {
         tooltipClass: null
       },
@@ -22996,8 +22920,8 @@ window.$ = import_jquery.default;
       }
     });
   }
-  var widgetsTooltip = $2.ui.tooltip;
-  var jQuery2 = $2;
+  var widgetsTooltip = $3.ui.tooltip;
+  var jQuery2 = $3;
   var stepHooks = "backgroundColor borderBottomColor borderLeftColor borderRightColor borderTopColor color columnRuleColor outlineColor textDecorationColor textEmphasisColor", class2type = {}, toString = class2type.toString, rplusequals = /^([\-+])=\s*(\d+\.?\d*)/, stringParsers = [{
     re: /rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*(\d?(?:\.\d+)?)\s*)?\)/,
     parse: function(execResult) {
@@ -23490,7 +23414,7 @@ window.$ = import_jquery.default;
     _default: "#ffffff"
   };
   var dataSpace = "ui-effects-", dataSpaceStyle = "ui-effects-style", dataSpaceAnimated = "ui-effects-animated";
-  $2.effects = {
+  $3.effects = {
     effect: {}
   };
   (function() {
@@ -23505,10 +23429,10 @@ window.$ = import_jquery.default;
       margin: 1,
       padding: 1
     };
-    $2.each(
+    $3.each(
       ["borderLeftStyle", "borderRightStyle", "borderBottomStyle", "borderTopStyle"],
       function(_, prop) {
-        $2.fx.step[prop] = function(fx) {
+        $3.fx.step[prop] = function(fx) {
           if (fx.end !== "none" && !fx.setAttr || fx.pos === 1 && !fx.setAttr) {
             jQuery2.style(fx.elem, prop, fx.end);
             fx.setAttr = true;
@@ -23546,7 +23470,7 @@ window.$ = import_jquery.default;
         value = newStyle[name];
         if (oldStyle[name] !== value) {
           if (!shorthandStyles[name]) {
-            if ($2.fx.step[name] || !isNaN(parseFloat(value))) {
+            if ($3.fx.step[name] || !isNaN(parseFloat(value))) {
               diff[name] = value;
             }
           }
@@ -23554,26 +23478,26 @@ window.$ = import_jquery.default;
       }
       return diff;
     }
-    if (!$2.fn.addBack) {
-      $2.fn.addBack = function(selector) {
+    if (!$3.fn.addBack) {
+      $3.fn.addBack = function(selector) {
         return this.add(
           selector == null ? this.prevObject : this.prevObject.filter(selector)
         );
       };
     }
-    $2.effects.animateClass = function(value, duration, easing, callback) {
-      var o = $2.speed(duration, easing, callback);
+    $3.effects.animateClass = function(value, duration, easing, callback) {
+      var o = $3.speed(duration, easing, callback);
       return this.queue(function() {
-        var animated = $2(this), baseClass = animated.attr("class") || "", applyClassChange, allAnimations = o.children ? animated.find("*").addBack() : animated;
+        var animated = $3(this), baseClass = animated.attr("class") || "", applyClassChange, allAnimations = o.children ? animated.find("*").addBack() : animated;
         allAnimations = allAnimations.map(function() {
-          var el = $2(this);
+          var el = $3(this);
           return {
             el,
             start: getElementStyles(this)
           };
         });
         applyClassChange = function() {
-          $2.each(classAnimationActions, function(i, action) {
+          $3.each(classAnimationActions, function(i, action) {
             if (value[action]) {
               animated[action + "Class"](value[action]);
             }
@@ -23587,7 +23511,7 @@ window.$ = import_jquery.default;
         });
         animated.attr("class", baseClass);
         allAnimations = allAnimations.map(function() {
-          var styleInfo = this, dfd = $2.Deferred(), opts = $2.extend({}, o, {
+          var styleInfo = this, dfd = $3.Deferred(), opts = $3.extend({}, o, {
             queue: false,
             complete: function() {
               dfd.resolve(styleInfo);
@@ -23596,11 +23520,11 @@ window.$ = import_jquery.default;
           this.el.animate(this.diff, opts);
           return dfd.promise();
         });
-        $2.when.apply($2, allAnimations.get()).done(function() {
+        $3.when.apply($3, allAnimations.get()).done(function() {
           applyClassChange();
-          $2.each(arguments, function() {
+          $3.each(arguments, function() {
             var el = this.el;
-            $2.each(this.diff, function(key) {
+            $3.each(this.diff, function(key) {
               el.css(key, "");
             });
           });
@@ -23608,10 +23532,10 @@ window.$ = import_jquery.default;
         });
       });
     };
-    $2.fn.extend({
+    $3.fn.extend({
       addClass: /* @__PURE__ */ function(orig) {
         return function(classNames, speed, easing, callback) {
-          return speed ? $2.effects.animateClass.call(
+          return speed ? $3.effects.animateClass.call(
             this,
             { add: classNames },
             speed,
@@ -23619,10 +23543,10 @@ window.$ = import_jquery.default;
             callback
           ) : orig.apply(this, arguments);
         };
-      }($2.fn.addClass),
+      }($3.fn.addClass),
       removeClass: /* @__PURE__ */ function(orig) {
         return function(classNames, speed, easing, callback) {
-          return arguments.length > 1 ? $2.effects.animateClass.call(
+          return arguments.length > 1 ? $3.effects.animateClass.call(
             this,
             { remove: classNames },
             speed,
@@ -23630,14 +23554,14 @@ window.$ = import_jquery.default;
             callback
           ) : orig.apply(this, arguments);
         };
-      }($2.fn.removeClass),
+      }($3.fn.removeClass),
       toggleClass: /* @__PURE__ */ function(orig) {
         return function(classNames, force, speed, easing, callback) {
           if (typeof force === "boolean" || force === void 0) {
             if (!speed) {
               return orig.apply(this, arguments);
             } else {
-              return $2.effects.animateClass.call(
+              return $3.effects.animateClass.call(
                 this,
                 force ? { add: classNames } : { remove: classNames },
                 speed,
@@ -23646,7 +23570,7 @@ window.$ = import_jquery.default;
               );
             }
           } else {
-            return $2.effects.animateClass.call(
+            return $3.effects.animateClass.call(
               this,
               { toggle: classNames },
               force,
@@ -23655,9 +23579,9 @@ window.$ = import_jquery.default;
             );
           }
         };
-      }($2.fn.toggleClass),
+      }($3.fn.toggleClass),
       switchClass: function(remove, add, speed, easing, callback) {
-        return $2.effects.animateClass.call(this, {
+        return $3.effects.animateClass.call(this, {
           add,
           remove
         }, speed, easing, callback);
@@ -23665,15 +23589,15 @@ window.$ = import_jquery.default;
     });
   })();
   (function() {
-    if ($2.expr && $2.expr.pseudos && $2.expr.pseudos.animated) {
-      $2.expr.pseudos.animated = /* @__PURE__ */ function(orig) {
+    if ($3.expr && $3.expr.pseudos && $3.expr.pseudos.animated) {
+      $3.expr.pseudos.animated = /* @__PURE__ */ function(orig) {
         return function(elem) {
-          return !!$2(elem).data(dataSpaceAnimated) || orig(elem);
+          return !!$3(elem).data(dataSpaceAnimated) || orig(elem);
         };
-      }($2.expr.pseudos.animated);
+      }($3.expr.pseudos.animated);
     }
-    if ($2.uiBackCompat !== false) {
-      $2.extend($2.effects, {
+    if ($3.uiBackCompat !== false) {
+      $3.extend($3.effects, {
         // Saves a set of properties in a data storage
         save: function(element, set) {
           var i = 0, length = set.length;
@@ -23708,7 +23632,7 @@ window.$ = import_jquery.default;
             width: element.outerWidth(true),
             height: element.outerHeight(true),
             "float": element.css("float")
-          }, wrapper = $2("<div></div>").addClass("ui-effects-wrapper").css({
+          }, wrapper = $3("<div></div>").addClass("ui-effects-wrapper").css({
             fontSize: "100%",
             background: "transparent",
             border: "none",
@@ -23724,19 +23648,19 @@ window.$ = import_jquery.default;
             active = document.body;
           }
           element.wrap(wrapper);
-          if (element[0] === active || $2.contains(element[0], active)) {
-            $2(active).trigger("focus");
+          if (element[0] === active || $3.contains(element[0], active)) {
+            $3(active).trigger("focus");
           }
           wrapper = element.parent();
           if (element.css("position") === "static") {
             wrapper.css({ position: "relative" });
             element.css({ position: "relative" });
           } else {
-            $2.extend(props, {
+            $3.extend(props, {
               position: element.css("position"),
               zIndex: element.css("z-index")
             });
-            $2.each(["top", "left", "bottom", "right"], function(i, pos) {
+            $3.each(["top", "left", "bottom", "right"], function(i, pos) {
               props[pos] = element.css(pos);
               if (isNaN(parseInt(props[pos], 10))) {
                 props[pos] = "auto";
@@ -23757,23 +23681,23 @@ window.$ = import_jquery.default;
           var active = document.activeElement;
           if (element.parent().is(".ui-effects-wrapper")) {
             element.parent().replaceWith(element);
-            if (element[0] === active || $2.contains(element[0], active)) {
-              $2(active).trigger("focus");
+            if (element[0] === active || $3.contains(element[0], active)) {
+              $3(active).trigger("focus");
             }
           }
           return element;
         }
       });
     }
-    $2.extend($2.effects, {
+    $3.extend($3.effects, {
       version: "1.13.2",
       define: function(name, mode, effect5) {
         if (!effect5) {
           effect5 = mode;
           mode = "effect";
         }
-        $2.effects.effect[name] = effect5;
-        $2.effects.effect[name].mode = mode;
+        $3.effects.effect[name] = effect5;
+        $3.effects.effect[name].mode = mode;
         return effect5;
       },
       scaledDimensions: function(element, percent, direction) {
@@ -23874,7 +23798,7 @@ window.$ = import_jquery.default;
         }).outerWidth(element.outerWidth()).outerHeight(element.outerHeight());
         if (/^(static|relative)/.test(cssPosition)) {
           cssPosition = "absolute";
-          placeholder = $2("<" + element[0].nodeName + ">").insertAfter(element).css({
+          placeholder = $3("<" + element[0].nodeName + ">").insertAfter(element).css({
             // Convert inline to inline block to account for inline elements
             // that turn to inline block based on content (like img)
             display: /^(inline|ruby)/.test(element.css("display")) ? "inline-block" : "block",
@@ -23905,12 +23829,12 @@ window.$ = import_jquery.default;
       // Removes a placeholder if it exists and restores
       // properties that were modified during placeholder creation
       cleanUp: function(element) {
-        $2.effects.restoreStyle(element);
-        $2.effects.removePlaceholder(element);
+        $3.effects.restoreStyle(element);
+        $3.effects.removePlaceholder(element);
       },
       setTransition: function(element, list, factor, value) {
         value = value || {};
-        $2.each(list, function(i, x) {
+        $3.each(list, function(i, x) {
           var unit = element.cssUnit(x);
           if (unit[0] > 0) {
             value[x] = unit[0] * factor + unit[1];
@@ -23920,7 +23844,7 @@ window.$ = import_jquery.default;
       }
     });
     function _normalizeArguments(effect5, options, speed, callback) {
-      if ($2.isPlainObject(effect5)) {
+      if ($3.isPlainObject(effect5)) {
         options = effect5;
         effect5 = effect5.effect;
       }
@@ -23933,7 +23857,7 @@ window.$ = import_jquery.default;
         speed = null;
         options = {};
       }
-      if (typeof options === "number" || $2.fx.speeds[options]) {
+      if (typeof options === "number" || $3.fx.speeds[options]) {
         callback = speed;
         speed = options;
         options = {};
@@ -23943,18 +23867,18 @@ window.$ = import_jquery.default;
         speed = null;
       }
       if (options) {
-        $2.extend(effect5, options);
+        $3.extend(effect5, options);
       }
       speed = speed || options.duration;
-      effect5.duration = $2.fx.off ? 0 : typeof speed === "number" ? speed : speed in $2.fx.speeds ? $2.fx.speeds[speed] : $2.fx.speeds._default;
+      effect5.duration = $3.fx.off ? 0 : typeof speed === "number" ? speed : speed in $3.fx.speeds ? $3.fx.speeds[speed] : $3.fx.speeds._default;
       effect5.complete = callback || options.complete;
       return effect5;
     }
     function standardAnimationOption(option) {
-      if (!option || typeof option === "number" || $2.fx.speeds[option]) {
+      if (!option || typeof option === "number" || $3.fx.speeds[option]) {
         return true;
       }
-      if (typeof option === "string" && !$2.effects.effect[option]) {
+      if (typeof option === "string" && !$3.effects.effect[option]) {
         return true;
       }
       if (typeof option === "function") {
@@ -23965,23 +23889,23 @@ window.$ = import_jquery.default;
       }
       return false;
     }
-    $2.fn.extend({
+    $3.fn.extend({
       effect: function() {
-        var args = _normalizeArguments.apply(this, arguments), effectMethod = $2.effects.effect[args.effect], defaultMode = effectMethod.mode, queue = args.queue, queueName = queue || "fx", complete = args.complete, mode = args.mode, modes = [], prefilter = function(next) {
-          var el = $2(this), normalizedMode = $2.effects.mode(el, mode) || defaultMode;
+        var args = _normalizeArguments.apply(this, arguments), effectMethod = $3.effects.effect[args.effect], defaultMode = effectMethod.mode, queue = args.queue, queueName = queue || "fx", complete = args.complete, mode = args.mode, modes = [], prefilter = function(next) {
+          var el = $3(this), normalizedMode = $3.effects.mode(el, mode) || defaultMode;
           el.data(dataSpaceAnimated, true);
           modes.push(normalizedMode);
           if (defaultMode && (normalizedMode === "show" || normalizedMode === defaultMode && normalizedMode === "hide")) {
             el.show();
           }
           if (!defaultMode || normalizedMode !== "none") {
-            $2.effects.saveStyle(el);
+            $3.effects.saveStyle(el);
           }
           if (typeof next === "function") {
             next();
           }
         };
-        if ($2.fx.off || !effectMethod) {
+        if ($3.fx.off || !effectMethod) {
           if (mode) {
             return this[mode](args.duration, complete);
           } else {
@@ -23993,10 +23917,10 @@ window.$ = import_jquery.default;
           }
         }
         function run(next) {
-          var elem = $2(this);
+          var elem = $3(this);
           function cleanup() {
             elem.removeData(dataSpaceAnimated);
-            $2.effects.cleanUp(elem);
+            $3.effects.cleanUp(elem);
             if (args.mode === "hide") {
               elem.hide();
             }
@@ -24011,7 +23935,7 @@ window.$ = import_jquery.default;
             }
           }
           args.mode = modes.shift();
-          if ($2.uiBackCompat !== false && !defaultMode) {
+          if ($3.uiBackCompat !== false && !defaultMode) {
             if (elem.is(":hidden") ? mode === "hide" : mode === "show") {
               elem[mode]();
               done();
@@ -24039,7 +23963,7 @@ window.$ = import_jquery.default;
             return this.effect.call(this, args);
           }
         };
-      }($2.fn.show),
+      }($3.fn.show),
       hide: /* @__PURE__ */ function(orig) {
         return function(option) {
           if (standardAnimationOption(option)) {
@@ -24050,7 +23974,7 @@ window.$ = import_jquery.default;
             return this.effect.call(this, args);
           }
         };
-      }($2.fn.hide),
+      }($3.fn.hide),
       toggle: /* @__PURE__ */ function(orig) {
         return function(option) {
           if (standardAnimationOption(option) || typeof option === "boolean") {
@@ -24061,10 +23985,10 @@ window.$ = import_jquery.default;
             return this.effect.call(this, args);
           }
         };
-      }($2.fn.toggle),
+      }($3.fn.toggle),
       cssUnit: function(key) {
         var style = this.css(key), val = [];
-        $2.each(["em", "px", "%", "pt"], function(i, unit) {
+        $3.each(["em", "px", "%", "pt"], function(i, unit) {
           if (style.indexOf(unit) > 0) {
             val = [parseFloat(style), unit];
           }
@@ -24078,12 +24002,12 @@ window.$ = import_jquery.default;
         return parseClip(this.css("clip"), this);
       },
       transfer: function(options, done) {
-        var element = $2(this), target = $2(options.to), targetFixed = target.css("position") === "fixed", body = $2("body"), fixTop = targetFixed ? body.scrollTop() : 0, fixLeft = targetFixed ? body.scrollLeft() : 0, endPosition = target.offset(), animation = {
+        var element = $3(this), target = $3(options.to), targetFixed = target.css("position") === "fixed", body = $3("body"), fixTop = targetFixed ? body.scrollTop() : 0, fixLeft = targetFixed ? body.scrollLeft() : 0, endPosition = target.offset(), animation = {
           top: endPosition.top - fixTop,
           left: endPosition.left - fixLeft,
           height: target.innerHeight(),
           width: target.innerWidth()
-        }, startPosition = element.offset(), transfer = $2("<div class='ui-effects-transfer'></div>");
+        }, startPosition = element.offset(), transfer = $3("<div class='ui-effects-transfer'></div>");
         transfer.appendTo("body").addClass(options.className).css({
           top: startPosition.top - fixTop,
           left: startPosition.left - fixLeft,
@@ -24107,15 +24031,15 @@ window.$ = import_jquery.default;
         left: parseFloat(values[4]) || 0
       };
     }
-    $2.fx.step.clip = function(fx) {
+    $3.fx.step.clip = function(fx) {
       if (!fx.clipInit) {
-        fx.start = $2(fx.elem).cssClip();
+        fx.start = $3(fx.elem).cssClip();
         if (typeof fx.end === "string") {
           fx.end = parseClip(fx.end, fx.elem);
         }
         fx.clipInit = true;
       }
-      $2(fx.elem).cssClip({
+      $3(fx.elem).cssClip({
         top: fx.pos * (fx.end.top - fx.start.top) + fx.start.top,
         right: fx.pos * (fx.end.right - fx.start.right) + fx.start.right,
         bottom: fx.pos * (fx.end.bottom - fx.start.bottom) + fx.start.bottom,
@@ -24125,12 +24049,12 @@ window.$ = import_jquery.default;
   })();
   (function() {
     var baseEasings = {};
-    $2.each(["Quad", "Cubic", "Quart", "Quint", "Expo"], function(i, name) {
+    $3.each(["Quad", "Cubic", "Quart", "Quint", "Expo"], function(i, name) {
       baseEasings[name] = function(p) {
         return Math.pow(p, i + 2);
       };
     });
-    $2.extend(baseEasings, {
+    $3.extend(baseEasings, {
       Sine: function(p) {
         return 1 - Math.cos(p * Math.PI / 2);
       },
@@ -24150,18 +24074,18 @@ window.$ = import_jquery.default;
         return 1 / Math.pow(4, 3 - bounce) - 7.5625 * Math.pow((pow2 * 3 - 2) / 22 - p, 2);
       }
     });
-    $2.each(baseEasings, function(name, easeIn) {
-      $2.easing["easeIn" + name] = easeIn;
-      $2.easing["easeOut" + name] = function(p) {
+    $3.each(baseEasings, function(name, easeIn) {
+      $3.easing["easeIn" + name] = easeIn;
+      $3.easing["easeOut" + name] = function(p) {
         return 1 - easeIn(1 - p);
       };
-      $2.easing["easeInOut" + name] = function(p) {
+      $3.easing["easeInOut" + name] = function(p) {
         return p < 0.5 ? easeIn(p * 2) / 2 : 1 - easeIn(p * -2 + 2) / 2;
       };
     });
   })();
-  var effect4 = $2.effects;
-  var effectsEffectBlind = $2.effects.define("blind", "hide", function(options, done) {
+  var effect4 = $3.effects;
+  var effectsEffectBlind = $3.effects.define("blind", "hide", function(options, done) {
     var map = {
       up: ["bottom", "top"],
       vertical: ["bottom", "top"],
@@ -24169,17 +24093,17 @@ window.$ = import_jquery.default;
       left: ["right", "left"],
       horizontal: ["right", "left"],
       right: ["left", "right"]
-    }, element = $2(this), direction = options.direction || "up", start2 = element.cssClip(), animate = { clip: $2.extend({}, start2) }, placeholder = $2.effects.createPlaceholder(element);
+    }, element = $3(this), direction = options.direction || "up", start2 = element.cssClip(), animate = { clip: $3.extend({}, start2) }, placeholder = $3.effects.createPlaceholder(element);
     animate.clip[map[direction][0]] = animate.clip[map[direction][1]];
     if (options.mode === "show") {
       element.cssClip(animate.clip);
       if (placeholder) {
-        placeholder.css($2.effects.clipToBox(animate));
+        placeholder.css($3.effects.clipToBox(animate));
       }
       animate.clip = start2;
     }
     if (placeholder) {
-      placeholder.animate($2.effects.clipToBox(animate), options.duration, options.easing);
+      placeholder.animate($3.effects.clipToBox(animate), options.duration, options.easing);
     }
     element.animate(animate, {
       queue: false,
@@ -24188,9 +24112,9 @@ window.$ = import_jquery.default;
       complete: done
     });
   });
-  var effectsEffectBounce = $2.effects.define("bounce", function(options, done) {
-    var upAnim, downAnim, refValue, element = $2(this), mode = options.mode, hide2 = mode === "hide", show = mode === "show", direction = options.direction || "up", distance = options.distance, times = options.times || 5, anims = times * 2 + (show || hide2 ? 1 : 0), speed = options.duration / anims, easing = options.easing, ref = direction === "up" || direction === "down" ? "top" : "left", motion = direction === "up" || direction === "left", i = 0, queuelen = element.queue().length;
-    $2.effects.createPlaceholder(element);
+  var effectsEffectBounce = $3.effects.define("bounce", function(options, done) {
+    var upAnim, downAnim, refValue, element = $3(this), mode = options.mode, hide2 = mode === "hide", show = mode === "show", direction = options.direction || "up", distance = options.distance, times = options.times || 5, anims = times * 2 + (show || hide2 ? 1 : 0), speed = options.duration / anims, easing = options.easing, ref = direction === "up" || direction === "down" ? "top" : "left", motion = direction === "up" || direction === "left", i = 0, queuelen = element.queue().length;
+    $3.effects.createPlaceholder(element);
     refValue = element.css(ref);
     if (!distance) {
       distance = element[ref === "top" ? "outerHeight" : "outerWidth"]() / 3;
@@ -24217,10 +24141,10 @@ window.$ = import_jquery.default;
       element.animate(upAnim, speed, easing);
     }
     element.queue(done);
-    $2.effects.unshift(element, queuelen, anims + 1);
+    $3.effects.unshift(element, queuelen, anims + 1);
   });
-  var effectsEffectClip = $2.effects.define("clip", "hide", function(options, done) {
-    var start2, animate = {}, element = $2(this), direction = options.direction || "vertical", both = direction === "both", horizontal = both || direction === "horizontal", vertical = both || direction === "vertical";
+  var effectsEffectClip = $3.effects.define("clip", "hide", function(options, done) {
+    var start2, animate = {}, element = $3(this), direction = options.direction || "vertical", both = direction === "both", horizontal = both || direction === "horizontal", vertical = both || direction === "vertical";
     start2 = element.cssClip();
     animate.clip = {
       top: vertical ? (start2.bottom - start2.top) / 2 : start2.top,
@@ -24228,7 +24152,7 @@ window.$ = import_jquery.default;
       bottom: vertical ? (start2.bottom - start2.top) / 2 : start2.bottom,
       left: horizontal ? (start2.right - start2.left) / 2 : start2.left
     };
-    $2.effects.createPlaceholder(element);
+    $3.effects.createPlaceholder(element);
     if (options.mode === "show") {
       element.cssClip(animate.clip);
       animate.clip = start2;
@@ -24240,11 +24164,11 @@ window.$ = import_jquery.default;
       complete: done
     });
   });
-  var effectsEffectDrop = $2.effects.define("drop", "hide", function(options, done) {
-    var distance, element = $2(this), mode = options.mode, show = mode === "show", direction = options.direction || "left", ref = direction === "up" || direction === "down" ? "top" : "left", motion = direction === "up" || direction === "left" ? "-=" : "+=", oppositeMotion = motion === "+=" ? "-=" : "+=", animation = {
+  var effectsEffectDrop = $3.effects.define("drop", "hide", function(options, done) {
+    var distance, element = $3(this), mode = options.mode, show = mode === "show", direction = options.direction || "left", ref = direction === "up" || direction === "down" ? "top" : "left", motion = direction === "up" || direction === "left" ? "-=" : "+=", oppositeMotion = motion === "+=" ? "-=" : "+=", animation = {
       opacity: 0
     };
-    $2.effects.createPlaceholder(element);
+    $3.effects.createPlaceholder(element);
     distance = options.distance || element[ref === "top" ? "outerHeight" : "outerWidth"](true) / 2;
     animation[ref] = motion + distance;
     if (show) {
@@ -24259,8 +24183,8 @@ window.$ = import_jquery.default;
       complete: done
     });
   });
-  var effectsEffectExplode = $2.effects.define("explode", "hide", function(options, done) {
-    var i, j, left2, top2, mx, my, rows = options.pieces ? Math.round(Math.sqrt(options.pieces)) : 3, cells = rows, element = $2(this), mode = options.mode, show = mode === "show", offset2 = element.show().css("visibility", "hidden").offset(), width = Math.ceil(element.outerWidth() / cells), height = Math.ceil(element.outerHeight() / rows), pieces = [];
+  var effectsEffectExplode = $3.effects.define("explode", "hide", function(options, done) {
+    var i, j, left2, top2, mx, my, rows = options.pieces ? Math.round(Math.sqrt(options.pieces)) : 3, cells = rows, element = $3(this), mode = options.mode, show = mode === "show", offset2 = element.show().css("visibility", "hidden").offset(), width = Math.ceil(element.outerWidth() / cells), height = Math.ceil(element.outerHeight() / rows), pieces = [];
     function childComplete() {
       pieces.push(this);
       if (pieces.length === rows * cells) {
@@ -24297,13 +24221,13 @@ window.$ = import_jquery.default;
       element.css({
         visibility: "visible"
       });
-      $2(pieces).remove();
+      $3(pieces).remove();
       done();
     }
   });
-  var effectsEffectFade = $2.effects.define("fade", "toggle", function(options, done) {
+  var effectsEffectFade = $3.effects.define("fade", "toggle", function(options, done) {
     var show = options.mode === "show";
-    $2(this).css("opacity", show ? 0 : 1).animate({
+    $3(this).css("opacity", show ? 0 : 1).animate({
       opacity: show ? 1 : 0
     }, {
       queue: false,
@@ -24312,8 +24236,8 @@ window.$ = import_jquery.default;
       complete: done
     });
   });
-  var effectsEffectFold = $2.effects.define("fold", "hide", function(options, done) {
-    var element = $2(this), mode = options.mode, show = mode === "show", hide2 = mode === "hide", size = options.size || 15, percent = /([0-9]+)%/.exec(size), horizFirst = !!options.horizFirst, ref = horizFirst ? ["right", "bottom"] : ["bottom", "right"], duration = options.duration / 2, placeholder = $2.effects.createPlaceholder(element), start2 = element.cssClip(), animation1 = { clip: $2.extend({}, start2) }, animation2 = { clip: $2.extend({}, start2) }, distance = [start2[ref[0]], start2[ref[1]]], queuelen = element.queue().length;
+  var effectsEffectFold = $3.effects.define("fold", "hide", function(options, done) {
+    var element = $3(this), mode = options.mode, show = mode === "show", hide2 = mode === "hide", size = options.size || 15, percent = /([0-9]+)%/.exec(size), horizFirst = !!options.horizFirst, ref = horizFirst ? ["right", "bottom"] : ["bottom", "right"], duration = options.duration / 2, placeholder = $3.effects.createPlaceholder(element), start2 = element.cssClip(), animation1 = { clip: $3.extend({}, start2) }, animation2 = { clip: $3.extend({}, start2) }, distance = [start2[ref[0]], start2[ref[1]]], queuelen = element.queue().length;
     if (percent) {
       size = parseInt(percent[1], 10) / 100 * distance[hide2 ? 0 : 1];
     }
@@ -24323,26 +24247,26 @@ window.$ = import_jquery.default;
     if (show) {
       element.cssClip(animation2.clip);
       if (placeholder) {
-        placeholder.css($2.effects.clipToBox(animation2));
+        placeholder.css($3.effects.clipToBox(animation2));
       }
       animation2.clip = start2;
     }
     element.queue(function(next) {
       if (placeholder) {
-        placeholder.animate($2.effects.clipToBox(animation1), duration, options.easing).animate($2.effects.clipToBox(animation2), duration, options.easing);
+        placeholder.animate($3.effects.clipToBox(animation1), duration, options.easing).animate($3.effects.clipToBox(animation2), duration, options.easing);
       }
       next();
     }).animate(animation1, duration, options.easing).animate(animation2, duration, options.easing).queue(done);
-    $2.effects.unshift(element, queuelen, 4);
+    $3.effects.unshift(element, queuelen, 4);
   });
-  var effectsEffectHighlight = $2.effects.define("highlight", "show", function(options, done) {
-    var element = $2(this), animation = {
+  var effectsEffectHighlight = $3.effects.define("highlight", "show", function(options, done) {
+    var element = $3(this), animation = {
       backgroundColor: element.css("backgroundColor")
     };
     if (options.mode === "hide") {
       animation.opacity = 0;
     }
-    $2.effects.saveStyle(element);
+    $3.effects.saveStyle(element);
     element.css({
       backgroundImage: "none",
       backgroundColor: options.color || "#ffff99"
@@ -24353,9 +24277,9 @@ window.$ = import_jquery.default;
       complete: done
     });
   });
-  var effectsEffectSize = $2.effects.define("size", function(options, done) {
-    var baseline, factor, temp, element = $2(this), cProps = ["fontSize"], vProps = ["borderTopWidth", "borderBottomWidth", "paddingTop", "paddingBottom"], hProps = ["borderLeftWidth", "borderRightWidth", "paddingLeft", "paddingRight"], mode = options.mode, restore = mode !== "effect", scale = options.scale || "both", origin = options.origin || ["middle", "center"], position2 = element.css("position"), pos = element.position(), original = $2.effects.scaledDimensions(element), from = options.from || original, to = options.to || $2.effects.scaledDimensions(element, 0);
-    $2.effects.createPlaceholder(element);
+  var effectsEffectSize = $3.effects.define("size", function(options, done) {
+    var baseline, factor, temp, element = $3(this), cProps = ["fontSize"], vProps = ["borderTopWidth", "borderBottomWidth", "paddingTop", "paddingBottom"], hProps = ["borderLeftWidth", "borderRightWidth", "paddingLeft", "paddingRight"], mode = options.mode, restore = mode !== "effect", scale = options.scale || "both", origin = options.origin || ["middle", "center"], position2 = element.css("position"), pos = element.position(), original = $3.effects.scaledDimensions(element), from = options.from || original, to = options.to || $3.effects.scaledDimensions(element, 0);
+    $3.effects.createPlaceholder(element);
     if (mode === "show") {
       temp = from;
       from = to;
@@ -24373,22 +24297,22 @@ window.$ = import_jquery.default;
     };
     if (scale === "box" || scale === "both") {
       if (factor.from.y !== factor.to.y) {
-        from = $2.effects.setTransition(element, vProps, factor.from.y, from);
-        to = $2.effects.setTransition(element, vProps, factor.to.y, to);
+        from = $3.effects.setTransition(element, vProps, factor.from.y, from);
+        to = $3.effects.setTransition(element, vProps, factor.to.y, to);
       }
       if (factor.from.x !== factor.to.x) {
-        from = $2.effects.setTransition(element, hProps, factor.from.x, from);
-        to = $2.effects.setTransition(element, hProps, factor.to.x, to);
+        from = $3.effects.setTransition(element, hProps, factor.from.x, from);
+        to = $3.effects.setTransition(element, hProps, factor.to.x, to);
       }
     }
     if (scale === "content" || scale === "both") {
       if (factor.from.y !== factor.to.y) {
-        from = $2.effects.setTransition(element, cProps, factor.from.y, from);
-        to = $2.effects.setTransition(element, cProps, factor.to.y, to);
+        from = $3.effects.setTransition(element, cProps, factor.from.y, from);
+        to = $3.effects.setTransition(element, cProps, factor.to.y, to);
       }
     }
     if (origin) {
-      baseline = $2.effects.getBaseline(origin, original);
+      baseline = $3.effects.getBaseline(origin, original);
       from.top = (original.outerHeight - from.outerHeight) * baseline.y + pos.top;
       from.left = (original.outerWidth - from.outerWidth) * baseline.x + pos.left;
       to.top = (original.outerHeight - to.outerHeight) * baseline.y + pos.top;
@@ -24401,7 +24325,7 @@ window.$ = import_jquery.default;
       vProps = vProps.concat(["marginTop", "marginBottom"]).concat(cProps);
       hProps = hProps.concat(["marginLeft", "marginRight"]);
       element.find("*[width]").each(function() {
-        var child = $2(this), childOriginal = $2.effects.scaledDimensions(child), childFrom = {
+        var child = $3(this), childOriginal = $3.effects.scaledDimensions(child), childFrom = {
           height: childOriginal.height * factor.from.y,
           width: childOriginal.width * factor.from.x,
           outerHeight: childOriginal.outerHeight * factor.from.y,
@@ -24413,20 +24337,20 @@ window.$ = import_jquery.default;
           outerWidth: childOriginal.width * factor.to.x
         };
         if (factor.from.y !== factor.to.y) {
-          childFrom = $2.effects.setTransition(child, vProps, factor.from.y, childFrom);
-          childTo = $2.effects.setTransition(child, vProps, factor.to.y, childTo);
+          childFrom = $3.effects.setTransition(child, vProps, factor.from.y, childFrom);
+          childTo = $3.effects.setTransition(child, vProps, factor.to.y, childTo);
         }
         if (factor.from.x !== factor.to.x) {
-          childFrom = $2.effects.setTransition(child, hProps, factor.from.x, childFrom);
-          childTo = $2.effects.setTransition(child, hProps, factor.to.x, childTo);
+          childFrom = $3.effects.setTransition(child, hProps, factor.from.x, childFrom);
+          childTo = $3.effects.setTransition(child, hProps, factor.to.x, childTo);
         }
         if (restore) {
-          $2.effects.saveStyle(child);
+          $3.effects.saveStyle(child);
         }
         child.css(childFrom);
         child.animate(childTo, options.duration, options.easing, function() {
           if (restore) {
-            $2.effects.restoreStyle(child);
+            $3.effects.restoreStyle(child);
           }
         });
       });
@@ -24442,33 +24366,33 @@ window.$ = import_jquery.default;
         }
         if (!restore) {
           element.css("position", position2 === "static" ? "relative" : position2).offset(offset2);
-          $2.effects.saveStyle(element);
+          $3.effects.saveStyle(element);
         }
         done();
       }
     });
   });
-  var effectsEffectScale = $2.effects.define("scale", function(options, done) {
-    var el = $2(this), mode = options.mode, percent = parseInt(options.percent, 10) || (parseInt(options.percent, 10) === 0 ? 0 : mode !== "effect" ? 0 : 100), newOptions = $2.extend(true, {
-      from: $2.effects.scaledDimensions(el),
-      to: $2.effects.scaledDimensions(el, percent, options.direction || "both"),
+  var effectsEffectScale = $3.effects.define("scale", function(options, done) {
+    var el = $3(this), mode = options.mode, percent = parseInt(options.percent, 10) || (parseInt(options.percent, 10) === 0 ? 0 : mode !== "effect" ? 0 : 100), newOptions = $3.extend(true, {
+      from: $3.effects.scaledDimensions(el),
+      to: $3.effects.scaledDimensions(el, percent, options.direction || "both"),
       origin: options.origin || ["middle", "center"]
     }, options);
     if (options.fade) {
       newOptions.from.opacity = 1;
       newOptions.to.opacity = 0;
     }
-    $2.effects.effect.size.call(this, newOptions, done);
+    $3.effects.effect.size.call(this, newOptions, done);
   });
-  var effectsEffectPuff = $2.effects.define("puff", "hide", function(options, done) {
-    var newOptions = $2.extend(true, {}, options, {
+  var effectsEffectPuff = $3.effects.define("puff", "hide", function(options, done) {
+    var newOptions = $3.extend(true, {}, options, {
       fade: true,
       percent: parseInt(options.percent, 10) || 150
     });
-    $2.effects.effect.scale.call(this, newOptions, done);
+    $3.effects.effect.scale.call(this, newOptions, done);
   });
-  var effectsEffectPulsate = $2.effects.define("pulsate", "show", function(options, done) {
-    var element = $2(this), mode = options.mode, show = mode === "show", hide2 = mode === "hide", showhide = show || hide2, anims = (options.times || 5) * 2 + (showhide ? 1 : 0), duration = options.duration / anims, animateTo = 0, i = 1, queuelen = element.queue().length;
+  var effectsEffectPulsate = $3.effects.define("pulsate", "show", function(options, done) {
+    var element = $3(this), mode = options.mode, show = mode === "show", hide2 = mode === "hide", showhide = show || hide2, anims = (options.times || 5) * 2 + (showhide ? 1 : 0), duration = options.duration / anims, animateTo = 0, i = 1, queuelen = element.queue().length;
     if (show || !element.is(":visible")) {
       element.css("opacity", 0).show();
       animateTo = 1;
@@ -24479,11 +24403,11 @@ window.$ = import_jquery.default;
     }
     element.animate({ opacity: animateTo }, duration, options.easing);
     element.queue(done);
-    $2.effects.unshift(element, queuelen, anims + 1);
+    $3.effects.unshift(element, queuelen, anims + 1);
   });
-  var effectsEffectShake = $2.effects.define("shake", function(options, done) {
-    var i = 1, element = $2(this), direction = options.direction || "left", distance = options.distance || 20, times = options.times || 3, anims = times * 2 + 1, speed = Math.round(options.duration / anims), ref = direction === "up" || direction === "down" ? "top" : "left", positiveMotion = direction === "up" || direction === "left", animation = {}, animation1 = {}, animation2 = {}, queuelen = element.queue().length;
-    $2.effects.createPlaceholder(element);
+  var effectsEffectShake = $3.effects.define("shake", function(options, done) {
+    var i = 1, element = $3(this), direction = options.direction || "left", distance = options.distance || 20, times = options.times || 3, anims = times * 2 + 1, speed = Math.round(options.duration / anims), ref = direction === "up" || direction === "down" ? "top" : "left", positiveMotion = direction === "up" || direction === "left", animation = {}, animation1 = {}, animation2 = {}, queuelen = element.queue().length;
+    $3.effects.createPlaceholder(element);
     animation[ref] = (positiveMotion ? "-=" : "+=") + distance;
     animation1[ref] = (positiveMotion ? "+=" : "-=") + distance * 2;
     animation2[ref] = (positiveMotion ? "-=" : "+=") + distance * 2;
@@ -24492,16 +24416,16 @@ window.$ = import_jquery.default;
       element.animate(animation1, speed, options.easing).animate(animation2, speed, options.easing);
     }
     element.animate(animation1, speed, options.easing).animate(animation, speed / 2, options.easing).queue(done);
-    $2.effects.unshift(element, queuelen, anims + 1);
+    $3.effects.unshift(element, queuelen, anims + 1);
   });
-  var effectsEffectSlide = $2.effects.define("slide", "show", function(options, done) {
-    var startClip, startRef, element = $2(this), map = {
+  var effectsEffectSlide = $3.effects.define("slide", "show", function(options, done) {
+    var startClip, startRef, element = $3(this), map = {
       up: ["bottom", "top"],
       down: ["top", "bottom"],
       left: ["right", "left"],
       right: ["left", "right"]
     }, mode = options.mode, direction = options.direction || "left", ref = direction === "up" || direction === "down" ? "top" : "left", positiveMotion = direction === "up" || direction === "left", distance = options.distance || element[ref === "top" ? "outerHeight" : "outerWidth"](true), animation = {};
-    $2.effects.createPlaceholder(element);
+    $3.effects.createPlaceholder(element);
     startClip = element.cssClip();
     startRef = element.position()[ref];
     animation[ref] = (positiveMotion ? -1 : 1) * distance + startRef;
@@ -24521,9 +24445,9 @@ window.$ = import_jquery.default;
     });
   });
   var effect4;
-  if ($2.uiBackCompat !== false) {
-    effect4 = $2.effects.define("transfer", function(options, done) {
-      $2(this).transfer(options, done);
+  if ($3.uiBackCompat !== false) {
+    effect4 = $3.effects.define("transfer", function(options, done) {
+      $3(this).transfer(options, done);
     });
   }
   var effectsEffectTransfer = effect4;
@@ -24541,6 +24465,7 @@ $(function() {
     }
   });
 });
+console.log(`i am here!!`);
 setTimeout(function() {
   $(".alert").fadeOut("fast");
 }, 5e3);
@@ -24949,17 +24874,14 @@ setTimeout(function() {
 
 jquery/dist/jquery.js:
   (*!
-   * jQuery JavaScript Library v3.6.0
+   * jQuery JavaScript Library v3.7.1
    * https://jquery.com/
-   *
-   * Includes Sizzle.js
-   * https://sizzlejs.com/
    *
    * Copyright OpenJS Foundation and other contributors
    * Released under the MIT license
    * https://jquery.org/license
    *
-   * Date: 2021-03-02T17:08Z
+   * Date: 2023-08-28T13:37Z
    *)
 
 bootstrap/dist/js/bootstrap.esm.js:
