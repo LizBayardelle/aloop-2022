@@ -1,8 +1,11 @@
-import "./controllers"
-import * as bootstrap from "bootstrap"
+import $ from "jquery";
+window.jQuery = $;
+window.$ = $;
 
-import "./src/jquery"
-import "./src/jquery-ui"
+import "bootstrap";
+
+
+
 
 // Initialize any jQuery or other JS library setups
 $(function() {
